@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "Copy to .claude/settings.local.json (gitignored) and fill in absolute paths for your machine. The devcontainer's postCreate does this automatically.",
+  "mcpServers": {
+    "jadx-ai-mcp": {
+      "_comment": "Bridge between Claude Code and the JADX-AI plugin running inside JADX-GUI. Start JADX-GUI before invoking; the bridge connects to the plugin's HTTP endpoint on localhost:8650.",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${REPO_ROOT}/.cache/jadx-mcp-server",
+        "jadx_mcp_server.py"
+      ]
+    },
+    "ha-tooling": {
+      "_comment": "F-0a — wraps ruff, mypy, hassfest, pytest. Built in this repo.",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${REPO_ROOT}/mcp/ha-tooling",
+        "server.py"
+      ]
+    },
+    "sandbox": {
+      "_comment": "F-0b — wraps Docker-based HA container test. Built in this repo.",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${REPO_ROOT}/mcp/sandbox",
+        "server.py"
+      ]
+    }
+  },
+  "permissions": {
+    "_comment": "Auto-approved tool patterns. Tighten or loosen during the first week of real runs.",
+    "allow": [
+      "Bash(./scripts/setup.sh*)",
+      "Bash(uv run*)",
+      "Bash(ruff*)",
+      "Bash(mypy*)",
+      "Bash(pytest*)",
+      "Bash(hassfest*)",
+      "Bash(docker compose*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Read(*)",
+      "Write(fixtures/snapshots/*)",
+      "Write(runs/*)",
+      "Write(custom_components/*)",
+      "Write(sdk_output/*)"
+    ],
+    "deny": [
+      "Bash(git push*)",
+      "Bash(rm -rf*)",
+      "Write(.git/*)",
+      "Write(LICENSE)",
+      "Write(SPECIFICATION.md)"
+    ]
+  }
+}

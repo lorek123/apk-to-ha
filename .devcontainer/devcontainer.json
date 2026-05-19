@@ -1,0 +1,59 @@
+{
+  "name": "HACS Integration Engine",
+  "image": "mcr.microsoft.com/devcontainers/python:3.14-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true
+    },
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "installGradle": false,
+      "installMaven": false
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+  "containerEnv": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONUNBUFFERED": "1"
+  },
+  "remoteEnv": {
+    "PATH": "${containerEnv:HOME}/.local/bin:${containerEnv:HOME}/.cargo/bin:${containerEnv:PATH}"
+  },
+  "postCreateCommand": "bash ./scripts/setup.sh --devcontainer",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "ms-python.python",
+        "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "[python]": {
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "charliermarsh.ruff"
+        }
+      }
+    }
+  },
+  "forwardPorts": [8650, 8651, 8123],
+  "portsAttributes": {
+    "8650": { "label": "JADX plugin HTTP" },
+    "8651": { "label": "jadx-mcp-server" },
+    "8123": { "label": "Home Assistant (V-3 test container)" }
+  },
+  "mounts": [
+    "source=hacs-engine-runs,target=${containerWorkspaceFolder}/runs,type=volume"
+  ],
+  "remoteUser": "vscode"
+}

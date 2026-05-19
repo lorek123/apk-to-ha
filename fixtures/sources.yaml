@@ -1,0 +1,91 @@
+# SPDX-License-Identifier: MIT
+# F-2b — Fixture corpus.
+#
+# APK binaries are NEVER committed to this repository. This file lists the
+# canonical download sources. `make fixtures` (TBD) pulls them locally into
+# fixtures/_cache/ which is gitignored. Distilled derivatives go in
+# fixtures/snapshots/ (committed) per F-2a.
+#
+# Annotate each entry with its license to keep the legal picture clear.
+
+apks:
+  # Native Java/Kotlin Retrofit — M1 happy path
+  - id: native_retrofit_a
+    description: "F-Droid app with clean Retrofit + Gson serialization"
+    framework: native
+    branch: M1
+    license: GPL-3.0-or-later
+    source: "https://f-droid.org/packages/PACKAGE.NAME/"
+    apk_url: "https://example.invalid/replace.me.apk"   # TODO: fill in during F-2b
+    expected_verdict: proceed
+    notes: "Primary M1 reference. Plain HTTPS, JSON, no signing."
+
+  - id: native_retrofit_b
+    description: "Second Retrofit example for redundancy"
+    framework: native
+    branch: M1
+    license: Apache-2.0
+    source: "TBD"
+    apk_url: "https://example.invalid/replace.me.apk"
+    expected_verdict: proceed
+
+  # Native OkHttp without Retrofit
+  - id: native_okhttp
+    description: "Hand-rolled OkHttp client, no Retrofit annotations"
+    framework: native
+    branch: M1
+    license: TBD
+    source: "TBD"
+    apk_url: "https://example.invalid/replace.me.apk"
+    expected_verdict: proceed
+
+  # Tuya clone — must trigger early-exit (P1-2)
+  - id: tuya_clone
+    description: "SmartLife / Tuya-clone app — pipeline should bail to tinytuya"
+    framework: native
+    branch: M1
+    license: TBD
+    source: "TBD"
+    apk_url: "https://example.invalid/replace.me.apk"
+    expected_verdict: skip
+    expected_reason: "tuya_detected_use_tinytuya"
+
+  # Flutter — M3
+  - id: flutter_app
+    description: "Flutter AOT app for blutter/reFlutter path testing"
+    framework: flutter
+    branch: M3
+    license: TBD
+    source: "TBD"
+    apk_url: "https://example.invalid/replace.me.apk"
+    expected_verdict: proceed
+
+  # React Native — M3
+  - id: react_native_app
+    description: "RN app with index.android.bundle to extract"
+    framework: react_native
+    branch: M3
+    license: TBD
+    source: "TBD"
+    apk_url: "https://example.invalid/replace.me.apk"
+    expected_verdict: proceed
+
+  # BLE-only — M3
+  - id: ble_only
+    description: "Device app with BluetoothGatt characteristic R/W, no HTTP"
+    framework: native
+    branch: M3
+    license: TBD
+    source: "TBD"
+    apk_url: "https://example.invalid/replace.me.apk"
+    expected_verdict: proceed
+
+# Verification fixtures — apps with KNOWN existing HA integrations.
+# These should ALL trigger P-2.5's "skip" verdict.
+duplicate_detection_fixtures:
+  - id: shelly_app
+    description: "Shelly app — HA Core has 'shelly' integration"
+    expected_existing: "core/shelly"
+  - id: esphome_app
+    description: "ESPHome app — HA Core has 'esphome' integration"
+    expected_existing: "core/esphome"

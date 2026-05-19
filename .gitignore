@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Type checkers and linters
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# Engine-specific
+runs/                       # F-6 run telemetry (local only)
+fixtures/_cache/            # F-2a APK download cache (never commit)
+fixtures/_cache/**          # belt and suspenders
+.claude/settings.local.json # actual MCP config (the .example is committed)
+
+# Generated artifacts during local testing
+sdk_output/
+custom_components/
+*.apk
+*.dex
+*.jar
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Direnv
+.envrc

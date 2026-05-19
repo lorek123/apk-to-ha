@@ -1,0 +1,25 @@
+HACS Integration Engine
+=======================
+
+This product includes software developed by third parties:
+
+JADX (Apache-2.0)
+  https://github.com/skylot/jadx
+
+jadx-ai-mcp (Apache-2.0)
+  https://github.com/zinja-coder/jadx-ai-mcp
+
+Home Assistant Core (Apache-2.0)
+  https://github.com/home-assistant/core
+  Used as reference for anchor integrations and as a runtime target.
+
+HACS integration_blueprint (MIT)
+  https://github.com/ludeeus/integration_blueprint
+  Adapted for P5 scaffolding templates.
+
+Tabler Icons (MIT) — used in any documentation diagrams.
+
+aiohttp, bleak, pydantic, jinja2 — all permissively licensed; see their
+respective LICENSE files via `pip show <package>`.
+
+Additional third-party attributions will be added as integrations land.
