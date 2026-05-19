@@ -38,8 +38,8 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://github.com/YOUR-USERNAME/hacs-integration-engine"
-Issues = "https://github.com/YOUR-USERNAME/hacs-integration-engine/issues"
+Repository = "https://github.com/lorek123/apk-to-ha"
+Issues = "https://github.com/lorek123/apk-to-ha/issues"
 
 [build-system]
 requires = ["hatchling"]

@@ -14,7 +14,7 @@ readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly REQUIRED_PYTHON="3.14"
 readonly REQUIRED_JAVA="21"
 readonly REQUIRED_NODE="22"
-readonly JADX_VERSION="1.5.2"
+readonly JADX_VERSION="1.5.5"
 
 # ────────────────────────────────────────────────────────────────
 # Logging
@@ -93,27 +93,18 @@ install_uv() {
 
 install_jadx() {
   if check_jadx; then return; fi
-  log "Installing JADX $JADX_VERSION..."
-  local os="$1"
-  case "$os" in
-    macos)
-      command -v brew >/dev/null || { err "Install Homebrew first: https://brew.sh"; exit 1; }
-      brew install jadx
-      ;;
-    ubuntu)
-      local dl="https://github.com/skylot/jadx/releases/download/v${JADX_VERSION}/jadx-${JADX_VERSION}.zip"
-      sudo mkdir -p /opt/jadx
-      curl -L "$dl" -o /tmp/jadx.zip
-      sudo unzip -q /tmp/jadx.zip -d /opt/jadx
-      sudo ln -sf /opt/jadx/bin/jadx /usr/local/bin/jadx
-      sudo ln -sf /opt/jadx/bin/jadx-gui /usr/local/bin/jadx-gui
-      ;;
-    *)
-      err "Unsupported OS for automatic JADX install: $os"
-      err "Install manually from https://github.com/skylot/jadx/releases and ensure 'jadx' is on PATH."
-      exit 1
-      ;;
-  esac
+  log "Installing JADX $JADX_VERSION from GitHub releases..."
+  local install_dir="$HOME/.local/jadx"
+  local bin_dir="$HOME/.local/bin"
+  local dl="https://github.com/skylot/jadx/releases/download/v${JADX_VERSION}/jadx-${JADX_VERSION}.zip"
+  mkdir -p "$install_dir" "$bin_dir"
+  curl -fL "$dl" -o /tmp/jadx.zip || { err "Failed to download JADX from $dl"; exit 1; }
+  unzip -q -o /tmp/jadx.zip -d "$install_dir"
+  rm /tmp/jadx.zip
+  chmod +x "$install_dir/bin/jadx" "$install_dir/bin/jadx-gui"
+  ln -sf "$install_dir/bin/jadx"     "$bin_dir/jadx"
+  ln -sf "$install_dir/bin/jadx-gui" "$bin_dir/jadx-gui"
+  ok "JADX $JADX_VERSION installed → $install_dir (symlinked into $bin_dir)"
 }
 
 install_jadx_mcp_plugin() {
@@ -199,7 +190,7 @@ main() {
       fi
 
       install_uv
-      check_jadx || install_jadx "$os"
+      check_jadx || install_jadx
       install_jadx_mcp_plugin
       setup_mcp_servers
       pull_docker_images
