@@ -1,0 +1,702 @@
+{
+  "apk_path": "/home/lorek/Downloads/Build Your Own R2-D2_1.1.31_release_APKPure.apk",
+  "package_name": "com.bullb.r2d2",
+  "app_name": "Build Your Own R2-D2_1.1.31_release_APKPure",
+  "version_name": "1.1.31_release",
+  "framework": "native",
+  "transport": {
+    "type": "websocket",
+    "port": 8887,
+    "host_source": "discovered",
+    "url_template": "ws://{host}:8887",
+    "tls": false
+  },
+  "discovery": {
+    "type": "udp_broadcast",
+    "port": 8090,
+    "broadcast_cmd": null,
+    "response_fields": []
+  },
+  "auth": {
+    "type": "handshake",
+    "handshake_cmd": "grantAccess",
+    "fields": [
+      {
+        "name": "uuid",
+        "serialized_name": "uuid",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "device_name",
+        "serialized_name": "device_name",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      }
+    ],
+    "description": "Send grantAccess on WebSocket open; robot responds with state + resultCode"
+  },
+  "state": {
+    "push_cmd": "gin",
+    "fields": [
+      {
+        "name": "arm",
+        "serialized_name": "arm",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "battery",
+        "serialized_name": "battery",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "charging",
+        "serialized_name": "charging",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "error",
+        "serialized_name": "error",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "f43ip",
+        "serialized_name": "ip",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "isAPMode",
+        "serialized_name": "ap_mode",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "lightsaber",
+        "serialized_name": "lightsaber",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "longLCD",
+        "serialized_name": "lcd_l",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "mode",
+        "serialized_name": "mode",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "name",
+        "serialized_name": "name",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "projector",
+        "serialized_name": "projector",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "selfUpdate",
+        "serialized_name": "self_update",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "shortLCD",
+        "serialized_name": "lcd_s",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "ssid",
+        "serialized_name": "ssid",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "timestamp",
+        "serialized_name": "timestamp",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "updateDownloadProgress",
+        "serialized_name": "update_dl_progress",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      },
+      {
+        "name": "uuid",
+        "serialized_name": "uuid",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null
+      }
+    ]
+  },
+  "commands": [
+    {
+      "cmd": "play_sound",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "interrupt",
+          "serialized_name": "interrupt",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "sound_id",
+          "serialized_name": "sound_id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "SoundRecyclerViewAdapter",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "move-head",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "angle",
+          "serialized_name": "angle",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DebugActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "mode",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DebugActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "reset_mcu",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DebugActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "d-head-power",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DebugActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "d-leg-power",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DebugActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "self_update",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "url",
+          "serialized_name": "url",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "SettingRecyclerViewAdapter",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "mode",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "FunctionRecyclerViewAdapter",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "head-shift",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "angle",
+          "serialized_name": "angle",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "interrupt",
+          "serialized_name": "interrupt",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "sound_id",
+          "serialized_name": "sound_id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "FunctionRecyclerViewAdapter",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "play_sound",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "interrupt",
+          "serialized_name": "interrupt",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "sound_id",
+          "serialized_name": "sound_id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "FunctionRecyclerViewAdapter",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "mode",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CustomActionPopupStepRecyclerViewAdapter",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "mode",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "interrupt",
+          "serialized_name": "interrupt",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "sound_id",
+          "serialized_name": "sound_id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CustomActionDetailActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "play_sound",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "interrupt",
+          "serialized_name": "interrupt",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "sound_id",
+          "serialized_name": "sound_id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CustomActionDetailActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "move",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "angle",
+          "serialized_name": "angle",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "NormalControlActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "head-dir",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "dir",
+          "serialized_name": "dir",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "NormalControlActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "head-dir",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "dir",
+          "serialized_name": "dir",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "angle",
+          "serialized_name": "angle",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "VideoControlActivity",
+      "confidence": 1.0
+    },
+    {
+      "cmd": "move",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "angle",
+          "serialized_name": "angle",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        },
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "VideoControlActivity",
+      "confidence": 1.0
+    }
+  ],
+  "events": [],
+  "duplicate_check": {
+    "found": false,
+    "location": null,
+    "name": null,
+    "repo_url": null,
+    "coverage_estimate": "none"
+  },
+  "extraction_confidence": 1.0,
+  "extractor_notes": [],
+  "raw_permissions": [
+    "android.permission.ACCESS_WIFI_STATE",
+    "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_COARSE_LOCATION",
+    "android.permission.CHANGE_WIFI_STATE",
+    "android.permission.INTERNET",
+    "android.permission.READ_PHONE_STATE",
+    "android.permission.READ_EXTERNAL_STORAGE",
+    "android.permission.READ_MEDIA_IMAGES",
+    "android.permission.READ_MEDIA_VIDEO",
+    "android.permission.READ_MEDIA_AUDIO",
+    "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+    "android.permission.WRITE_EXTERNAL_STORAGE"
+  ],
+  "extra": {}
+}

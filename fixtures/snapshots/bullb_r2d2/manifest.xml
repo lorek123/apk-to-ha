@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="40"
+    android:versionName="1.1.31_release"
+    android:compileSdkVersion="34"
+    android:compileSdkVersionCodename="14"
+    package="com.bullb.r2d2"
+    platformBuildVersionCode="34"
+    platformBuildVersionName="14">
+    <uses-sdk
+        android:minSdkVersion="19"
+        android:targetSdkVersion="34"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <application
+        android:theme="@style/AppTheme"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:name="com.bullb.r2d2.MainApplication"
+        android:allowBackup="true"
+        android:supportsRtl="true"
+        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+        android:requestLegacyExternalStorage="true">
+        <provider
+            android:name="com.bullb.r2d2.Setting.Gallery.GalleryFileProvider"
+            android:exported="false"
+            android:authorities="com.bullb.r2d2.Setting.Gallery.GalleryFileProvider"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar"
+            android:name="com.bullb.r2d2.Splash.SplashActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/title_activity_connect_robot_wifi"
+            android:name="com.bullb.r2d2.ConnectRobot.ConnectRobotActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/title_activity_walk"
+            android:name="com.bullb.r2d2.Control.NormalControl.NormalControlActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/title_activity_home"
+            android:name="com.bullb.r2d2.Home.HomeActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name="com.bullb.r2d2.BaseConnectionActivity"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/title_activity_wifi_control"
+            android:name="com.bullb.r2d2.Control.VideoControl.VideoControlActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:name="com.bullb.r2d2.DebugActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/title_activity_setting"
+            android:name="com.bullb.r2d2.Setting.SettingActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/title_activity_change_language"
+            android:name="com.bullb.r2d2.Setting.Language.ChangeLanguageActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name="com.bullb.r2d2.BaseActivity"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/title_activity_change_language"
+            android:name="com.bullb.r2d2.Setting.RobotSetting.RobotSettingActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/title_activity_qrcode"
+            android:name="com.bullb.r2d2.ConnectWifi.QRCodeActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/title_activity_wifi_input"
+            android:name="com.bullb.r2d2.ConnectRobot.LocalNetwork.PairUpTutorialActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/title_activity_wifi_input"
+            android:name="com.bullb.r2d2.ConnectRobot.LocalNetwork.WifiInputActivity"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/title_activity_connect_in_ap"
+            android:name="com.bullb.r2d2.ConnectRobot.p003AP.ConnectInApActivity"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/setting_paired_devices"
+            android:name="com.bullb.r2d2.Setting.PairedDevice.PairedDeviceActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/setting.gallery"
+            android:name="com.bullb.r2d2.Setting.Gallery.GalleryActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/setting.gallery"
+            android:name="com.bullb.r2d2.Setting.Gallery.GalleryItemPreviewActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/setting.terms"
+            android:name="com.bullb.r2d2.Setting.TermsAndConditionActivity"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/custom.custom_action"
+            android:name="com.bullb.r2d2.Custom.CustomActionListActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:theme="@style/AppTheme.NoActionBar.Transparent"
+            android:label="@string/custom.custom_action"
+            android:name="com.bullb.r2d2.Custom.CustomActionDetailActivity"
+            android:screenOrientation="portrait"/>
+        <service
+            android:name="androidx.room.MultiInstanceInvalidationService"
+            android:exported="false"
+            android:directBootAware="true"/>
+        <activity
+            android:theme="@style/Theme.Transparent"
+            android:name="com.karumi.dexter.DexterActivity"
+            android:launchMode="singleTask"/>
+        <meta-data
+            android:name="com.android.vending.derived.apk.id"
+            android:value="1"/>
+    </application>
+</manifest>

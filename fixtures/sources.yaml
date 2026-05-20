@@ -9,19 +9,26 @@
 # Annotate each entry with its license to keep the legal picture clear.
 
 apks:
-  # Native Java/Kotlin Retrofit — M1 happy path
-  - id: native_retrofit_a
-    description: "F-Droid app with clean Retrofit + Gson serialization"
+  # Native Java/Kotlin WebSocket — M1 primary fixture
+  - id: bullb_r2d2
+    description: "Build Your Own R2-D2 v1.1.31 by Bullb — WebSocket + UDP discovery, no signing"
     framework: native
     branch: M1
-    license: GPL-3.0-or-later
-    source: "https://f-droid.org/packages/PACKAGE.NAME/"
-    apk_url: "https://example.invalid/replace.me.apk"   # TODO: fill in during F-2b
+    package: com.bullb.r2d2
+    license: proprietary
+    source: "https://apkpure.com/build-your-own-r2-d2/com.bullb.r2d2"
+    apk_url: "https://example.invalid/replace.me.apk"   # proprietary — download manually to fixtures/_cache/
+    local_path: "fixtures/_cache/Build Your Own R2-D2_1.1.31_release_APKPure.apk"
     expected_verdict: proceed
-    notes: "Primary M1 reference. Plain HTTPS, JSON, no signing."
+    transport: websocket
+    transport_port: 8887
+    discovery: udp_broadcast
+    discovery_port: 8090
+    auth: handshake_grant_access
+    notes: "Primary M1 reference. Pure WebSocket, JSON commands, gin push state. No HTTP endpoints."
 
   - id: native_retrofit_b
-    description: "Second Retrofit example for redundancy"
+    description: "Second Retrofit example for redundancy (TBD)"
     framework: native
     branch: M1
     license: Apache-2.0

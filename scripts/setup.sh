@@ -140,6 +140,29 @@ setup_mcp_servers() {
   fi
 }
 
+clone_ha_core() {
+  local ha_version
+  ha_version=$(grep -E '^ha_core_version' "$REPO_ROOT/config/ha_target.toml" | head -1 | cut -d'"' -f2)
+  local ha_core_dir="$REPO_ROOT/.cache/ha-core"
+  if [[ -d "$ha_core_dir" ]]; then
+    local current
+    current=$(git -C "$ha_core_dir" describe --tags 2>/dev/null || echo "unknown")
+    if [[ "$current" == "$ha_version" ]]; then
+      ok "HA Core $ha_version already cloned"
+      return
+    fi
+    log "Updating HA Core clone to $ha_version..."
+    rm -rf "$ha_core_dir"
+  fi
+  log "Cloning HA Core $ha_version (shallow) for hassfest..."
+  git clone --depth 1 --branch "$ha_version" \
+    https://github.com/home-assistant/core "$ha_core_dir" || {
+      warn "HA Core clone failed. hassfest will fall back to Docker."
+      return
+    }
+  ok "HA Core $ha_version cloned → $ha_core_dir"
+}
+
 pull_docker_images() {
   log "Pre-pulling Docker images for V-3..."
   local ha_image_tag
@@ -193,6 +216,7 @@ main() {
       check_jadx || install_jadx
       install_jadx_mcp_plugin
       setup_mcp_servers
+      clone_ha_core
       pull_docker_images
       ok "Setup complete. Try: ./scripts/setup.sh smoke"
       ;;
