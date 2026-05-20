@@ -27,6 +27,7 @@ htmlcov/
 *.swo
 
 # Engine-specific
+.cache/                     # JADX decompile cache, HA Core clone, duplicate-check cache
 runs/                       # F-6 run telemetry (local only)
 fixtures/_cache/            # F-2a APK download cache (never commit)
 fixtures/_cache/**          # belt and suspenders
