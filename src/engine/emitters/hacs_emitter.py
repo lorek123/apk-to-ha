@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -49,8 +50,21 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     if "number" in platforms:
         _render(env, ctx, domain_dir, "number.py.j2", "number.py")
 
+    _fix_imports(domain_dir)
     _LOGGER.info("HACS integration emitted to %s", domain_dir)
     return domain_dir
+
+
+def _fix_imports(directory: Path) -> None:
+    """Run ruff --fix to sort imports in emitted Python files."""
+    try:
+        subprocess.run(
+            ["ruff", "check", "--select", "I001", "--fix", str(directory)],
+            capture_output=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        _LOGGER.debug("ruff not found; skipping import sort")
 
 
 def _render(env: Environment, ctx: dict, out_dir: Path, template: str, filename: str) -> None:

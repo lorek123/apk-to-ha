@@ -215,8 +215,11 @@ class ProtocolScanner:
                     fields=fields,
                     description="Send grantAccess on WebSocket open; robot responds with state + resultCode",
                 )
+            # Retrofit @Headers (class-level) or @Header (method-level) with API-key pattern
             if "@Headers" in src and ("Authorization" in src or "X-API-Key" in src):
                 return AuthScheme(type=AuthType.API_KEY, description="Static API key in headers")
+            if "@Header(" in src and any(kw in src for kw in ("API-Key", "Api-Key", "api-key", "api_key")):
+                return AuthScheme(type=AuthType.API_KEY, description="Per-request API key header")
 
         return AuthScheme(type=AuthType.NONE)
 

@@ -762,7 +762,7 @@
   ],
   "events": [
     {
-      "cmd": "gin",
+      "cmd": "streaming",
       "transport": "websocket",
       "direction": "from_device",
       "awaits_response": false,
@@ -774,7 +774,7 @@
       "entity_hint": "sensor"
     },
     {
-      "cmd": "streaming",
+      "cmd": "gin",
       "transport": "websocket",
       "direction": "from_device",
       "awaits_response": false,
