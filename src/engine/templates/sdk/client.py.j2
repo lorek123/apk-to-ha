@@ -11,9 +11,10 @@ from typing import Any
 
 import aiohttp
 
-from .const import CMD_AUTH, CMD_STATE_PUSH, DEFAULT_PORT
 {% if mode_actions %}
-from .const import ACTION_TO_MODE
+from .const import ACTION_TO_MODE, CMD_AUTH, CMD_STATE_PUSH, DEFAULT_PORT
+{% else %}
+from .const import CMD_AUTH, CMD_STATE_PUSH, DEFAULT_PORT
 {% endif %}
 from .models import RobotState
 

@@ -8,10 +8,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
-
 from {{ sdk_package }} import {{ class_prefix }}Client
 
-from .const import DEFAULT_PORT, DOMAIN
+from .const import DEFAULT_PORT
 from .coordinator import {{ class_prefix }}Coordinator
 
 PLATFORMS: list[Platform] = [

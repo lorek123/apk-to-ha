@@ -62,16 +62,22 @@ def main() -> None:
         if "_sdk_dir" in ir.extra:
             print(f"  SDK:        {ir.extra['_sdk_dir']}")
             print(f"  HACS:       {ir.extra['_hacs_dir']}")
+        if "_v1_passed" in ir.extra:
+            v1s = "PASS" if ir.extra["_v1_passed"] else "FAIL"
+            print(f"\n  V-1 ruff:              {v1s} — {ir.extra['_v1_errors']} errors, {ir.extra['_v1_warnings']} warnings")
         if "_v2_passed" in ir.extra:
             status = "PASS" if ir.extra["_v2_passed"] else "FAIL"
             tier = ir.extra["_v2_tier"]
             nerr = len(ir.extra.get("_v2_errors", []))
             nwrn = len(ir.extra.get("_v2_warnings", []))
-            print(f"\n  V-2 hassfest ({tier}): {status} — {nerr} errors, {nwrn} warnings")
+            print(f"  V-2 hassfest ({tier}): {status} — {nerr} errors, {nwrn} warnings")
             for e in ir.extra.get("_v2_errors", []):
                 print(f"    ✗ [{e['check']}] {e['message']}")
             for w in ir.extra.get("_v2_warnings", []):
                 print(f"    ⚠ [{w['check']}] {w['message']}")
+        if ir.extra.get("_v3_ran"):
+            v3s = "PASS" if ir.extra["_v3_passed"] else "FAIL"
+            print(f"  V-3 container import:  {v3s}")
 
 
 if __name__ == "__main__":
