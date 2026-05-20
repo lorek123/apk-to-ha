@@ -14,7 +14,7 @@
   "discovery": {
     "type": "udp_broadcast",
     "port": 8090,
-    "broadcast_cmd": null,
+    "broadcast_cmd": "updBroadcast",
     "response_fields": []
   },
   "auth": {
@@ -28,7 +28,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": null
       },
       {
         "name": "device_name",
@@ -37,7 +38,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": null
       }
     ],
     "description": "Send grantAccess on WebSocket open; robot responds with state + resultCode"
@@ -52,7 +54,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "binary_sensor"
       },
       {
         "name": "battery",
@@ -61,7 +64,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "charging",
@@ -70,7 +74,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "error",
@@ -79,7 +84,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "f43ip",
@@ -88,7 +94,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "isAPMode",
@@ -97,7 +104,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "binary_sensor"
       },
       {
         "name": "lightsaber",
@@ -106,7 +114,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "binary_sensor"
       },
       {
         "name": "longLCD",
@@ -115,7 +124,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "binary_sensor"
       },
       {
         "name": "mode",
@@ -124,7 +134,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "name",
@@ -133,7 +144,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "projector",
@@ -142,7 +154,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "selfUpdate",
@@ -151,7 +164,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "shortLCD",
@@ -160,7 +174,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "binary_sensor"
       },
       {
         "name": "ssid",
@@ -169,7 +184,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "timestamp",
@@ -178,7 +194,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "updateDownloadProgress",
@@ -187,7 +204,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       },
       {
         "name": "uuid",
@@ -196,7 +214,8 @@
         "required": true,
         "nullable": false,
         "enum_values": null,
-        "description": null
+        "description": null,
+        "entity_hint": "sensor"
       }
     ]
   },
@@ -214,7 +233,8 @@
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         },
         {
           "name": "sound_id",
@@ -223,13 +243,15 @@
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         }
       ],
       "response_fields": [],
       "description": null,
       "source_class": "SoundRecyclerViewAdapter",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "entity_hint": "number"
     },
     {
       "cmd": "move-head",
@@ -244,13 +266,15 @@
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         }
       ],
       "response_fields": [],
       "description": null,
       "source_class": "DebugActivity",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "entity_hint": "button"
     },
     {
       "cmd": "mode",
@@ -261,44 +285,39 @@
         {
           "name": "mode",
           "serialized_name": "mode",
-          "kind": "integer",
+          "kind": "string",
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         },
         {
-          "name": "mode",
-          "serialized_name": "mode",
+          "name": "interrupt",
+          "serialized_name": "interrupt",
           "kind": "integer",
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         },
         {
-          "name": "mode",
-          "serialized_name": "mode",
-          "kind": "integer",
+          "name": "sound_id",
+          "serialized_name": "sound_id",
+          "kind": "string",
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "mode",
-          "serialized_name": "mode",
-          "kind": "integer",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         }
       ],
       "response_fields": [],
       "description": null,
-      "source_class": "DebugActivity",
-      "confidence": 1.0
+      "source_class": "CustomActionDetailActivity",
+      "confidence": 1.0,
+      "entity_hint": "select"
     },
     {
       "cmd": "reset_mcu",
@@ -309,7 +328,8 @@
       "response_fields": [],
       "description": null,
       "source_class": "DebugActivity",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "entity_hint": "button"
     },
     {
       "cmd": "d-head-power",
@@ -320,7 +340,8 @@
       "response_fields": [],
       "description": null,
       "source_class": "DebugActivity",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "entity_hint": "button"
     },
     {
       "cmd": "d-leg-power",
@@ -331,7 +352,8 @@
       "response_fields": [],
       "description": null,
       "source_class": "DebugActivity",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "entity_hint": "button"
     },
     {
       "cmd": "self_update",
@@ -346,34 +368,295 @@
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         }
       ],
       "response_fields": [],
       "description": null,
       "source_class": "SettingRecyclerViewAdapter",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "entity_hint": "button"
     },
     {
-      "cmd": "mode",
+      "cmd": "grantAccess",
       "transport": "websocket",
       "direction": "to_device",
-      "awaits_response": false,
+      "awaits_response": true,
       "request_fields": [
         {
-          "name": "mode",
-          "serialized_name": "mode",
+          "name": "uuid",
+          "serialized_name": "uuid",
           "kind": "string",
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "device_name",
+          "serialized_name": "device_name",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "new_name",
+          "serialized_name": "new_name",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
         }
       ],
       "response_fields": [],
       "description": null,
-      "source_class": "FunctionRecyclerViewAdapter",
-      "confidence": 1.0
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "change_name",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "new_name",
+          "serialized_name": "new_name",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "paired_list",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "uuid",
+          "serialized_name": "uuid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "unpair",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "uuid",
+          "serialized_name": "uuid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "getWifiList",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "ssid",
+          "serialized_name": "ssid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "wifi_pw",
+          "serialized_name": "wifi_pw",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "connectWifi",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "ssid",
+          "serialized_name": "ssid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "wifi_pw",
+          "serialized_name": "wifi_pw",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "power",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "mute",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "face_detection",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "voice_recognition",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "switch"
     },
     {
       "cmd": "head-shift",
@@ -388,7 +671,8 @@
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         },
         {
           "name": "interrupt",
@@ -397,169 +681,15 @@
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "sound_id",
-          "serialized_name": "sound_id",
-          "kind": "string",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         }
       ],
       "response_fields": [],
       "description": null,
       "source_class": "FunctionRecyclerViewAdapter",
-      "confidence": 1.0
-    },
-    {
-      "cmd": "play_sound",
-      "transport": "websocket",
-      "direction": "to_device",
-      "awaits_response": false,
-      "request_fields": [
-        {
-          "name": "interrupt",
-          "serialized_name": "interrupt",
-          "kind": "integer",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "sound_id",
-          "serialized_name": "sound_id",
-          "kind": "string",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        }
-      ],
-      "response_fields": [],
-      "description": null,
-      "source_class": "FunctionRecyclerViewAdapter",
-      "confidence": 1.0
-    },
-    {
-      "cmd": "mode",
-      "transport": "websocket",
-      "direction": "to_device",
-      "awaits_response": false,
-      "request_fields": [
-        {
-          "name": "mode",
-          "serialized_name": "mode",
-          "kind": "integer",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "mode",
-          "serialized_name": "mode",
-          "kind": "integer",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "mode",
-          "serialized_name": "mode",
-          "kind": "integer",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "mode",
-          "serialized_name": "mode",
-          "kind": "integer",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        }
-      ],
-      "response_fields": [],
-      "description": null,
-      "source_class": "CustomActionPopupStepRecyclerViewAdapter",
-      "confidence": 1.0
-    },
-    {
-      "cmd": "mode",
-      "transport": "websocket",
-      "direction": "to_device",
-      "awaits_response": false,
-      "request_fields": [
-        {
-          "name": "mode",
-          "serialized_name": "mode",
-          "kind": "string",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "interrupt",
-          "serialized_name": "interrupt",
-          "kind": "integer",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "sound_id",
-          "serialized_name": "sound_id",
-          "kind": "string",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        }
-      ],
-      "response_fields": [],
-      "description": null,
-      "source_class": "CustomActionDetailActivity",
-      "confidence": 1.0
-    },
-    {
-      "cmd": "play_sound",
-      "transport": "websocket",
-      "direction": "to_device",
-      "awaits_response": false,
-      "request_fields": [
-        {
-          "name": "interrupt",
-          "serialized_name": "interrupt",
-          "kind": "integer",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "sound_id",
-          "serialized_name": "sound_id",
-          "kind": "string",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        }
-      ],
-      "response_fields": [],
-      "description": null,
-      "source_class": "CustomActionDetailActivity",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "entity_hint": "number"
     },
     {
       "cmd": "move",
@@ -574,7 +704,8 @@
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         },
         {
           "name": "enable",
@@ -583,13 +714,15 @@
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         }
       ],
       "response_fields": [],
       "description": null,
       "source_class": "NormalControlActivity",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "entity_hint": "switch"
     },
     {
       "cmd": "head-dir",
@@ -604,76 +737,67 @@
           "required": true,
           "nullable": false,
           "enum_values": null,
-          "description": null
+          "description": null,
+          "entity_hint": null
         }
       ],
       "response_fields": [],
       "description": null,
       "source_class": "NormalControlActivity",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "entity_hint": "button"
     },
     {
-      "cmd": "head-dir",
+      "cmd": "user_control",
       "transport": "websocket",
       "direction": "to_device",
       "awaits_response": false,
-      "request_fields": [
-        {
-          "name": "dir",
-          "serialized_name": "dir",
-          "kind": "string",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "angle",
-          "serialized_name": "angle",
-          "kind": "string",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        }
-      ],
+      "request_fields": [],
       "response_fields": [],
       "description": null,
-      "source_class": "VideoControlActivity",
-      "confidence": 1.0
-    },
-    {
-      "cmd": "move",
-      "transport": "websocket",
-      "direction": "to_device",
-      "awaits_response": false,
-      "request_fields": [
-        {
-          "name": "angle",
-          "serialized_name": "angle",
-          "kind": "string",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        },
-        {
-          "name": "enable",
-          "serialized_name": "enable",
-          "kind": "boolean",
-          "required": true,
-          "nullable": false,
-          "enum_values": null,
-          "description": null
-        }
-      ],
-      "response_fields": [],
-      "description": null,
-      "source_class": "VideoControlActivity",
-      "confidence": 1.0
+      "source_class": "NormalControlActivity",
+      "confidence": 1.0,
+      "entity_hint": "button"
     }
   ],
-  "events": [],
+  "events": [
+    {
+      "cmd": "gin",
+      "transport": "websocket",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "streaming",
+      "transport": "websocket",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "updBroadcast",
+      "transport": "websocket",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    }
+  ],
   "duplicate_check": {
     "found": false,
     "location": null,
@@ -698,5 +822,23 @@
     "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
     "android.permission.WRITE_EXTERNAL_STORAGE"
   ],
-  "extra": {}
+  "extra": {
+    "mode_actions": {
+      "3": "turn_left",
+      "4": "turn_right",
+      "2": "turn_around",
+      "5": "go_forward",
+      "15": "shake_head",
+      "12": "walk_circle",
+      "10": "dance",
+      "6": "lightsaber",
+      "16": "arm",
+      "17": "short_lcd",
+      "18": "long_lcd",
+      "9": "patrol",
+      "19": "projector1",
+      "20": "projector2",
+      "0": "play"
+    }
+  }
 }

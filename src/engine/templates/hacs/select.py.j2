@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: MIT
+"""Select platform for {{ name }}."""
+from __future__ import annotations
+
+from homeassistant.components.select import SelectEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from {{ sdk_package }}.const import ACTION_TO_MODE
+
+from .coordinator import {{ class_prefix }}Coordinator
+from .entity_base import {{ class_prefix }}Entity
+
+{% for sel in selects %}
+_{{ sel.key | upper }}_OPTIONS = [
+{% for opt in sel.options %}
+    "{{ opt }}",
+{% endfor %}
+]
+{% endfor %}
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    coordinator: {{ class_prefix }}Coordinator = entry.runtime_data.coordinator
+    async_add_entities([
+{% for sel in selects %}
+        {{ class_prefix }}SelectEntity(
+            coordinator, "{{ sel.key }}", "{{ sel.name }}", "{{ sel.cmd }}", _{{ sel.key | upper }}_OPTIONS
+        ),
+{% endfor %}
+    ])
+
+
+class {{ class_prefix }}SelectEntity({{ class_prefix }}Entity, SelectEntity):
+    def __init__(
+        self,
+        coordinator: {{ class_prefix }}Coordinator,
+        key: str,
+        name: str,
+        cmd: str,
+        options: list[str],
+    ) -> None:
+        super().__init__(coordinator, key)
+        self._attr_name = name
+        self._cmd = cmd
+        self._attr_options = options
+        self._attr_current_option: str | None = None
+
+    async def async_select_option(self, option: str) -> None:
+        mode = ACTION_TO_MODE.get(option)
+        if mode is None:
+            return
+        await self.coordinator.client.send_command(self._cmd, mode=mode)
+        self._attr_current_option = option
+        self.async_write_ha_state()

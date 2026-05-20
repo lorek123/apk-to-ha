@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: MIT
+"""Protocol constants for {{ name }}."""
+from __future__ import annotations
+
+DEFAULT_PORT: int = {{ ws_port }}
+{% if udp_port %}
+UDP_PORT: int = {{ udp_port }}
+{% endif %}
+{% if udp_broadcast_cmd %}
+CMD_DISCOVERY: str = "{{ udp_broadcast_cmd }}"
+{% endif %}
+CMD_AUTH: str = "{{ auth_cmd }}"
+CMD_STATE_PUSH: str = "{{ state_push_cmd }}"
+{% for sw in switches %}
+CMD_{{ sw.key | upper }}: str = "{{ sw.cmd }}"
+{% endfor %}
+{% for btn in buttons %}
+CMD_{{ btn.key | upper }}: str = "{{ btn.cmd }}"
+{% endfor %}
+{% for sel in selects %}
+CMD_{{ sel.key | upper }}: str = "{{ sel.cmd }}"
+{% endfor %}
+{% for num in numbers %}
+CMD_{{ num.key | upper }}: str = "{{ num.cmd }}"
+{% endfor %}
+{% if mode_actions %}
+
+# Mode enum values for CMD_MODE
+MODE_ACTIONS: dict[int, str] = {
+{% for k, v in mode_actions.items() | sort %}
+    {{ k }}: "{{ v }}",
+{% endfor %}
+}
+ACTION_TO_MODE: dict[str, int] = {v: k for k, v in MODE_ACTIONS.items()}
+{% endif %}

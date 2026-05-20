@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: MIT
+"""{{ name }} Home Assistant integration."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, CONF_PORT, Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import aiohttp_client
+
+from {{ sdk_package }} import {{ class_prefix }}Client
+
+from .const import DEFAULT_PORT, DOMAIN
+from .coordinator import {{ class_prefix }}Coordinator
+
+PLATFORMS: list[Platform] = [
+{% for p in platforms %}
+    Platform.{{ p | upper }},
+{% endfor %}
+]
+
+
+@dataclass
+class {{ class_prefix }}RuntimeData:
+    coordinator: {{ class_prefix }}Coordinator
+    client: {{ class_prefix }}Client
+
+
+type {{ class_prefix }}ConfigEntry = ConfigEntry[{{ class_prefix }}RuntimeData]
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: {{ class_prefix }}ConfigEntry) -> bool:
+    session = aiohttp_client.async_get_clientsession(hass)
+    client = {{ class_prefix }}Client(
+        host=entry.data[CONF_HOST],
+        port=entry.data.get(CONF_PORT, DEFAULT_PORT),
+        session=session,
+    )
+    coordinator = {{ class_prefix }}Coordinator(hass, entry, client)
+    await coordinator.async_config_entry_first_refresh()
+
+    entry.runtime_data = {{ class_prefix }}RuntimeData(coordinator=coordinator, client=client)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: {{ class_prefix }}ConfigEntry) -> bool:
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok:
+        await entry.runtime_data.client.disconnect()
+    return unload_ok
+
+
+async def async_reload_entry(hass: HomeAssistant, entry: {{ class_prefix }}ConfigEntry) -> None:
+    await async_unload_entry(hass, entry)
+    await async_setup_entry(hass, entry)

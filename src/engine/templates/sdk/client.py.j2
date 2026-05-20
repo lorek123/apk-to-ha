@@ -1,0 +1,129 @@
+# SPDX-License-Identifier: MIT
+"""WebSocket client for {{ name }}."""
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+import uuid as _uuid_mod
+from collections.abc import Callable
+from typing import Any
+
+import aiohttp
+
+from .const import CMD_AUTH, CMD_STATE_PUSH, DEFAULT_PORT
+{% if mode_actions %}
+from .const import ACTION_TO_MODE
+{% endif %}
+from .models import RobotState
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class {{ class_prefix }}Client:
+    """Manages the WebSocket connection to a {{ name }} robot."""
+
+    def __init__(
+        self,
+        host: str,
+        port: int = DEFAULT_PORT,
+        session: aiohttp.ClientSession | None = None,
+    ) -> None:
+        self._host = host
+        self._port = port
+        self._session = session
+        self._own_session = session is None
+        self._ws: aiohttp.ClientWebSocketResponse | None = None
+        self._state: RobotState = RobotState()
+        self._state_callbacks: list[Callable[[RobotState], None]] = []
+        self._listen_task: asyncio.Task | None = None  # type: ignore[type-arg]
+
+    @property
+    def state(self) -> RobotState:
+        return self._state
+
+    @property
+    def host(self) -> str:
+        return self._host
+
+    def on_state_update(self, callback: Callable[[RobotState], None]) -> None:
+        self._state_callbacks.append(callback)
+
+    async def connect(
+        self,
+        device_uuid: str | None = None,
+        device_name: str = "Home Assistant",
+    ) -> None:
+        if self._own_session:
+            self._session = aiohttp.ClientSession()
+
+        url = f"ws://{self._host}:{self._port}"
+        _LOGGER.debug("Connecting to %s", url)
+        assert self._session is not None
+        self._ws = await self._session.ws_connect(url, heartbeat=30)
+
+        grant = {
+            "cmd": CMD_AUTH,
+            "uuid": device_uuid or str(_uuid_mod.uuid4()),
+            "device_name": device_name,
+        }
+        await self._ws.send_str(json.dumps(grant))
+        self._listen_task = asyncio.ensure_future(self._listen())
+
+    async def disconnect(self) -> None:
+        if self._listen_task:
+            self._listen_task.cancel()
+            self._listen_task = None
+        if self._ws and not self._ws.closed:
+            await self._ws.close()
+        if self._own_session and self._session:
+            await self._session.close()
+            self._session = None
+
+    async def send_command(self, cmd: str, **params: Any) -> None:
+        if self._ws is None or self._ws.closed:
+            raise RuntimeError("Not connected")
+        payload: dict[str, Any] = {"cmd": cmd, **params}
+        await self._ws.send_str(json.dumps(payload))
+{% for sw in switches %}
+
+    async def set_{{ sw.key }}(self, enable: bool) -> None:
+        await self.send_command("{{ sw.cmd }}", enable=enable)
+{% endfor %}
+{% if selects %}
+
+    async def set_mode(self, action_name: str) -> None:
+        mode = ACTION_TO_MODE.get(action_name)
+        if mode is None:
+            raise ValueError(f"Unknown mode: {action_name!r}")
+        await self.send_command("mode", mode=mode)
+{% endif %}
+{% for btn in buttons %}
+
+    async def {{ btn.key | replace('-', '_') }}(self) -> None:
+        await self.send_command("{{ btn.cmd }}")
+{% endfor %}
+
+    async def _listen(self) -> None:
+        assert self._ws is not None
+        try:
+            async for msg in self._ws:
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    self._dispatch(msg.data)
+                elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
+                    break
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            _LOGGER.exception("WebSocket listener error")
+
+    def _dispatch(self, raw: str) -> None:
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return
+        cmd = data.get("cmd")
+        if cmd == CMD_STATE_PUSH:
+            self._state = RobotState.from_dict(data)
+            for cb in self._state_callbacks:
+                cb(self._state)

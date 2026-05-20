@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: MIT
+"""UDP device discovery for {{ name }}."""
+from __future__ import annotations
+
+import asyncio
+import json
+import socket
+
+from .const import CMD_DISCOVERY, UDP_PORT
+
+_BROADCAST_ADDR = "255.255.255.255"
+_RECV_TIMEOUT = 3.0
+
+
+async def discover(timeout: float = _RECV_TIMEOUT) -> list[dict]:
+    """Broadcast a discovery packet and collect device responses."""
+    loop = asyncio.get_running_loop()
+    results: list[dict] = []
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.setblocking(False)
+
+    payload = json.dumps({"cmd": CMD_DISCOVERY}).encode()
+    try:
+        sock.sendto(payload, (_BROADCAST_ADDR, UDP_PORT))
+        deadline = loop.time() + timeout
+        while True:
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                break
+            try:
+                data, addr = await asyncio.wait_for(
+                    loop.run_in_executor(None, sock.recvfrom, 4096),
+                    timeout=remaining,
+                )
+                parsed = json.loads(data)
+                parsed.setdefault("host", addr[0])
+                results.append(parsed)
+            except (asyncio.TimeoutError, json.JSONDecodeError):
+                break
+    finally:
+        sock.close()
+
+    return results

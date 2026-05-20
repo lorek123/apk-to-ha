@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: MIT
+"""DataUpdateCoordinator for {{ name }}."""
+from __future__ import annotations
+
+import logging
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
+from {{ sdk_package }} import {{ class_prefix }}Client, RobotState
+
+from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class {{ class_prefix }}Coordinator(DataUpdateCoordinator[RobotState]):
+    """Manages the WebSocket connection and state for {{ name }}.
+
+    Push-only: update_interval is None. State is updated via {{ state_push_cmd }} events.
+    """
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        client: {{ class_prefix }}Client,
+    ) -> None:
+        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=None)
+        self.client = client
+        self.config_entry = entry
+
+    async def _async_setup(self) -> None:
+        """Connect and register the state-push callback."""
+        try:
+            await self.client.connect(
+                device_uuid=str(self.config_entry.entry_id),
+                device_name="Home Assistant",
+            )
+        except Exception as exc:
+            raise ConfigEntryNotReady(f"Cannot connect to robot: {exc}") from exc
+        self.client.on_state_update(self._handle_push)
+
+    def _handle_push(self, state: RobotState) -> None:
+        """Called by the SDK when a {{ state_push_cmd }} message arrives."""
+        self.async_set_updated_data(state)
+
+    async def _async_update_data(self) -> RobotState:
+        """Return current state; real updates come via push."""
+        if self.data is None:
+            raise UpdateFailed("Waiting for first state push from device")
+        return self.data

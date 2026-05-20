@@ -51,6 +51,19 @@ class FieldKind(str, Enum):
     ARRAY = "array"
 
 
+class EntityHint(str, Enum):
+    """Suggested Home Assistant entity platform for a command, event, or state field."""
+    SENSOR = "sensor"
+    BINARY_SENSOR = "binary_sensor"
+    SWITCH = "switch"
+    BUTTON = "button"
+    SELECT = "select"
+    NUMBER = "number"
+    TEXT = "text"
+    LIGHT = "light"
+    MEDIA_PLAYER = "media_player"
+
+
 class FieldDef(BaseModel):
     name: str
     serialized_name: str | None = None     # @SerializedName / @Json(name=...)
@@ -59,6 +72,7 @@ class FieldDef(BaseModel):
     nullable: bool = False
     enum_values: list[str | int] | None = None
     description: str | None = None
+    entity_hint: EntityHint | None = None  # for StateSchema fields → which HA entity type
 
 
 class Endpoint(BaseModel):
@@ -74,6 +88,7 @@ class Endpoint(BaseModel):
     description: str | None = None
     source_class: str | None = None        # Java class where this was found
     confidence: float = 1.0               # 0.0–1.0; <0.7 flagged for review
+    entity_hint: EntityHint | None = None  # suggested HA platform for this endpoint
 
 
 class TransportContract(BaseModel):

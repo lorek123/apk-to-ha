@@ -57,7 +57,21 @@ def main() -> None:
         if ir.duplicate_check and ir.duplicate_check.found:
             print(f"  ⚠  Duplicate: {ir.duplicate_check.location}/{ir.duplicate_check.name}"
                   f" ({ir.duplicate_check.coverage_estimate} coverage)")
-        print(f"\n  Snapshot:   fixtures/snapshots/{args.apk_id or args.apk.stem.lower()}/")
+        apk_id = args.apk_id or args.apk.stem.lower()
+        print(f"\n  Snapshot:   fixtures/snapshots/{apk_id}/")
+        if "_sdk_dir" in ir.extra:
+            print(f"  SDK:        {ir.extra['_sdk_dir']}")
+            print(f"  HACS:       {ir.extra['_hacs_dir']}")
+        if "_v2_passed" in ir.extra:
+            status = "PASS" if ir.extra["_v2_passed"] else "FAIL"
+            tier = ir.extra["_v2_tier"]
+            nerr = len(ir.extra.get("_v2_errors", []))
+            nwrn = len(ir.extra.get("_v2_warnings", []))
+            print(f"\n  V-2 hassfest ({tier}): {status} — {nerr} errors, {nwrn} warnings")
+            for e in ir.extra.get("_v2_errors", []):
+                print(f"    ✗ [{e['check']}] {e['message']}")
+            for w in ir.extra.get("_v2_warnings", []):
+                print(f"    ⚠ [{w['check']}] {w['message']}")
 
 
 if __name__ == "__main__":

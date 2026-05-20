@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MIT
+"""State model for {{ name }}."""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+
+@dataclass
+class RobotState:
+    """Parsed state push ({{ state_push_cmd }} event)."""
+{% for s in sensors %}
+    {{ s.attr }}: int | float | str | None = None
+{% endfor %}
+{% for bs in binary_sensors %}
+    {{ bs.attr }}: bool | None = None
+{% endfor %}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "RobotState":
+        return cls(
+{% for s in sensors %}
+            {{ s.attr }}=data.get("{{ s.key }}"),
+{% endfor %}
+{% for bs in binary_sensors %}
+            {{ bs.attr }}=bool(data.get("{{ bs.key }}")),
+{% endfor %}
+        )
