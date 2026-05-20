@@ -37,6 +37,39 @@ class ContainerTestResult:
     error: str = ""
 
 
+def _resolve_image(cfg: dict) -> str:
+    """Return the Docker image to use for V-3.
+
+    Prefers the local sandbox image (built by `make sandbox`) because it has
+    ruff/mypy/pytest pre-baked and avoids network installs. Falls back to the
+    official HA image when the sandbox hasn't been built yet.
+    """
+    sandbox = cfg.get("sandbox", {})
+    sb_image = sandbox.get("image", "hacs-engine-sandbox")
+    sb_tag = sandbox.get("tag", "latest")
+    full_sandbox = f"{sb_image}:{sb_tag}"
+
+    # Check if the sandbox image exists locally (inspect doesn't pull)
+    probe = shutil.which("docker")
+    if probe:
+        import subprocess
+        result = subprocess.run(
+            ["docker", "image", "inspect", full_sandbox],
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            _LOGGER.info("V-3: using sandbox image %s", full_sandbox)
+            return full_sandbox
+
+    # Fallback: bare HA image
+    ha_image = cfg["docker"]["ha_image"]
+    ha_tag = cfg["docker"]["ha_image_tag"]
+    fallback = f"{ha_image}:{ha_tag}"
+    _LOGGER.info("V-3: sandbox image not found — using %s", fallback)
+    return fallback
+
+
 async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
     """Run the container import test. Returns result (skipped if no Docker)."""
     if not shutil.which("docker"):
@@ -45,8 +78,7 @@ async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
 
     with open(_HA_TARGET, "rb") as fh:
         cfg = tomllib.load(fh)
-    tag = cfg["docker"]["ha_image_tag"]
-    image = f"homeassistant/home-assistant:{tag}"
+    image = _resolve_image(cfg)
 
     # sdk_output_dir layout: {sdk_package}/ pyproject.toml custom_components/{domain}/
     sdk_pkg_dir = next(

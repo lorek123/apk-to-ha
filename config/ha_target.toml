@@ -24,3 +24,10 @@ ha_image_tag = "2026.5.2"
 # Pulled from HA Core at this commit/tag for fixtures/anchors/.
 # Bump in lockstep with ha_core_version.
 ref = "2026.5.2"
+
+[sandbox]
+# F-5: local Docker image built by `make sandbox`.
+# V-3 prefers this image (pre-baked ruff/mypy/pytest) over the bare HA image.
+# Falls back to docker.ha_image:docker.ha_image_tag when not present.
+image = "hacs-engine-sandbox"
+tag = "latest"
