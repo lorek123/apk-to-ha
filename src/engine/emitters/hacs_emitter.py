@@ -46,6 +46,8 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
         _render(env, ctx, domain_dir, "button.py.j2", "button.py")
     if "select" in platforms:
         _render(env, ctx, domain_dir, "select.py.j2", "select.py")
+    if "number" in platforms:
+        _render(env, ctx, domain_dir, "number.py.j2", "number.py")
 
     _LOGGER.info("HACS integration emitted to %s", domain_dir)
     return domain_dir

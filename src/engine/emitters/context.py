@@ -33,7 +33,8 @@ def _class_prefix(domain: str) -> str:
     """'r2d2' → 'R2D2', 'my_device' → 'MyDevice'"""
     result = []
     for part in domain.split("_"):
-        if any(c.isdigit() for c in part) or len(part) <= 3:
+        # Uppercase alphanumeric segments that contain a digit (e.g. r2d2 → R2D2)
+        if any(c.isdigit() for c in part):
             result.append(part.upper())
         else:
             result.append(part.capitalize())
