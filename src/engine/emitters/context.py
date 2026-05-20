@@ -7,7 +7,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from ..ir.models import EntityHint, ProtocolIR
+from ..ir.models import EntityHint, ProtocolIR, TransportType
 
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
 
@@ -122,6 +122,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "sdk_package": sdk_pkg,
         "integration_version": "0.1.0",
         "ha_min_version": ha_cfg["target"]["generated_minimum_required"],
+        "iot_class": _infer_iot_class(ir.transport.type),
         # transport
         "ws_port": ir.transport.port or 8887,
         "udp_port": ir.discovery.port,
@@ -139,6 +140,16 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         # platforms present
         "platforms": _platforms(switches, buttons, selects, numbers, sensors, binary_sensors),
     }
+
+
+def _infer_iot_class(transport_type: TransportType) -> str:
+    return {
+        TransportType.WEBSOCKET: "local_push",
+        TransportType.HTTP_REST: "local_polling",
+        TransportType.BLE: "local_push",
+        TransportType.UDP: "local_push",
+        TransportType.TCP_SOCKET: "local_push",
+    }.get(transport_type, "local_polling")
 
 
 def _platforms(

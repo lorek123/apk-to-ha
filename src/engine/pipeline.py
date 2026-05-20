@@ -19,6 +19,7 @@ from .extraction.protocol_scanner import ProtocolScanner
 from .ingestion import classifier, decompiler, manifest_parser
 from .ir.models import Framework, ProtocolIR
 from .snapshot import harness as snapshot_harness
+from .validation import fix_router
 from .validation import hassfest as hassfest_validator
 from .validation import ruff_check, container_test
 
@@ -128,27 +129,51 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         log("P5", "hacs_emit", "INFO", f"HACS integration emitted to {hacs_dir}")
         ir = ir.model_copy(update={"extra": {**ir.extra, "_sdk_dir": str(sdk_dir), "_hacs_dir": str(hacs_dir)}})
 
-        # ── V-1: ruff on generated code ───────────────────────────────────────
-        v1_hacs = await ruff_check.check(hacs_dir)
-        v1_sdk = await ruff_check.check(sdk_dir)
-        v1_errors = v1_hacs.error_count + v1_sdk.error_count
-        v1_warnings = v1_hacs.warning_count + v1_sdk.warning_count
-        log("V1", "ruff", "INFO" if (v1_hacs.passed and v1_sdk.passed) else "WARNING",
-            f"ruff: {v1_errors} errors, {v1_warnings} warnings")
-        for f in v1_hacs.findings + v1_sdk.findings:
-            log("V1", "ruff", "WARNING" if f.code.startswith("W") else "ERROR",
-                f"{Path(f.file).name}:{f.line} [{f.code}] {f.message}")
+        # ── V-1 / V-2 validation loop (max 3 iterations per §8) ──────────────
+        _MAX_ITERATIONS = 3
+        v1_hacs = v1_sdk = v2 = None
+        for iteration in range(_MAX_ITERATIONS):
+            v1_hacs = await ruff_check.check(hacs_dir)
+            v1_sdk = await ruff_check.check(sdk_dir)
+            v2 = await hassfest_validator.validate(hacs_dir)
 
-        # ── V-2: hassfest validation ───────────────────────────────────────────
-        v2 = await hassfest_validator.validate(hacs_dir)
-        log("V2", "hassfest", "INFO" if v2.passed else "WARNING",
-            f"hassfest ({v2.tier}): {'PASS' if v2.passed else 'FAIL'} "
-            f"— {len(v2.errors)} errors, {len(v2.warnings)} warnings")
-        for finding in v2.findings:
-            log("V2", "hassfest", finding.severity.upper(),
-                f"[{finding.check}] {finding.message}")
+            v1_errors = v1_hacs.error_count + v1_sdk.error_count
+            v1_warnings = v1_hacs.warning_count + v1_sdk.warning_count
+            log("V1", "ruff", "INFO" if (v1_hacs.passed and v1_sdk.passed) else "WARNING",
+                f"[iter {iteration}] ruff: {v1_errors} errors, {v1_warnings} warnings")
+            for f in v1_hacs.findings + v1_sdk.findings:
+                log("V1", "ruff", "WARNING" if f.code.startswith("W") else "ERROR",
+                    f"{Path(f.file).name}:{f.line} [{f.code}] {f.message}")
+
+            log("V2", "hassfest", "INFO" if v2.passed else "WARNING",
+                f"[iter {iteration}] hassfest ({v2.tier}): {'PASS' if v2.passed else 'FAIL'} "
+                f"— {len(v2.errors)} errors, {len(v2.warnings)} warnings")
+            for finding in v2.findings:
+                log("V2", "hassfest", finding.severity.upper(),
+                    f"[{finding.check}] {finding.message}")
+
+            if v1_hacs.passed and v1_sdk.passed and v2.passed:
+                break  # clean — no fixes needed
+
+            fix = fix_router.route_and_apply(
+                ruff_findings=v1_hacs.findings + v1_sdk.findings,
+                hassfest_findings=v2.findings,
+                ctx=ctx,
+                integration_dir=hacs_dir,
+            )
+            log("V5", "fix_router", "INFO",
+                f"[iter {iteration}] applied={fix.applied} skipped={fix.skipped}")
+            for detail in fix.details:
+                log("V5", "fix_router", "INFO", detail)
+
+            if fix.applied == 0:
+                log("V5", "fix_router", "WARNING",
+                    "No deterministic fixes available — escalating to human review")
+                break
+
+        assert v1_hacs is not None and v1_sdk is not None and v2 is not None
+
         # ── V-3: HA container import test ─────────────────────────────────────
-        ctx = emitter_context.build(ir)
         v3 = await container_test.run(ctx["domain"], run_out)
         if v3.ran:
             log("V3", "container", "INFO" if v3.passed else "WARNING",
@@ -159,8 +184,8 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         ir = ir.model_copy(update={"extra": {
             **ir.extra,
             "_v1_passed": v1_hacs.passed and v1_sdk.passed,
-            "_v1_errors": v1_errors,
-            "_v1_warnings": v1_warnings,
+            "_v1_errors": v1_hacs.error_count + v1_sdk.error_count,
+            "_v1_warnings": v1_hacs.warning_count + v1_sdk.warning_count,
             "_v2_passed": v2.passed,
             "_v2_tier": v2.tier,
             "_v2_errors": [{"check": f.check, "message": f.message} for f in v2.errors],

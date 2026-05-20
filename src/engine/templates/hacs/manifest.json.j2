@@ -5,7 +5,7 @@
   "config_flow": true,
   "documentation": "https://github.com/lorek123/apk-to-ha",
   "homeassistant": "{{ ha_min_version }}",
-  "iot_class": "local_push",
+  "iot_class": "{{ iot_class }}",
   "quality_scale": "platinum",
   "requirements": ["{{ sdk_package }}=={{ integration_version }}"],
   "version": "{{ integration_version }}"
