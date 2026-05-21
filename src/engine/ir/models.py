@@ -127,6 +127,19 @@ class DuplicateCheckResult(BaseModel):
     coverage_estimate: Literal["full", "partial", "none"] = "none"
 
 
+class PlayStoreInfo(BaseModel):
+    """Metadata fetched from Google Play Store during P1."""
+    title: str
+    description: str            # full description text
+    summary: str | None = None  # short 1–2 sentence summary
+    category: str | None = None # e.g. "House & Home", "Tools"
+    developer: str | None = None
+    developer_id: str | None = None
+    rating: float | None = None
+    installs: str | None = None  # e.g. "1,000,000+"
+    play_store_url: str | None = None
+
+
 class ProtocolIR(BaseModel):
     """Complete extracted protocol contract for one APK. P3-1 IR root object."""
     model_config = ConfigDict(populate_by_name=True)
@@ -147,6 +160,7 @@ class ProtocolIR(BaseModel):
     events: list[Endpoint] = Field(default_factory=list)      # device → app
 
     # meta
+    play_store: PlayStoreInfo | None = None
     duplicate_check: DuplicateCheckResult | None = None
     extraction_confidence: float = 1.0
     extractor_notes: list[str] = Field(default_factory=list)

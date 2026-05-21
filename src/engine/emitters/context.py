@@ -114,6 +114,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         else:
             sensors.append(spec)
 
+    ps = ir.play_store
     return {
         # identifiers
         "domain": domain,
@@ -123,6 +124,11 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "integration_version": "0.1.0",
         "ha_min_version": ha_cfg["target"]["generated_minimum_required"],
         "iot_class": _infer_iot_class(ir.transport.type),
+        # play store context
+        "app_description": ps.description if ps else "",
+        "app_summary": (ps.summary or ps.description[:200]) if ps else "",
+        "play_category": (ps.category or "") if ps else "",
+        "play_developer": (ps.developer or "") if ps else "",
         # transport
         "ws_port": ir.transport.port or 8887,
         "udp_port": ir.discovery.port,

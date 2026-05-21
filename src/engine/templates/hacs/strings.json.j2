@@ -3,6 +3,7 @@
     "step": {
       "user": {
         "title": "Connect to {{ name }}",
+        {% if app_summary %}"description": "{{ app_summary | replace('"', '\\"') }}",{% endif %}
         "data": {
           "host": "IP address or hostname",
           "port": "Port (default {{ ws_port }})"
@@ -10,7 +11,7 @@
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect — check the IP address and that the robot is powered on",
+      "cannot_connect": "Failed to connect — check the IP address and that the device is powered on",
       "unknown": "Unexpected error"
     },
     "abort": {

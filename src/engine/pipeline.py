@@ -16,7 +16,7 @@ from .emitters import context as emitter_context
 from .emitters import hacs_emitter, sdk_emitter
 from .extraction import entity_classifier
 from .extraction.protocol_scanner import ProtocolScanner
-from .ingestion import classifier, decompiler, manifest_parser
+from .ingestion import classifier, decompiler, manifest_parser, play_store as play_store_fetcher
 from .ir.models import Framework, ProtocolIR
 from .snapshot import harness as snapshot_harness
 from .validation import fix_router
@@ -82,11 +82,19 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         discovery=discovery.type.value,
     )
 
-    # ── P-2.5: duplicate check ─────────────────────────────────────────────────
+    # ── P-2.5: duplicate check + Play Store metadata (parallel network calls) ───
     async with aiohttp.ClientSession() as session:
-        dup_result = await dup_checker.check(manifest.package_name, session)
+        dup_result, ps_info = await asyncio.gather(
+            dup_checker.check(manifest.package_name, session),
+            play_store_fetcher.fetch(manifest.package_name),
+        )
     log("P2.5", "dup_check", "INFO",
         f"Duplicate check: found={dup_result.found}, coverage={dup_result.coverage_estimate}")
+    if ps_info:
+        log("P2.5", "play_store", "INFO",
+            f"Play Store: {ps_info.title!r} ({ps_info.category}) by {ps_info.developer}")
+    else:
+        log("P2.5", "play_store", "INFO", "Play Store: not found or unavailable")
 
     if dup_result.found and dup_result.coverage_estimate == "full":
         log("P2.5", "dup_check", "WARNING",
@@ -105,6 +113,7 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         state=state,
         commands=commands,
         events=events,
+        play_store=ps_info,
         duplicate_check=dup_result,
         raw_permissions=manifest.permissions,
         extra=scanner.extra,

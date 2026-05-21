@@ -26,6 +26,7 @@ dependencies = [
     "pyyaml>=6.0",
     "click>=8.1",
     "structlog>=24.1",
+    "google-play-scraper>=1.2.7",
 ]
 
 [project.optional-dependencies]
@@ -98,6 +99,8 @@ asyncio_mode = "auto"
 filterwarnings = [
     "error",
     "ignore::DeprecationWarning:pydantic.*",
+    "ignore::DeprecationWarning:google_play_scraper.*",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
 ]
 
 [tool.coverage.run]
