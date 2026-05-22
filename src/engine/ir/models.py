@@ -103,6 +103,8 @@ class DiscoveryMechanism(BaseModel):
     type: DiscoveryType
     port: int | None = None
     broadcast_cmd: str | None = None       # JSON cmd value in broadcast packet
+    service_type: str | None = None        # mDNS/zeroconf service type e.g. "_device._tcp.local."
+    hostname_pattern: str | None = None    # DHCP hostname glob e.g. "mydevice*"
     response_fields: list[FieldDef] = Field(default_factory=list)
 
 

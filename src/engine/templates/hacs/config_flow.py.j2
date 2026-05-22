@@ -10,6 +10,12 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers import aiohttp_client
+{% if has_zeroconf %}
+from homeassistant.components import zeroconf
+{% endif %}
+{% if has_dhcp %}
+from homeassistant.components import dhcp
+{% endif %}
 from {{ sdk_package }} import {{ class_prefix }}Client
 
 from .const import DEFAULT_PORT, DOMAIN
@@ -50,6 +56,13 @@ class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for {{ name }}."""
 
     VERSION = 1
+{% if has_zeroconf or has_dhcp %}
+
+    def __init__(self) -> None:
+        """Initialise."""
+        self._discovered_host: str | None = None
+        self._discovered_port: int | None = None
+{% endif %}
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -75,3 +88,53 @@ class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
         )
+{% if has_zeroconf %}
+
+    async def async_step_zeroconf(
+        self, discovery_info: zeroconf.ZeroconfServiceInfo
+    ) -> ConfigFlowResult:
+        """Handle zeroconf discovery."""
+        host = discovery_info.host
+        port = discovery_info.port or DEFAULT_PORT
+
+        await self.async_set_unique_id(f"{host}:{port}")
+        self._abort_if_unique_id_configured()
+
+        self._discovered_host = host
+        self._discovered_port = port
+        self.context["title_placeholders"] = {"host": host}
+        return await self.async_step_zeroconf_confirm()
+
+    async def async_step_zeroconf_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm zeroconf-discovered device."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title=self.context["title_placeholders"]["host"],
+                data={
+                    CONF_HOST: self._discovered_host,
+                    CONF_PORT: self._discovered_port or DEFAULT_PORT,
+                },
+            )
+        return self.async_show_form(
+            step_id="zeroconf_confirm",
+            description_placeholders=self.context["title_placeholders"],
+        )
+{% endif %}
+{% if has_dhcp %}
+
+    async def async_step_dhcp(
+        self, discovery_info: dhcp.DhcpServiceInfo
+    ) -> ConfigFlowResult:
+        """Handle DHCP discovery."""
+        host = discovery_info.ip
+
+        await self.async_set_unique_id(host)
+        self._abort_if_unique_id_configured()
+
+        self._discovered_host = host
+        self._discovered_port = DEFAULT_PORT
+        self.context["title_placeholders"] = {"host": host}
+        return await self.async_step_user()
+{% endif %}

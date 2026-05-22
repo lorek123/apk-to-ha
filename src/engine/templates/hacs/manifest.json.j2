@@ -8,5 +8,17 @@
   "iot_class": "{{ iot_class }}",
   "quality_scale": "platinum",
   "requirements": ["{{ sdk_package }}=={{ integration_version }}"],
-  "version": "{{ integration_version }}"
+  "version": "{{ integration_version }}"{% if has_zeroconf %},
+  "zeroconf": [
+{% for stype in zeroconf_types %}
+    {"type": "{{ stype }}"}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  ]{% endif %}{% if has_dhcp %},
+  "dhcp": [
+{% for hostname in dhcp_hostnames %}
+    {"hostname": "{{ hostname }}"}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  ]{% endif %}
 }

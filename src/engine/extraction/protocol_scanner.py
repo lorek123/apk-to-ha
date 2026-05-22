@@ -28,6 +28,7 @@ from ..ir.models import (
     TransportContract,
     TransportType,
 )
+from .discovery_scanner import scan as discovery_scan
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ class ProtocolScanner:
     def __init__(self, apk_out_dir: Path) -> None:
         self._sources = apk_out_dir / "sources"
         self._app_sources: list[Path] = []
+        self._app_package: str = ""
         self._str_constants: dict[str, str] = {}   # CONST_NAME → "string_value"
         self._response_cmds: set[str] = set()       # cmds that receive a reply
         self._no_response_cmds: set[str] = set()    # fire-and-forget / push cmds
@@ -78,6 +80,7 @@ class ProtocolScanner:
         list[Endpoint],
     ]:
         """Return (transport, discovery, auth, state, commands, events)."""
+        self._app_package = app_package
         pkg_path = self._sources / app_package.replace(".", "/")
         if pkg_path.exists():
             self._app_sources = list(pkg_path.rglob("*.java"))
@@ -173,32 +176,20 @@ class ProtocolScanner:
         return TransportContract(type=TransportType.HTTP_REST, host_source="manual")
 
     def _detect_discovery(self) -> DiscoveryMechanism:
-        for f in self._app_sources:
-            src = self._read(f)
-            if "UDPServer" in src or "DatagramSocket" in src or "DatagramPacket" in src:
-                port: int | None = None
-                m = _UDP_PORT_RE.search(src)
-                if m:
-                    port = int(m.group(1))
-                # Prefer the known UDP broadcast command name from the no-response list
-                broadcast_cmd: str | None = next(
-                    (c for c in self._no_response_cmds if "broadcast" in c.lower() or "udp" in c.lower()),
-                    None,
-                )
-                if not broadcast_cmd:
-                    m2 = re.search(r'"cmd".*?"([^"]+)"', src)
-                    if m2:
-                        broadcast_cmd = m2.group(1)
-                _LOGGER.info("Discovery: UDP broadcast port=%s cmd=%s", port, broadcast_cmd)
-                return DiscoveryMechanism(
-                    type=DiscoveryType.UDP_BROADCAST,
-                    port=port,
-                    broadcast_cmd=broadcast_cmd,
-                )
-            if "NsdManager" in src:
-                return DiscoveryMechanism(type=DiscoveryType.ZEROCONF)
+        # Use P5-7 discovery scanner for enriched mDNS/UDP detection
+        result = discovery_scan(self._sources, self._app_package)
 
-        return DiscoveryMechanism(type=DiscoveryType.NONE)
+        # For UDP_BROADCAST, also try to find the broadcast_cmd from known no-response cmds
+        if result.type == DiscoveryType.UDP_BROADCAST and not result.broadcast_cmd:
+            broadcast_cmd: str | None = next(
+                (c for c in self._no_response_cmds
+                 if "broadcast" in c.lower() or "udp" in c.lower()),
+                None,
+            )
+            if broadcast_cmd:
+                result = result.model_copy(update={"broadcast_cmd": broadcast_cmd})
+
+        return result
 
     def _detect_auth(self) -> AuthScheme:
         grant_access_value = self._str_constants.get("GRANT_ACCESS", "grantAccess")

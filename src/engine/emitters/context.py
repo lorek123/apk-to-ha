@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ..extraction.signing_emitter import build as build_signing_ctx
-from ..ir.models import Direction, EntityHint, ProtocolIR, TransportType
+from ..ir.models import Direction, DiscoveryType, EntityHint, ProtocolIR, TransportType
 
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
 
@@ -123,6 +123,18 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         else:
             sensors.append(spec)
 
+    # ── P5-7 discovery blocks for manifest.json + config_flow ────────────────
+    zeroconf_types: list[str] = []
+    dhcp_hostnames: list[str] = []
+    if ir.discovery.type == DiscoveryType.ZEROCONF:
+        if ir.discovery.service_type:
+            zeroconf_types = [ir.discovery.service_type]
+        if ir.discovery.hostname_pattern:
+            dhcp_hostnames = [ir.discovery.hostname_pattern]
+    elif ir.discovery.type == DiscoveryType.UDP_BROADCAST:
+        # UDP broadcast devices: also add a DHCP block using the app slug as hostname hint
+        dhcp_hostnames = [f"{domain}*"]
+
     # ── BLE characteristics for P4-6 Bleak client template ───────────────────
     ble_char_uuids: dict[str, str] = ir.extra.get("ble_char_uuids", {})
     ble_char_access: dict[str, list[str]] = ir.extra.get("ble_char_access", {})
@@ -182,6 +194,11 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "mode_actions": mode_actions,
         # platforms present
         "platforms": _platforms(switches, buttons, selects, numbers, sensors, binary_sensors),
+        # P5-7 discovery
+        "has_zeroconf": bool(zeroconf_types),
+        "has_dhcp": bool(dhcp_hostnames),
+        "zeroconf_types": zeroconf_types,
+        "dhcp_hostnames": dhcp_hostnames,
         # P4-6 BLE client
         "has_ble": bool(ble_chars),
         "ble_chars": ble_chars,
