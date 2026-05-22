@@ -21,6 +21,7 @@ from .dynamic import oracle as dynamic_oracle
 from .extraction.crypto_scanner import scan as crypto_scan
 from .extraction.java_code_graph import JavaCodeGraph
 from .extraction.protocol_scanner import ProtocolScanner
+from .extraction.ble_scanner import BLEScanner
 from .extraction.rn_scanner import RNScanner
 from .extraction.signing_tracer import LLM_THRESHOLD
 from .extraction.signing_tracer import trace as signing_trace
@@ -84,12 +85,29 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         log("P1", "classify", "WARNING", "Flutter path (P1-5) not yet implemented — extraction will be incomplete")
 
     # ── P2: protocol extraction ────────────────────────────────────────────────
+    extra_ctx: dict = {}
     if framework == Framework.REACT_NATIVE:
         rn = RNScanner(out_dir)
         transport, discovery, auth, state, commands, events = rn.scan(manifest.package_name)
     else:
         scanner = ProtocolScanner(out_dir)
         transport, discovery, auth, state, commands, events = scanner.scan(manifest.package_name)
+        extra_ctx = scanner.extra
+
+        # ── P2-8: BLE endpoint augmentation ──────────────────────────────────
+        ble = BLEScanner(out_dir)
+        ble_transport, _, _, _, ble_commands, ble_events = ble.scan(manifest.package_name)
+        if ble_commands or ble_events:
+            commands = commands + ble_commands
+            events = events + ble_events
+            extra_ctx = {**extra_ctx, **ble.extra}
+            if not (transport.type.value != "ble") or not commands:
+                transport = ble_transport
+            log("P2", "ble_scan", "INFO",
+                f"BLE: {len(ble_commands)} commands, {len(ble_events)} events",
+                service_uuids=ble.extra.get("ble_service_uuids", []),
+            )
+
     log("P2", "scan", "INFO",
         f"Extracted {len(commands)} commands, {len(events)} events",
         transport=transport.type.value,
@@ -130,7 +148,7 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         play_store=ps_info,
         duplicate_check=dup_result,
         raw_permissions=manifest.permissions,
-        extra=scanner.extra,
+        extra=extra_ctx,
     )
 
     # ── P2-4: crypto API scan ─────────────────────────────────────────────────
