@@ -14,10 +14,27 @@
     },
     "error": {
       "cannot_connect": "Failed to connect — check the IP address and that the device is powered on",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error"{% if device_errors %},
+{% for e in device_errors %}
+      {{ e.key | tojson }}: {{ e.msg | tojson }}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+{% endif %}
     },
     "abort": {
       "already_configured": "This device is already configured"
     }
+  }{% if entity_sections %},
+  "entity": {
+{% for platform, entities in entity_sections.items() %}
+    {{ platform | tojson }}: {
+{% for key, data in entities.items() %}
+      {{ key | tojson }}: {"name": {{ data.name | tojson }}}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    }{% if not loop.last %},{% endif %}
+
+{% endfor %}
   }
+{% endif %}
 }

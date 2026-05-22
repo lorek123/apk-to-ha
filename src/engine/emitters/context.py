@@ -175,6 +175,31 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         if "write" in ch["access"]
     ]
 
+    # ── P5-6 Android string resources → HA translation strings ───────────────
+    android_strings: dict[str, str] = ir.extra.get("android_strings", {})
+    device_errors: list[dict] = []
+    for raw_key, msg in android_strings.items():
+        k_lower = raw_key.lower()
+        if any(t in k_lower for t in ("error", "fail", "warn", "alert", "unavail")):
+            device_errors.append({"key": _to_snake(raw_key), "msg": msg})
+
+    # Entity name translations for translations/en.json (Gold rule)
+    all_sensors = sensors + (ble_sensors or [])
+    all_switches = switches + (ble_switches or [])
+    entity_sections: dict[str, dict] = {}
+    if all_sensors:
+        entity_sections["sensor"] = {s["key"]: {"name": s["name"]} for s in all_sensors}
+    if binary_sensors:
+        entity_sections["binary_sensor"] = {s["key"]: {"name": s["name"]} for s in binary_sensors}
+    if all_switches:
+        entity_sections["switch"] = {s["key"]: {"name": s["name"]} for s in all_switches}
+    if buttons:
+        entity_sections["button"] = {s["key"]: {"name": s["name"]} for s in buttons}
+    if selects:
+        entity_sections["select"] = {s["key"]: {"name": s["name"]} for s in selects}
+    if numbers:
+        entity_sections["number"] = {s["key"]: {"name": s["name"]} for s in numbers}
+
     ps = ir.play_store
     return {
         # identifiers
@@ -218,6 +243,9 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "ble_sensors": ble_sensors,
         "ble_switches": ble_switches,
         "ble_service_uuids": ir.extra.get("ble_service_uuids", []),
+        # P5-6 translation strings
+        "device_errors": device_errors,
+        "entity_sections": entity_sections,
         # P2-6 signing (merged in; has_signing=False when no trace)
         **build_signing_ctx(ir.signing_traces),
     }

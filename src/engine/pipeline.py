@@ -23,6 +23,7 @@ from .extraction.java_code_graph import JavaCodeGraph
 from .extraction.protocol_scanner import ProtocolScanner
 from .extraction.ble_scanner import BLEScanner
 from .extraction.rn_scanner import RNScanner
+from .extraction.strings_scanner import scan as strings_scan
 from .extraction.signing_tracer import LLM_THRESHOLD
 from .extraction.signing_tracer import trace as signing_trace
 from .ingestion import classifier, decompiler, manifest_parser, play_store as play_store_fetcher
@@ -131,6 +132,15 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
     if dup_result.found and dup_result.coverage_estimate == "full":
         log("P2.5", "dup_check", "WARNING",
             f"Full coverage found at {dup_result.location}/{dup_result.name} — skipping generation")
+
+    # ── P5-6: Android string resources ───────────────────────────────────────
+    android_strings = strings_scan(out_dir)
+    if android_strings:
+        extra_ctx = {**extra_ctx, "android_strings": android_strings}
+        log("P5", "strings_scan", "INFO",
+            f"Extracted {len(android_strings)} user-facing strings from strings.xml")
+    else:
+        log("P5", "strings_scan", "DEBUG", "No strings.xml or no relevant strings found")
 
     # ── P3-1: assemble IR ─────────────────────────────────────────────────────
     ir = ProtocolIR(
