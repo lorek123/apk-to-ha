@@ -32,6 +32,19 @@ from ..ir.models import (
     ProtocolIR,
 )
 
+# State fields that are device metadata, not HA sensors
+_METADATA_FIELDS = frozenset({
+    "name", "uuid", "ssid", "ip", "ip_address", "host",
+    "mac", "mac_address", "timestamp", "ts",
+    "self_update", "update_dl_progress",
+})
+
+# Field names that are boolean regardless of their declared type
+_BOOLEAN_FIELD_NAMES = frozenset({
+    "charging", "connected", "docked", "asleep", "locked",
+    "armed", "online", "presence", "occupancy", "motion",
+})
+
 
 def classify(ir: ProtocolIR) -> ProtocolIR:
     """Return a copy of *ir* with entity_hint fields populated."""
@@ -83,6 +96,9 @@ def _hint_endpoint(ep, mode_action_keys: set[int]):  # type: ignore[no-untyped-d
 def _hint_field(field):  # type: ignore[no-untyped-def]
     if field.entity_hint is not None:
         return field
-    if field.kind == FieldKind.BOOLEAN:
+    field_key = (field.serialized_name or field.name).lower()
+    if field_key in _METADATA_FIELDS:
+        return field  # entity_hint stays None → context builder skips it
+    if field_key in _BOOLEAN_FIELD_NAMES or field.kind == FieldKind.BOOLEAN:
         return field.model_copy(update={"entity_hint": EntityHint.BINARY_SENSOR})
     return field.model_copy(update={"entity_hint": EntityHint.SENSOR})

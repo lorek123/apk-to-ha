@@ -3,7 +3,9 @@
     "step": {
       "user": {
         "title": "Connect to {{ name }}",
-        {% if app_summary %}"description": "{{ app_summary | replace('"', '\\"') }}",{% endif %}
+        {% if app_summary %}
+        "description": "{{ app_summary | replace('"', '\\"') }}",
+        {% endif %}
         "data": {
           "host": "IP address or hostname",
           "port": "Port (default {{ ws_port }})"

@@ -21,6 +21,7 @@ from .ir.models import Framework, ProtocolIR
 from .snapshot import harness as snapshot_harness
 from .validation import fix_router
 from .validation import hassfest as hassfest_validator
+from .validation import quality_checker
 from .validation import ruff_check, container_test
 
 _LOGGER = logging.getLogger(__name__)
@@ -182,6 +183,15 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
 
         assert v1_hacs is not None and v1_sdk is not None and v2 is not None
 
+        # ── V-4: platinum quality rubric ─────────────────────────────────────
+        v4 = quality_checker.check(hacs_dir)
+        log("V4", "quality", "INFO" if v4.passed else "WARNING",
+            f"quality: {'PASS' if v4.passed else 'FAIL'} "
+            f"— {len(v4.errors)} errors, {len(v4.warnings)} warnings")
+        for r in v4.failures:
+            log("V4", "quality", r.rule.severity.upper(),
+                f"[{r.rule.id}] {r.rule.name}: {r.detail}")
+
         # ── V-3: HA container import test ─────────────────────────────────────
         v3 = await container_test.run(ctx["domain"], run_out)
         if v3.ran:
@@ -199,6 +209,9 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
             "_v2_tier": v2.tier,
             "_v2_errors": [{"check": f.check, "message": f.message} for f in v2.errors],
             "_v2_warnings": [{"check": f.check, "message": f.message} for f in v2.warnings],
+            "_v4_passed": v4.passed,
+            "_v4_errors": [{"id": r.rule.id, "name": r.rule.name, "detail": r.detail} for r in v4.errors],
+            "_v4_warnings": [{"id": r.rule.id, "name": r.rule.name, "detail": r.detail} for r in v4.warnings],
             "_v3_ran": v3.ran,
             "_v3_passed": v3.passed,
         }})

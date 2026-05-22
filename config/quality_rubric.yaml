@@ -1,0 +1,75 @@
+# HACS Integration Engine — Platinum Quality Scale rubric
+# check_type: deterministic | agent
+# severity:   error | warning
+rules:
+  - id: PLT-001
+    name: entity_name
+    description: "All entities must declare _attr_has_entity_name = True"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-002
+    name: unique_id
+    description: "All entities must declare a stable _attr_unique_id"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-003
+    name: runtime_data
+    description: "Integration must use entry.runtime_data (not hass.data) for config entry state"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-004
+    name: aiohttp_client
+    description: "HTTP sessions must use async_get_clientsession(hass), never aiohttp.ClientSession() directly"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-005
+    name: update_failed
+    description: "DataUpdateCoordinator._async_update_data must raise UpdateFailed on error, not generic Exception"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-006
+    name: device_info
+    description: "Entities must have DeviceInfo with identifiers= set to (DOMAIN, entry_id)"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-007
+    name: spdx_headers
+    description: "All .py files must begin with # SPDX-License-Identifier: MIT"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-008
+    name: config_flow_user_step
+    description: "Config flow must have async_step_user with an errors dict passed to async_show_form"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-009
+    name: iot_class
+    description: "manifest.json iot_class must be a valid Home Assistant iot_class value"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-010
+    name: translation_coverage
+    description: "strings.json and translations/en.json must be valid JSON with matching top-level structure"
+    check_type: deterministic
+    severity: warning
+
+  - id: PLT-011
+    name: coordinator_push_pattern
+    description: "Push-capable transports (WebSocket, BLE) should have update_interval=None; verify intent matches transport type"
+    check_type: agent
+    severity: warning
+
+  - id: PLT-012
+    name: entity_semantic_naming
+    description: "Entity names should be human-readable; internal cmd names must be slugified and translated"
+    check_type: agent
+    severity: warning

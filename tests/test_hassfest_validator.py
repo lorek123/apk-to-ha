@@ -150,7 +150,7 @@ def test_generated_r2d2_passes_structural():
     """The integration we generated from the R2-D2 snapshot must pass all structural checks."""
     import asyncio
     from engine.validation.hassfest import validate
-    hacs_dir = Path("sdk_output/bullb_r2d2/custom_components/r2d2")
+    hacs_dir = (Path(__file__).parents[1] / "sdk_output/bullb_r2d2/custom_components/r2d2").resolve()
     if not hacs_dir.exists():
         pytest.skip("generated integration not present — run the pipeline first")
     result = asyncio.run(validate(hacs_dir))

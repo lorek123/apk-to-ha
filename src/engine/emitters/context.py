@@ -104,6 +104,8 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     # ── state fields → sensors ────────────────────────────────────────────────
     sensors, binary_sensors = [], []
     for f in ir.state.fields:
+        if f.entity_hint is None:
+            continue  # metadata field — not a HA entity
         spec = {
             "key": f.serialized_name or f.name,
             "name": _human(f.serialized_name or f.name),
