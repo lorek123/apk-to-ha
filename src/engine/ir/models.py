@@ -127,6 +127,25 @@ class DuplicateCheckResult(BaseModel):
     coverage_estimate: Literal["full", "partial", "none"] = "none"
 
 
+class SigningComponent(BaseModel):
+    """One logical piece of a signing-input concatenation, in order."""
+    kind: str           # "timestamp" | "path" | "body" | "http_method" | "host"
+                        # | "secret_key" | "nonce" | "literal" | "unknown"
+    variable_name: str  # name as it appears in the decompiled source
+    value: str | None = None    # populated for kind=="literal" only
+    confidence: float = 1.0
+
+
+class SigningTrace(BaseModel):
+    """P2-5 output: reconstructed signing-input layout for one crypto call site."""
+    algorithm: str                              # e.g. "HMAC-SHA256"
+    components: list[SigningComponent]          # signing input parts, in order
+    key_source: str | None = None              # variable holding the HMAC key
+    source_method: str                          # fully-qualified method name
+    confidence: float                           # min(component confidences) × coverage factor
+    unresolved: list[str] = Field(default_factory=list)   # vars the tracer couldn't classify
+
+
 class CryptoUsage(BaseModel):
     """One detected cryptographic primitive usage found by P2-4."""
     algorithm: str           # normalised, e.g. "HMAC-SHA256", "AES/CBC/PKCS5Padding"
@@ -167,8 +186,9 @@ class ProtocolIR(BaseModel):
     commands: list[Endpoint] = Field(default_factory=list)    # app → device
     events: list[Endpoint] = Field(default_factory=list)      # device → app
 
-    # crypto findings (P2-4)
+    # crypto findings (P2-4) and signing traces (P2-5)
     crypto: list[CryptoUsage] = Field(default_factory=list)
+    signing_traces: list[SigningTrace] = Field(default_factory=list)
 
     # meta
     play_store: PlayStoreInfo | None = None

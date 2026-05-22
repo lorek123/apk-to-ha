@@ -19,6 +19,8 @@ from .emitters import hacs_emitter, sdk_emitter
 from .extraction import entity_classifier
 from .extraction.crypto_scanner import scan as crypto_scan
 from .extraction.protocol_scanner import ProtocolScanner
+from .extraction.signing_tracer import LLM_THRESHOLD
+from .extraction.signing_tracer import trace as signing_trace
 from .ingestion import classifier, decompiler, manifest_parser, play_store as play_store_fetcher
 from .ir.models import Framework, ProtocolIR
 from .snapshot import harness as snapshot_harness
@@ -130,6 +132,18 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         f"Crypto usages: {len(crypto_usages)}",
         algorithms=[u.algorithm for u in crypto_usages if u.confidence >= 0.7])
     ir = ir.model_copy(update={"crypto": crypto_usages})
+
+    # ── P2-5: signing-input tracer (static path) ──────────────────────────────
+    traces = signing_trace(crypto_usages, out_dir)
+    high_conf = [t for t in traces if t.confidence >= LLM_THRESHOLD]
+    needs_llm = [t for t in traces if t.confidence < LLM_THRESHOLD]
+    log("P2", "signing_tracer", "INFO",
+        f"Signing traces: {len(traces)} total, {len(high_conf)} high-conf, "
+        f"{len(needs_llm)} need LLM escalation")
+    for t in needs_llm:
+        log("P2", "signing_tracer", "WARNING",
+            f"{t.source_method}: confidence={t.confidence:.2f} unresolved={t.unresolved}")
+    ir = ir.model_copy(update={"signing_traces": traces})
 
     # ── P3-2: entity hint classification ─────────────────────────────────────
     ir = entity_classifier.classify(ir)
