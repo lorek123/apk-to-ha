@@ -127,6 +127,14 @@ class DuplicateCheckResult(BaseModel):
     coverage_estimate: Literal["full", "partial", "none"] = "none"
 
 
+class CryptoUsage(BaseModel):
+    """One detected cryptographic primitive usage found by P2-4."""
+    algorithm: str           # normalised, e.g. "HMAC-SHA256", "AES/CBC/PKCS5Padding"
+    call_site: str           # Java class name
+    context_snippet: str     # up to 3 source lines around the call
+    confidence: float = 1.0  # 0..1; <0.5 means inferred from import only
+
+
 class PlayStoreInfo(BaseModel):
     """Metadata fetched from Google Play Store during P1."""
     title: str
@@ -158,6 +166,9 @@ class ProtocolIR(BaseModel):
     state: StateSchema
     commands: list[Endpoint] = Field(default_factory=list)    # app → device
     events: list[Endpoint] = Field(default_factory=list)      # device → app
+
+    # crypto findings (P2-4)
+    crypto: list[CryptoUsage] = Field(default_factory=list)
 
     # meta
     play_store: PlayStoreInfo | None = None

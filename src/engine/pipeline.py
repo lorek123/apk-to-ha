@@ -9,18 +9,22 @@ import time
 import uuid
 from pathlib import Path
 
+import hashlib
+
 import aiohttp
 
 from .duplicate_check import checker as dup_checker
 from .emitters import context as emitter_context
 from .emitters import hacs_emitter, sdk_emitter
 from .extraction import entity_classifier
+from .extraction.crypto_scanner import scan as crypto_scan
 from .extraction.protocol_scanner import ProtocolScanner
 from .ingestion import classifier, decompiler, manifest_parser, play_store as play_store_fetcher
 from .ir.models import Framework, ProtocolIR
 from .snapshot import harness as snapshot_harness
 from .validation import fix_router
 from .validation import hassfest as hassfest_validator
+from .validation import log_analyzer
 from .validation import quality_checker
 from .validation import ruff_check, container_test
 
@@ -120,6 +124,13 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         extra=scanner.extra,
     )
 
+    # ── P2-4: crypto API scan ─────────────────────────────────────────────────
+    crypto_usages = crypto_scan(out_dir)
+    log("P2", "crypto", "INFO",
+        f"Crypto usages: {len(crypto_usages)}",
+        algorithms=[u.algorithm for u in crypto_usages if u.confidence >= 0.7])
+    ir = ir.model_copy(update={"crypto": crypto_usages})
+
     # ── P3-2: entity hint classification ─────────────────────────────────────
     ir = entity_classifier.classify(ir)
     log("P3", "entity_hints", "INFO",
@@ -200,6 +211,12 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
             if not v3.passed:
                 log("V3", "container", "WARNING", v3.error or v3.output[:500])
 
+        # ── V-7: HA log analysis ──────────────────────────────────────────────
+        v7_findings = log_analyzer.analyze(v3.output if v3.ran else "")
+        for f in v7_findings:
+            log("V7", "log_analyzer", f.severity.upper(),
+                f"[{f.category}] {f.message}")
+
         ir = ir.model_copy(update={"extra": {
             **ir.extra,
             "_v1_passed": v1_hacs.passed and v1_sdk.passed,
@@ -214,16 +231,55 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
             "_v4_warnings": [{"id": r.rule.id, "name": r.rule.name, "detail": r.detail} for r in v4.warnings],
             "_v3_ran": v3.ran,
             "_v3_passed": v3.passed,
+            "_v7_findings": [{"category": f.category, "severity": f.severity, "message": f.message}
+                             for f in v7_findings],
         }})
 
-    # ── write run log ──────────────────────────────────────────────────────────
+    # ── V-6: write run state ──────────────────────────────────────────────────
     run_dir = _RUNS_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
+
+    # Structured event log
     with (run_dir / "log.jsonl").open("w") as fh:
         for entry in log_entries:
             fh.write(json.dumps(entry) + "\n")
 
-    log("pipeline", "done", "INFO", "Pipeline complete", run_id=run_id)
+    # Full IR snapshot — enables offline replay and debugging
+    (run_dir / "ir.json").write_text(ir.model_dump_json(indent=2))
+
+    # Output hash — detects regressions across runs for the same APK
+    output_hash: str | None = None
+    if emit:
+        hacs_path = Path(ir.extra.get("_hacs_dir", ""))
+        if hacs_path.exists():
+            h = hashlib.sha256()
+            for f in sorted(hacs_path.rglob("*")):
+                if f.is_file():
+                    h.update(f.name.encode())
+                    h.update(f.read_bytes())
+            output_hash = h.hexdigest()[:16]
+
+    # Human-readable run summary
+    summary = {
+        "run_id": run_id,
+        "apk": str(apk_path),
+        "package_name": ir.package_name,
+        "app_name": ir.app_name,
+        "ts": time.time(),
+        "emit": emit,
+        "v1_passed": ir.extra.get("_v1_passed"),
+        "v2_passed": ir.extra.get("_v2_passed"),
+        "v2_tier": ir.extra.get("_v2_tier"),
+        "v3_ran": ir.extra.get("_v3_ran"),
+        "v3_passed": ir.extra.get("_v3_passed"),
+        "v4_passed": ir.extra.get("_v4_passed"),
+        "v7_findings": len(ir.extra.get("_v7_findings", [])),
+        "crypto_usages": len(ir.crypto),
+        "output_hash": output_hash,
+    }
+    (run_dir / "summary.json").write_text(json.dumps(summary, indent=2))
+
+    log("pipeline", "done", "INFO", "Pipeline complete", run_id=run_id, output_hash=output_hash)
     return ir
 
 
