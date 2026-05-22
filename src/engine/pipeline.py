@@ -21,6 +21,7 @@ from .dynamic import oracle as dynamic_oracle
 from .extraction.crypto_scanner import scan as crypto_scan
 from .extraction.java_code_graph import JavaCodeGraph
 from .extraction.protocol_scanner import ProtocolScanner
+from .extraction.rn_scanner import RNScanner
 from .extraction.signing_tracer import LLM_THRESHOLD
 from .extraction.signing_tracer import trace as signing_trace
 from .ingestion import classifier, decompiler, manifest_parser, play_store as play_store_fetcher
@@ -79,12 +80,16 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
     framework = classifier.classify(out_dir)
     log("P1", "classify", "INFO", f"Framework: {framework.value}")
 
-    if framework != Framework.NATIVE:
-        log("P1", "classify", "WARNING", f"{framework.value} path not implemented in M1 — extraction may be incomplete")
+    if framework == Framework.FLUTTER:
+        log("P1", "classify", "WARNING", "Flutter path (P1-5) not yet implemented — extraction will be incomplete")
 
     # ── P2: protocol extraction ────────────────────────────────────────────────
-    scanner = ProtocolScanner(out_dir)
-    transport, discovery, auth, state, commands, events = scanner.scan(manifest.package_name)
+    if framework == Framework.REACT_NATIVE:
+        rn = RNScanner(out_dir)
+        transport, discovery, auth, state, commands, events = rn.scan(manifest.package_name)
+    else:
+        scanner = ProtocolScanner(out_dir)
+        transport, discovery, auth, state, commands, events = scanner.scan(manifest.package_name)
     log("P2", "scan", "INFO",
         f"Extracted {len(commands)} commands, {len(events)} events",
         transport=transport.type.value,
