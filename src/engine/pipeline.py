@@ -116,9 +116,13 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
     )
 
     # ── P-2.5: duplicate check + Play Store metadata (parallel network calls) ───
+    _ble_uuids = extra_ctx.get("ble_service_uuids") or []
     async with aiohttp.ClientSession() as session:
         dup_result, ps_info = await asyncio.gather(
-            dup_checker.check(manifest.package_name, session),
+            dup_checker.check(
+                manifest.package_name, session,
+                ble_service_uuids=_ble_uuids or None,
+            ),
             play_store_fetcher.fetch(manifest.package_name),
         )
     log("P2.5", "dup_check", "INFO",
