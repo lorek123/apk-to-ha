@@ -17,6 +17,7 @@ from .duplicate_check import checker as dup_checker
 from .emitters import context as emitter_context
 from .emitters import hacs_emitter, sdk_emitter
 from .extraction import entity_classifier
+from .dynamic import oracle as dynamic_oracle
 from .extraction.crypto_scanner import scan as crypto_scan
 from .extraction.java_code_graph import JavaCodeGraph
 from .extraction.protocol_scanner import ProtocolScanner
@@ -150,6 +151,24 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         log("P2", "signing_tracer", "WARNING",
             f"{t.source_method}: confidence={t.confidence:.2f} unresolved={t.unresolved}")
     ir = ir.model_copy(update={"signing_traces": traces})
+
+    # ── P2-7: dynamic oracle (redroid + Frida) ────────────────────────────────
+    oracle_report = await dynamic_oracle.run(apk_path, ir)
+    if oracle_report.patched_ir is not None:
+        ir = oracle_report.patched_ir
+        log("P2", "oracle", "INFO",
+            f"Oracle patched IR: new_cmds={oracle_report.new_commands} "
+            f"confidence_boost={oracle_report.confidence_boost:.2f}")
+    else:
+        log("P2", "oracle", "INFO",
+            f"Oracle: skipped or no patches — "
+            f"hmac={oracle_report.capture_summary.get('hmac_calls', 0)} "
+            f"http={oracle_report.capture_summary.get('http_calls', 0)} "
+            f"ws={oracle_report.capture_summary.get('ws_frames', 0)}")
+    if oracle_report.signing:
+        sv = oracle_report.signing
+        level = "INFO" if sv.verified else "WARNING"
+        log("P2", "oracle", level, f"Signing: verified={sv.verified} corrected={sv.corrected} — {sv.detail}")
 
     # ── P3-2: entity hint classification ─────────────────────────────────────
     ir = entity_classifier.classify(ir)

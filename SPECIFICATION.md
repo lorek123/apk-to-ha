@@ -14,7 +14,7 @@
 - Refuse to duplicate work: detect existing HA Core / HACS integrations and bail out early.
 
 ### Non-goals
-- Dynamic instrumentation as the primary extraction path. Frida is a fallback for crypto signing only, not the main strategy.
+- Dynamic instrumentation as the **primary** extraction path. Static analysis (P1–P2-6) runs first; the dynamic oracle (P2-7) is a verification and gap-filling layer, not a replacement.
 - Cloud-only / OAuth-heavy device APIs as the M1 target. Local-network HTTP comes first.
 - Bypassing DRM, license enforcement, or anti-tamper. The engine analyzes communication protocols, not security mechanisms.
 - A general-purpose APK analysis tool. Scope is narrow: device-control surfaces that map onto HA entities.
@@ -151,8 +151,28 @@ Update path: weekly GitHub Action checks for a newer HA release, opens a PR bump
 **P2-6 — Signature algorithm Python emitter.** Given a P2-5 trace, generate the corresponding Python signing function plus a unit test verifying it matches an example from the trace.
 - **Deps:** P2-5, P4-1.
 
-**P2-7 — Frida dynamic verification fallback.** When P2-5 confidence is low or P2-6's emitted signer fails verification, launch the app in an emulator with a Frida hook, capture a real request, validate or correct the signer. Could be its own epic.
-- **Deps:** P2-6.
+**P2-7 — Dynamic protocol oracle (Frida + redroid).** Runs the APK in a redroid Android container, injects a Frida agent, spins up a mock device server, and captures live traffic. Produces a `CaptureSession` that the `IRReconciler` uses to verify and patch the static IR.
+
+Scope covers **all** protocol surfaces, not just signing:
+- **Signing verification:** hook `Mac.doFinal()` + `SecretKeySpec`, decode raw input bytes, compare against P2-6's `sign()` output; auto-correct component order / separator if wrong.
+- **HTTP oracle:** hook OkHttp3 / `HttpURLConnection`, capture real request methods, URLs, headers, and bodies; reconcile against extracted `commands` and `events`.
+- **WebSocket oracle:** hook OkHttp WS + `java-websocket`, capture outgoing and incoming frames; confirm command names, field keys, and response schema.
+- **Field-name correction:** raw JSON keys observed at runtime replace inferred serialized names in the IR, eliminating the most common source of broken integrations.
+- **Discovery confirmation:** observe actual UDP broadcast / mDNS packets; correct `DiscoveryMechanism` port and command.
+
+Architecture (`src/engine/dynamic/`):
+- `redroid_runner.py` — Docker container lifecycle; loads `binder_linux` module, waits for ADB.
+- `adb_client.py` — ADB wrapper: install APK, push frida-server, forward ports.
+- `frida_agent.js` — JavaScript agent injected into the app process.
+- `frida_runner.py` — Python Frida orchestration; spawns app, injects agent, collects messages.
+- `mock_device_server.py` — aiohttp + asyncio UDP server that answers discovery + auth so the app generates real signing calls and API requests without a physical device.
+- `capture_model.py` — typed dataclasses: `HmacCapture`, `HttpCapture`, `WsCapture`, `CaptureSession`.
+- `ir_reconciler.py` — diff `CaptureSession` against `ProtocolIR`; output `ReconciliationReport`.
+- `oracle.py` — public entry point: `run(apk_path, ir, graph) → ReconciliationReport`.
+
+Emulator: **redroid** (Android 13 Docker image). Requires `binder_linux` kernel module on host; auto-loaded via `modprobe` if absent. Falls back gracefully (skips P2-7) when Docker is unavailable or module cannot be loaded.
+
+- **Deps:** P2-6. **Skipped when:** static confidence ≥ 0.9 on all traces AND zero unresolved IR fields.
 
 **P2-8 — BLE endpoint scanner (M3).** Find `BluetoothGatt` service/characteristic UUIDs, scan for read/write/notify patterns. Output into IR alongside HTTP endpoints.
 - **Deps:** P2-1 (sibling).
@@ -349,7 +369,7 @@ P1-5, P1-6, P2-8, P4-6, P5-7, P5-8.
 ## 10. Open questions (deferred, not blockers)
 
 1. **Evaluation result on `vichhka` MCP** — if it's good, replaces most of Phase 2.
-2. **Frida emulator selection** — Android Studio AVD vs Genymotion vs cloud Android. Affects P2-7 build complexity.
+2. ~~**Frida emulator selection**~~ — **Resolved: redroid** (Android 13 Docker container). `binder_linux.ko` present on target host. No QEMU overhead; root by default; Docker-native. See P2-7.
 3. **Anchor integration update cadence** — manual bump on HA release, or automated.
 4. **HACS publication workflow** — does the engine emit a HACS-publishable repo automatically, or do users vendor the output into their own repos?
 
