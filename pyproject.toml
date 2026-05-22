@@ -30,6 +30,7 @@ dependencies = [
     "tree-sitter>=0.25",
     "tree-sitter-java>=0.23",
     "frida>=17.0",
+    "openapi-spec-validator>=0.7",
 ]
 
 [project.optional-dependencies]

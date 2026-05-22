@@ -213,7 +213,8 @@ Output verdict: `{found: bool, location: "core"|"hacs"|null, name, repo_url, cov
 **P4-4 — Package metadata emitter.** Generates `pyproject.toml`, `README.md`, version pinning. Output is `pip install -e .`-installable.
 - **Deps:** P4-1..P4-3. **Done when:** generated SDK installs cleanly in the F-5 sandbox.
 
-**P4-5 — openapi-generator-cli alternative path (M2).** Add as alternative SDK backend for users who want the generator output. Hand-rolled remains default.
+**P4-5 — openapi-generator-cli alternative path. CLOSED.**
+`openapi-generator-cli` produces synchronous requests-based Python by default. Adapting it to emit async/aiohttp code requires a custom generator template that would drift on every upstream update and still require heavy post-processing for HA-specific patterns (DataUpdateCoordinator, inject-websession, platinum naming). The hand-rolled Jinja2 SDK already produces better output with zero post-processing. The actual third-party-contract use case is fully covered by P3-2's `openapi.yaml` output written to every snapshot and validated by P3-3.
 
 **P4-6 — Bleak BLE client template (M3).** Mirror of P4-2 for BLE. Async context-managed `BleakClient`, characteristic R/W/notify wrappers, reconnection logic.
 - **Deps:** P2-8, P4-1.

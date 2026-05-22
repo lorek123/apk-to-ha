@@ -14,7 +14,11 @@ import logging
 import shutil
 from pathlib import Path
 
+import yaml
+
 from ..ir.models import ProtocolIR
+from ..ir.openapi_emitter import emit as openapi_emit
+from ..ir.openapi_validator import validate as openapi_validate
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,6 +32,23 @@ def write(apk_id: str, ir: ProtocolIR, apk_out_dir: Path) -> Path:
 
     # ir.json
     (snap_dir / "ir.json").write_text(ir.model_dump_json(indent=2))
+
+    # openapi.yaml (P3-2)
+    openapi_doc = openapi_emit(ir)
+    (snap_dir / "openapi.yaml").write_text(yaml.dump(openapi_doc, sort_keys=False, allow_unicode=True))
+
+    # openapi validation report (P3-3)
+    validation = openapi_validate(openapi_doc)
+    if not validation.passed:
+        _LOGGER.warning("openapi: validation failed (%d errors)", validation.error_count)
+        for err in validation.errors:
+            _LOGGER.warning("openapi: %s", err)
+    (snap_dir / "openapi_validation.json").write_text(
+        __import__("json").dumps(
+            {"passed": validation.passed, "errors": validation.errors, "warnings": validation.warnings},
+            indent=2,
+        )
+    )
 
     # manifest excerpt
     manifest_src = apk_out_dir / "resources" / "AndroidManifest.xml"
