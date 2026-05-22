@@ -25,6 +25,7 @@ from .extraction.ble_scanner import BLEScanner
 from .extraction.rn_scanner import RNScanner
 from .extraction.strings_scanner import scan as strings_scan
 from .extraction.signing_tracer import LLM_THRESHOLD
+from .extraction.signing_tracer import escalate as signing_escalate
 from .extraction.signing_tracer import trace as signing_trace
 from .ingestion import classifier, decompiler, manifest_parser, play_store as play_store_fetcher
 from .ir.models import Framework, ProtocolIR
@@ -187,6 +188,15 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
     for t in needs_llm:
         log("P2", "signing_tracer", "WARNING",
             f"{t.source_method}: confidence={t.confidence:.2f} unresolved={t.unresolved}")
+
+    # ── F-4: LLM escalation for low-confidence traces ─────────────────────────
+    if needs_llm:
+        traces = await signing_escalate(traces, out_dir)
+        still_low = [t for t in traces if t.confidence < LLM_THRESHOLD]
+        log("P2", "signing_escalate", "INFO",
+            f"LLM escalation: {len(needs_llm) - len(still_low)}/{len(needs_llm)} resolved",
+            remaining_low_conf=len(still_low))
+
     ir = ir.model_copy(update={"signing_traces": traces})
 
     # ── P2-7: dynamic oracle (redroid + Frida) ────────────────────────────────

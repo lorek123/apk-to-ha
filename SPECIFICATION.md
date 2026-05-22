@@ -93,6 +93,30 @@ Tool that takes a local APK and produces a committable snapshot bundle: decompil
 Source 6–10 APKs covering: 2× Native Java/Kotlin Retrofit, 1× Native OkHttp, 1× Tuya clone, 1× Flutter, 1× React Native, 1× BLE-only. Annotate each in `fixtures/sources.yaml` with license, source URL, and the framework branch it exercises. Run F-2a against each, commit results.
 - **Done when:** corpus covers all framework branches with golden expected outputs.
 
+### F-3 — LLM escalation client
+Thin async wrapper around the Anthropic SDK. Sends `[system, user]` message pairs,
+validates the response as JSON against a caller-supplied Pydantic model class.
+
+Key requirements:
+- Reads `ANTHROPIC_API_KEY` from env. If absent, returns `None` and logs `WARNING` — never crashes.
+- Structured output: system prompt declares the JSON schema (via `model.model_json_schema()`); response is parsed with `model.model_validate_json()`.
+- Logs every call: prompt hash (sha256[:8]), response hash, model, `input_tokens`, `output_tokens`, `latency_ms`, `estimated_cost_usd`.
+- Hard limits: `max_tokens=2048`, `temperature=0.1` (low variance for structured tasks).
+- Retries: 2× on 429 (rate-limit) with exponential backoff; 0× on other errors.
+- Default model: `claude-sonnet-4-6`.
+- **Done when:** given a `(system, user, PydanticModel)` triple, returns a validated instance or `None`.
+
+### F-4 — P2-5 LLM escalation path
+When `signing_tracer.trace()` returns traces with `confidence < LLM_THRESHOLD`:
+1. Build a prompt containing the decompiled method body + current unresolved variable list.
+2. Ask the LLM to complete the trace: resolve component kinds, infer format string, estimate confidence.
+3. Merge the LLM's structured response back into the `SigningTrace`.
+
+The LLM response schema is `LLMSigningResult`: `{inputs: [{name, kind, order}], format_string, confidence, notes}`.
+On failure (no API key, parse error, timeout), the original low-confidence trace is returned unmodified.
+- **Deps:** F-3, P2-5.
+- **Done when:** a low-confidence trace (unresolved variables) from the signing-tracer test suite is enriched to `≥0.7` confidence by the LLM path when an API key is present.
+
 ### F-5 — Sandbox Docker base
 Build the Docker image used in V-3 *now*. Python 3.14, ruff, mypy, pytest, HA Core 2026.5.x, the generated SDK output dir mounted.
 - **Done when:** `docker run sandbox pytest` works against a stub.

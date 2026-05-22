@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""P2-5 (static path) — backward signing-input tracer.
+"""P2-5 — backward signing-input tracer (static path + F-4 LLM escalation).
 
 Given CryptoUsage objects from P2-4, walks backward through decompiled Java
 sources to reconstruct the signing-input format: which variables are
@@ -24,6 +24,9 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
+from typing import Literal
+
+from pydantic import BaseModel
 
 from ..ir.models import CryptoUsage, SigningComponent, SigningTrace
 from .java_code_graph import JavaCodeGraph
@@ -557,3 +560,119 @@ def _low_conf(usage: CryptoUsage, unresolved: list[str]) -> SigningTrace:
         algorithm=usage.algorithm, components=[], key_source=None,
         source_method=usage.call_site, confidence=0.1, unresolved=unresolved,
     )
+
+
+# ── F-4: LLM escalation path ──────────────────────────────────────────────────
+
+_VALID_KINDS = frozenset({
+    "timestamp", "nonce", "path", "http_method", "host",
+    "body", "secret_key", "literal", "unknown",
+})
+
+_SYSTEM_PROMPT = """\
+You are a static analysis assistant specialising in Android app signing protocols.
+Given a decompiled Java method body and a list of variables the static tracer \
+could not classify, identify:
+1. The kind of each signing component (one of: timestamp, nonce, path, \
+http_method, host, body, secret_key, literal, unknown)
+2. The order in which components are concatenated (0-based)
+3. A Python f-string format_string if the concatenation pattern is clear, \
+   e.g. "{timestamp}\\n{path}\\n{body}"
+4. Your confidence in the result (0.0–1.0)
+"""
+
+
+class _LLMInput(BaseModel):
+    name: str
+    kind: Literal[
+        "timestamp", "nonce", "path", "http_method", "host",
+        "body", "secret_key", "literal", "unknown"
+    ]
+    order: int
+
+
+class _LLMSigningResult(BaseModel):
+    inputs: list[_LLMInput]
+    format_string: str | None = None
+    confidence: float
+    notes: str | None = None
+
+
+async def escalate(
+    traces: list[SigningTrace],
+    sources_dir: Path,
+) -> list[SigningTrace]:
+    """F-4: enrich low-confidence traces with LLM reasoning.
+
+    Returns a new list with low-confidence entries replaced by LLM-enriched
+    versions.  High-confidence traces are passed through unchanged.  If the
+    LLM is unavailable, the original traces are returned unmodified.
+    """
+    from ..llm import escalator  # noqa: PLC0415 — lazy import avoids hard dep
+
+    enriched: list[SigningTrace] = []
+    for tr in traces:
+        if tr.confidence >= LLM_THRESHOLD or not tr.unresolved:
+            enriched.append(tr)
+            continue
+
+        method_body = _fetch_method_body(tr.source_method, sources_dir)
+        user_msg = (
+            f"Algorithm: {tr.algorithm}\n"
+            f"Source method: {tr.source_method}\n"
+            f"Unresolved variables: {tr.unresolved}\n\n"
+            f"Method body:\n```java\n{method_body}\n```"
+        )
+
+        result = await escalator.call(
+            system=_SYSTEM_PROMPT,
+            user=user_msg,
+            schema_model=_LLMSigningResult,
+        )
+
+        if result is None:
+            enriched.append(tr)
+            continue
+
+        # Merge LLM result back into the trace
+        new_components: list[SigningComponent] = list(tr.components)
+        for inp in sorted(result.inputs, key=lambda x: x.order):
+            if inp.name in tr.unresolved:
+                new_components.append(SigningComponent(
+                    kind=inp.kind,
+                    variable_name=inp.name,
+                    confidence=result.confidence,
+                ))
+
+        merged = tr.model_copy(update={
+            "components": new_components,
+            "confidence": max(tr.confidence, result.confidence),
+            "unresolved": [
+                v for v in tr.unresolved
+                if not any(c.variable_name == v for c in new_components)
+            ],
+        })
+        _LOGGER.info(
+            "F-4 escalation: %s confidence %.2f → %.2f (resolved %d/%d)",
+            tr.source_method,
+            tr.confidence,
+            merged.confidence,
+            len(tr.unresolved) - len(merged.unresolved),
+            len(tr.unresolved),
+        )
+        enriched.append(merged)
+
+    return enriched
+
+
+def _fetch_method_body(source_method: str, sources_dir: Path) -> str:
+    """Return the source of the method containing the crypto call, up to 200 lines."""
+    class_file = _find_class_file(source_method, sources_dir)
+    if class_file is None:
+        return "(source not available)"
+    src = class_file.read_text(errors="replace")
+    _, method_src = _find_crypto_method(src, "") or (None, None)
+    if method_src:
+        lines = method_src.splitlines()[:200]
+        return "\n".join(lines)
+    return src[:4000]
