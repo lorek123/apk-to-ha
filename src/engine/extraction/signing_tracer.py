@@ -26,6 +26,7 @@ import re
 from pathlib import Path
 
 from ..ir.models import CryptoUsage, SigningComponent, SigningTrace
+from .java_code_graph import JavaCodeGraph
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,14 +61,23 @@ _ASSIGN_RE = re.compile(
 )
 
 
-def trace(crypto_usages: list[CryptoUsage], sources_dir: Path) -> list[SigningTrace]:
-    """Return signing traces for all usages that have a traceable call site."""
+def trace(
+    crypto_usages: list[CryptoUsage],
+    sources_dir: Path,
+    graph: JavaCodeGraph | None = None,
+) -> list[SigningTrace]:
+    """Return signing traces for all usages that have a traceable call site.
+
+    If *graph* is supplied (built by :class:`~.java_code_graph.JavaCodeGraph`)
+    cross-method resolution uses BFS over the full call graph rather than the
+    depth-2 same-file fallback.
+    """
     results: list[SigningTrace] = []
     for usage in crypto_usages:
         if usage.confidence < 0.5:
             _LOGGER.debug("signing_tracer: skipping low-confidence usage in %s", usage.call_site)
             continue
-        t = _trace_one(usage, sources_dir)
+        t = _trace_one(usage, sources_dir, graph)
         if t is not None:
             results.append(t)
             _LOGGER.debug(
@@ -79,7 +89,11 @@ def trace(crypto_usages: list[CryptoUsage], sources_dir: Path) -> list[SigningTr
 
 # ── per-usage tracer ──────────────────────────────────────────────────────────
 
-def _trace_one(usage: CryptoUsage, sources_dir: Path) -> SigningTrace | None:
+def _trace_one(
+    usage: CryptoUsage,
+    sources_dir: Path,
+    graph: JavaCodeGraph | None,
+) -> SigningTrace | None:
     class_file = _find_class_file(usage.call_site, sources_dir)
     if class_file is None:
         return _low_conf(usage, ["source file not found"])
@@ -97,7 +111,7 @@ def _trace_one(usage: CryptoUsage, sources_dir: Path) -> SigningTrace | None:
         components: list[SigningComponent] = []
         unresolved: list[str] = []
         for var in update_vars:
-            c, u = _resolve_variable(var, method_src, src, sources_dir, depth=0)
+            c, u = _resolve_variable(var, method_src, src, sources_dir, graph, depth=0)
             components.extend(c)
             unresolved.extend(u)
         return SigningTrace(
@@ -109,7 +123,7 @@ def _trace_one(usage: CryptoUsage, sources_dir: Path) -> SigningTrace | None:
     if dofinal_var is None:
         return _low_conf(usage, ["doFinal/update input not found"])
 
-    components, unresolved = _resolve_variable(dofinal_var, method_src, src, sources_dir, depth=0)
+    components, unresolved = _resolve_variable(dofinal_var, method_src, src, sources_dir, graph, depth=0)
     return SigningTrace(
         algorithm=usage.algorithm, components=components, key_source=key_var,
         source_method=fq_method, confidence=_score(components, unresolved),
@@ -234,6 +248,7 @@ def _resolve_variable(
     method_src: str,
     class_src: str,
     sources_dir: Path,
+    graph: JavaCodeGraph | None,
     depth: int,
 ) -> tuple[list[SigningComponent], list[str]]:
     expr = _unwrap_conversions(expr.strip())
@@ -246,7 +261,7 @@ def _resolve_variable(
 
     # Inline concatenation passed directly (e.g. as doFinal arg)
     if " + " in expr and not _is_simple_name(expr):
-        return _parse_concat(expr, method_src, class_src, sources_dir, depth)
+        return _parse_concat(expr, method_src, class_src, sources_dir, graph, depth)
 
     if _is_simple_name(expr):
         # Check for StringBuilder first
@@ -257,7 +272,7 @@ def _resolve_variable(
 
         rhs = _find_assignment(expr, method_src)
         if rhs is not None:
-            return _resolve_rhs(rhs, expr, method_src, class_src, sources_dir, depth)
+            return _resolve_rhs(rhs, expr, method_src, class_src, sources_dir, graph, depth)
 
         # Parameter or field — classify by name
         kind = _classify_name(expr)
@@ -279,6 +294,7 @@ def _resolve_rhs(
     method_src: str,
     class_src: str,
     sources_dir: Path,
+    graph: JavaCodeGraph | None,
     depth: int,
 ) -> tuple[list[SigningComponent], list[str]]:
     rhs = rhs.strip()
@@ -287,37 +303,42 @@ def _resolve_rhs(
         return [SigningComponent(kind="literal", variable_name=var_name, value=_unquote(rhs))], []
 
     if " + " in rhs:
-        return _parse_concat(rhs, method_src, class_src, sources_dir, depth)
+        return _parse_concat(rhs, method_src, class_src, sources_dir, graph, depth)
 
     if "new StringBuilder" in rhs or "new StringBuffer" in rhs:
         comps = _parse_stringbuilder(var_name, method_src)
         if comps is not None:
             return comps, []
 
-    # Method call — cross-method tracing up to depth 2
-    if "(" in rhs and depth < 2:
+    # Method call — cross-method tracing
+    _max_depth = 8 if graph is not None else 2
+    if "(" in rhs and depth < _max_depth:
         m = re.match(r'(\w+)\(', rhs)
         if m:
             called = m.group(1)
+            # 1) Try same-file text search (fastest)
             inner_src = _find_method_in_class(called, class_src)
+            # 2) Try the call graph (cross-file)
+            if inner_src is None and graph is not None:
+                inner_src = graph.get_method_source(called)
             if inner_src:
                 inner_dofinal, inner_updates, _ = _extract_crypto_inputs(inner_src)
                 if inner_dofinal:
                     return _resolve_variable(inner_dofinal, inner_src, class_src,
-                                             sources_dir, depth + 1)
+                                             sources_dir, graph, depth + 1)
                 if inner_updates:
                     all_c: list[SigningComponent] = []
                     all_u: list[str] = []
                     for uv in inner_updates:
                         c, u = _resolve_variable(uv, inner_src, class_src,
-                                                 sources_dir, depth + 1)
+                                                 sources_dir, graph, depth + 1)
                         all_c.extend(c)
                         all_u.extend(u)
                     return all_c, all_u
                 ret = re.search(r'\breturn\s+(.+?);', inner_src)
                 if ret:
                     return _resolve_variable(ret.group(1).strip(), inner_src,
-                                             class_src, sources_dir, depth + 1)
+                                             class_src, sources_dir, graph, depth + 1)
             return [SigningComponent(
                 kind=_classify_name(var_name), variable_name=var_name, confidence=0.35,
             )], [f"{var_name}={called}(...)"]
@@ -334,13 +355,14 @@ def _parse_concat(
     method_src: str,
     class_src: str,
     sources_dir: Path,
+    graph: JavaCodeGraph | None,
     depth: int,
 ) -> tuple[list[SigningComponent], list[str]]:
     parts = _split_concat(expr)
     components: list[SigningComponent] = []
     unresolved: list[str] = []
     for part in parts:
-        c, u = _resolve_variable(part, method_src, class_src, sources_dir, depth)
+        c, u = _resolve_variable(part, method_src, class_src, sources_dir, graph, depth)
         components.extend(c)
         unresolved.extend(u)
     return components, unresolved

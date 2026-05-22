@@ -18,6 +18,7 @@ from .emitters import context as emitter_context
 from .emitters import hacs_emitter, sdk_emitter
 from .extraction import entity_classifier
 from .extraction.crypto_scanner import scan as crypto_scan
+from .extraction.java_code_graph import JavaCodeGraph
 from .extraction.protocol_scanner import ProtocolScanner
 from .extraction.signing_tracer import LLM_THRESHOLD
 from .extraction.signing_tracer import trace as signing_trace
@@ -134,7 +135,12 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
     ir = ir.model_copy(update={"crypto": crypto_usages})
 
     # ── P2-5: signing-input tracer (static path) ──────────────────────────────
-    traces = signing_trace(crypto_usages, out_dir)
+    t0 = time.time()
+    code_graph = JavaCodeGraph.build(out_dir)
+    log("P2", "code_graph", "INFO",
+        f"Call graph: {len(code_graph.method_sources)} methods indexed",
+        duration_ms=int((time.time() - t0) * 1000))
+    traces = signing_trace(crypto_usages, out_dir, code_graph)
     high_conf = [t for t in traces if t.confidence >= LLM_THRESHOLD]
     needs_llm = [t for t in traces if t.confidence < LLM_THRESHOLD]
     log("P2", "signing_tracer", "INFO",
