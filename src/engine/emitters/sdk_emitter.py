@@ -32,6 +32,15 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     _render(env, ctx, pkg_dir, "discovery.py.j2", "discovery.py")
     _render(env, ctx, out_root, "pyproject.toml.j2", "pyproject.toml")
 
+    # P2-6: emit signing helper + test when a high-confidence trace exists
+    if ctx.get("has_signing"):
+        _render(env, ctx, pkg_dir, "signing.py.j2", "signing.py")
+        tests_dir = out_root / "tests"
+        tests_dir.mkdir(exist_ok=True)
+        _render(env, ctx, tests_dir, "tests/test_signing.py.j2", "test_signing.py")
+        _LOGGER.info("Signing helper emitted (algorithm=%s confidence=%.2f)",
+                     ctx["signing_algorithm"], ctx["signing_confidence"])
+
     _LOGGER.info("SDK emitted to %s", pkg_dir)
     return pkg_dir
 

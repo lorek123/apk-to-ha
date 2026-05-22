@@ -7,6 +7,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+from ..extraction.signing_emitter import build as build_signing_ctx
 from ..ir.models import EntityHint, ProtocolIR, TransportType
 
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
@@ -147,6 +148,8 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "mode_actions": mode_actions,
         # platforms present
         "platforms": _platforms(switches, buttons, selects, numbers, sensors, binary_sensors),
+        # P2-6 signing (merged in; has_signing=False when no trace)
+        **build_signing_ctx(ir.signing_traces),
     }
 
 

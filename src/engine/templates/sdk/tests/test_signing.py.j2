@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MIT
+"""Auto-generated tests for the {{ domain }} signing helper (P2-6)."""
+from __future__ import annotations
+
+import base64
+import hashlib
+import hmac
+
+from {{ sdk_package }}.signing import sign
+
+_SAMPLE_ARGS: dict[str, str] = {
+{% for p in signing_params %}
+    "{{ p.name }}": "test_{{ p.name }}",
+{% endfor %}
+}
+
+
+def test_sign_returns_nonempty_string() -> None:
+    result = sign(**_SAMPLE_ARGS)
+    assert isinstance(result, str)
+    assert len(result) > 0
+
+
+def test_sign_is_valid_base64() -> None:
+    result = sign(**_SAMPLE_ARGS)
+    decoded = base64.b64decode(result)
+    assert len(decoded) > 0
+
+
+def test_sign_is_deterministic() -> None:
+    assert sign(**_SAMPLE_ARGS) == sign(**_SAMPLE_ARGS)
+
+
+{% for p in signing_params %}
+{% if p.name != signing_key_param %}
+def test_sign_changes_with_different_{{ p.name }}() -> None:
+    args = {**_SAMPLE_ARGS, "{{ p.name }}": "other_{{ p.name }}"}
+    assert sign(**args) != sign(**_SAMPLE_ARGS)
+
+
+{% endif %}
+{% endfor %}
+def test_sign_matches_reference_hmac() -> None:
+    """Cross-check generated function against Python hmac directly."""
+    message = {{ signing_message_expr }}
+    expected = base64.b64encode(
+        hmac.new(
+            _SAMPLE_ARGS["{{ signing_key_param }}"].encode("utf-8"),
+            message.encode("utf-8"),
+            hashlib.{{ signing_digest }},
+        ).digest()
+    ).decode()
+    assert sign(**_SAMPLE_ARGS) == expected
