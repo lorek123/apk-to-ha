@@ -1,0 +1,79 @@
+# SPDX-License-Identifier: MIT
+"""BLE DataUpdateCoordinator for {{ name }}."""
+from __future__ import annotations
+
+import logging
+from datetime import timedelta
+
+from bleak import BleakError
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
+from {{ sdk_package }}.ble_client import {{ class_prefix }}BleClient
+
+from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
+_POLL_INTERVAL = timedelta(seconds=30)
+
+
+class {{ class_prefix }}BleCoordinator(DataUpdateCoordinator[dict[str, bytearray]]):
+    """Manages the BLE connection and characteristic data for {{ name }}.
+
+    Notify characteristics push data immediately via callbacks.
+    Read-only characteristics are polled at _POLL_INTERVAL.
+    """
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        client: {{ class_prefix }}BleClient,
+    ) -> None:
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=f"{DOMAIN}_ble",
+            update_interval=_POLL_INTERVAL,
+        )
+        self.client = client
+        self.config_entry = entry
+        self._char_data: dict[str, bytearray] = {}
+
+    async def _async_setup(self) -> None:
+        """Connect and register notify callbacks for all subscribable characteristics."""
+        try:
+            await self.client.connect()
+        except BleakError as exc:
+            raise ConfigEntryNotReady(f"Cannot connect via BLE: {exc}") from exc
+{% for char in ble_chars %}
+{% if "notify" in char.access %}
+        self.client.on_{{ char.key }}_update(
+            lambda data, _u="{{ char.uuid }}": self._handle_notify(_u, data)
+        )
+        try:
+            await self.client.start_{{ char.key }}_notify()
+        except BleakError:
+            _LOGGER.warning("Could not enable notifications for {{ char.uuid }}")
+{% endif %}
+{% endfor %}
+
+    def _handle_notify(self, uuid: str, data: bytearray) -> None:
+        """Handle an incoming BLE notification, propagate to HA."""
+        self._char_data[uuid] = data
+        self.async_set_updated_data(dict(self._char_data))
+
+    async def _async_update_data(self) -> dict[str, bytearray]:
+        """Poll readable characteristics; notify characteristics are updated via callbacks."""
+        result = dict(self._char_data)
+{% for char in ble_chars %}
+{% if "read" in char.access %}
+        try:
+            result["{{ char.uuid }}"] = await self.client.read_{{ char.key }}()
+        except BleakError as exc:
+            raise UpdateFailed(f"BLE read of {{ char.uuid }} failed: {exc}") from exc
+{% endif %}
+{% endfor %}
+        return result

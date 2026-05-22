@@ -163,6 +163,18 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
             deduped_ble.append(ch)
     ble_chars = deduped_ble
 
+    # Derived entity lists for BLE platform emission
+    ble_sensors: list[dict] = [
+        {**ch, "name": _human(ch["cmd"])}
+        for ch in ble_chars
+        if "notify" in ch["access"] or "read" in ch["access"]
+    ]
+    ble_switches: list[dict] = [
+        {**ch, "name": _human(ch["cmd"])}
+        for ch in ble_chars
+        if "write" in ch["access"]
+    ]
+
     ps = ir.play_store
     return {
         # identifiers
@@ -193,15 +205,18 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "binary_sensors": binary_sensors,
         "mode_actions": mode_actions,
         # platforms present
-        "platforms": _platforms(switches, buttons, selects, numbers, sensors, binary_sensors),
+        "platforms": _platforms(switches, buttons, selects, numbers, sensors, binary_sensors,
+                                ble_sensors, ble_switches),
         # P5-7 discovery
         "has_zeroconf": bool(zeroconf_types),
         "has_dhcp": bool(dhcp_hostnames),
         "zeroconf_types": zeroconf_types,
         "dhcp_hostnames": dhcp_hostnames,
-        # P4-6 BLE client
+        # P4-6 BLE client + P5-8 BLE entity mapping
         "has_ble": bool(ble_chars),
         "ble_chars": ble_chars,
+        "ble_sensors": ble_sensors,
+        "ble_switches": ble_switches,
         "ble_service_uuids": ir.extra.get("ble_service_uuids", []),
         # P2-6 signing (merged in; has_signing=False when no trace)
         **build_signing_ctx(ir.signing_traces),
@@ -221,13 +236,14 @@ def _infer_iot_class(transport_type: TransportType) -> str:
 def _platforms(
     switches: list, buttons: list, selects: list, numbers: list,
     sensors: list, binary_sensors: list,
+    ble_sensors: list | None = None, ble_switches: list | None = None,
 ) -> list[str]:
     plats = []
-    if sensors:
+    if sensors or ble_sensors:
         plats.append("sensor")
     if binary_sensors:
         plats.append("binary_sensor")
-    if switches:
+    if switches or ble_switches:
         plats.append("switch")
     if buttons:
         plats.append("button")

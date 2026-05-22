@@ -11,6 +11,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import {{ class_prefix }}Coordinator
 from .entity_base import {{ class_prefix }}Entity
+{% if has_ble and ble_switches %}
+from .ble_coordinator import {{ class_prefix }}BleCoordinator
+from .entity_base import {{ class_prefix }}BleEntity
+{% endif %}
 
 
 async def async_setup_entry(
@@ -18,14 +22,27 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    entities: list[SwitchEntity] = []
+{% if switches %}
     coordinator: {{ class_prefix }}Coordinator = entry.runtime_data.coordinator
-    async_add_entities([
+    entities.extend([
 {% for sw in switches %}
         {{ class_prefix }}Switch(coordinator, "{{ sw.key }}", "{{ sw.name }}", "{{ sw.cmd }}"),
 {% endfor %}
     ])
+{% endif %}
+{% if has_ble and ble_switches %}
+    ble_coordinator: {{ class_prefix }}BleCoordinator = entry.runtime_data.ble_coordinator
+    entities.extend([
+{% for sw in ble_switches %}
+        {{ class_prefix }}BleSwitch(ble_coordinator, "{{ sw.key }}", "{{ sw.name }}", "{{ sw.uuid }}"),
+{% endfor %}
+    ])
+{% endif %}
+    async_add_entities(entities)
 
 
+{% if switches %}
 class {{ class_prefix }}Switch({{ class_prefix }}Entity, SwitchEntity):
     def __init__(
         self,
@@ -52,3 +69,40 @@ class {{ class_prefix }}Switch({{ class_prefix }}Entity, SwitchEntity):
         await self.coordinator.client.send_command(self._cmd, enable=False)
         self._is_on = False
         self.async_write_ha_state()
+{% endif %}
+{% if has_ble and ble_switches %}
+
+
+class {{ class_prefix }}BleSwitch({{ class_prefix }}BleEntity, SwitchEntity):
+    """Switch entity backed by a writable BLE characteristic."""
+
+    # ON and OFF payloads — device-specific; defaults match common conventions
+    _ON_PAYLOAD: bytes = b"\x01"
+    _OFF_PAYLOAD: bytes = b"\x00"
+
+    def __init__(
+        self,
+        coordinator: {{ class_prefix }}BleCoordinator,
+        key: str,
+        name: str,
+        uuid: str,
+    ) -> None:
+        super().__init__(coordinator, key)
+        self._attr_name = name
+        self._uuid = uuid
+        self._is_on: bool | None = None
+
+    @property
+    def is_on(self) -> bool | None:
+        return self._is_on
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        await self.coordinator.client.write_char(self._uuid, self._ON_PAYLOAD)
+        self._is_on = True
+        self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self.coordinator.client.write_char(self._uuid, self._OFF_PAYLOAD)
+        self._is_on = False
+        self.async_write_ha_state()
+{% endif %}

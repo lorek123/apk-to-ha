@@ -30,6 +30,7 @@ from ..ir.models import (
     EntityHint,
     FieldKind,
     ProtocolIR,
+    TransportType,
 )
 
 # State fields that are device metadata, not HA sensors
@@ -64,7 +65,13 @@ def classify(ir: ProtocolIR) -> ProtocolIR:
 
 def _hint_endpoint(ep, mode_action_keys: set[int]):  # type: ignore[no-untyped-def]
     if ep.entity_hint is not None:
-        return ep  # already set
+        return ep  # already set (BLE scanner pre-populates these)
+
+    # BLE characteristics not yet classified (e.g. from dynamic oracle)
+    if ep.transport == TransportType.BLE:
+        if ep.direction == Direction.FROM_DEVICE:
+            return ep.model_copy(update={"entity_hint": EntityHint.SENSOR})
+        return ep.model_copy(update={"entity_hint": EntityHint.SWITCH})
 
     fields = ep.request_fields if ep.direction == Direction.TO_DEVICE else ep.response_fields
 

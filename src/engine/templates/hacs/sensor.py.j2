@@ -9,6 +9,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import {{ class_prefix }}Coordinator
 from .entity_base import {{ class_prefix }}Entity
+{% if has_ble and ble_sensors %}
+from .ble_coordinator import {{ class_prefix }}BleCoordinator
+from .entity_base import {{ class_prefix }}BleEntity
+{% endif %}
 
 
 async def async_setup_entry(
@@ -16,14 +20,27 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    entities: list[SensorEntity] = []
+{% if sensors %}
     coordinator: {{ class_prefix }}Coordinator = entry.runtime_data.coordinator
-    async_add_entities([
+    entities.extend([
 {% for s in sensors %}
         {{ class_prefix }}Sensor(coordinator, "{{ s.key }}", "{{ s.name }}", "{{ s.attr }}"),
 {% endfor %}
     ])
+{% endif %}
+{% if has_ble and ble_sensors %}
+    ble_coordinator: {{ class_prefix }}BleCoordinator = entry.runtime_data.ble_coordinator
+    entities.extend([
+{% for s in ble_sensors %}
+        {{ class_prefix }}BleSensor(ble_coordinator, "{{ s.key }}", "{{ s.name }}", "{{ s.uuid }}"),
+{% endfor %}
+    ])
+{% endif %}
+    async_add_entities(entities)
 
 
+{% if sensors %}
 class {{ class_prefix }}Sensor({{ class_prefix }}Entity, SensorEntity):
     def __init__(
         self,
@@ -41,3 +58,29 @@ class {{ class_prefix }}Sensor({{ class_prefix }}Entity, SensorEntity):
         if self.coordinator.data is None:
             return None
         return getattr(self.coordinator.data, self._attr, None)
+{% endif %}
+{% if has_ble and ble_sensors %}
+
+
+class {{ class_prefix }}BleSensor({{ class_prefix }}BleEntity, SensorEntity):
+    """Sensor entity backed by a BLE characteristic (notify or read)."""
+
+    def __init__(
+        self,
+        coordinator: {{ class_prefix }}BleCoordinator,
+        key: str,
+        name: str,
+        uuid: str,
+    ) -> None:
+        super().__init__(coordinator, key)
+        self._attr_name = name
+        self._uuid = uuid
+
+    @property
+    def native_value(self) -> str | None:
+        """Return raw characteristic data as a hex string."""
+        if self.coordinator.data is None:
+            return None
+        raw = self.coordinator.data.get(self._uuid)
+        return raw.hex() if raw else None
+{% endif %}
