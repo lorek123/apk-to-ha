@@ -174,10 +174,9 @@ pull_docker_images() {
 # Smoke test
 # ────────────────────────────────────────────────────────────────
 run_smoke() {
-  log "Running smoke test against demo fixture..."
-  warn "Smoke test is a placeholder until F-2b corpus exists."
-  warn "Once F-2b lands, this will: pull a demo APK, run P1-1..P5, validate via V-tier, verify HACS load."
-  return 0
+  log "Running smoke test against bullb_r2d2 IR snapshot..."
+  cd "$REPO_ROOT"
+  uv run python scripts/smoke.py
 }
 
 # ────────────────────────────────────────────────────────────────

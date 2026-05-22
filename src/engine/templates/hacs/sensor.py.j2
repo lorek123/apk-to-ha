@@ -25,7 +25,9 @@ async def async_setup_entry(
     coordinator: {{ class_prefix }}Coordinator = entry.runtime_data.coordinator
     entities.extend([
 {% for s in sensors %}
-        {{ class_prefix }}Sensor(coordinator, "{{ s.key }}", "{{ s.name }}", "{{ s.attr }}"),
+        {{ class_prefix }}Sensor(
+            coordinator, "{{ s.key }}", "{{ s.name }}", "{{ s.attr }}"
+        ),
 {% endfor %}
     ])
 {% endif %}
@@ -33,7 +35,9 @@ async def async_setup_entry(
     ble_coordinator: {{ class_prefix }}BleCoordinator = entry.runtime_data.ble_coordinator
     entities.extend([
 {% for s in ble_sensors %}
-        {{ class_prefix }}BleSensor(ble_coordinator, "{{ s.key }}", "{{ s.name }}", "{{ s.uuid }}"),
+        {{ class_prefix }}BleSensor(
+            ble_coordinator, "{{ s.key }}", "{{ s.name }}", "{{ s.uuid }}"
+        ),
 {% endfor %}
     ])
 {% endif %}
