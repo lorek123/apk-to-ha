@@ -41,6 +41,14 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
         _LOGGER.info("Signing helper emitted (algorithm=%s confidence=%.2f)",
                      ctx["signing_algorithm"], ctx["signing_confidence"])
 
+    # P4-6: emit Bleak BLE client + test when BLE characteristics were found
+    if ctx.get("has_ble"):
+        _render(env, ctx, pkg_dir, "ble_client.py.j2", "ble_client.py")
+        tests_dir = out_root / "tests"
+        tests_dir.mkdir(exist_ok=True)
+        _render(env, ctx, tests_dir, "tests/test_ble_client.py.j2", "test_ble_client.py")
+        _LOGGER.info("BLE client emitted (%d characteristics)", len(ctx["ble_chars"]))
+
     _LOGGER.info("SDK emitted to %s", pkg_dir)
     return pkg_dir
 

@@ -125,6 +125,15 @@ class BLEScanner:
         )
         self.extra["ble_service_uuids"] = list(dict.fromkeys(service_uuids))
 
+        # cmd → uuid mapping consumed by the BLE client template emitter
+        self.extra["ble_char_uuids"] = {
+            _uuid_to_cmd(ch.const_name, ch.uuid): ch.uuid for ch in chars
+        }
+        # cmd → sorted access list for template rendering
+        self.extra["ble_char_access"] = {
+            _uuid_to_cmd(ch.const_name, ch.uuid): sorted(ch.access) for ch in chars
+        }
+
         commands: list[Endpoint] = []
         events: list[Endpoint] = []
         for ch in chars:

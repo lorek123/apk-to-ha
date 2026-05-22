@@ -1,0 +1,123 @@
+# SPDX-License-Identifier: MIT
+"""Auto-generated tests for the {{ domain }} BLE client (P4-6)."""
+from __future__ import annotations
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from {{ sdk_package }}.ble_client import {{ class_prefix }}BleClient
+
+_ADDR = "AA:BB:CC:DD:EE:FF"
+
+
+@pytest.fixture()
+def mock_bleak():
+    """Patch BleakClient so tests never touch real BLE hardware."""
+    with patch("{{ sdk_package }}.ble_client.BleakClient") as mock_cls:
+        instance = MagicMock()
+        instance.is_connected = True
+        instance.connect = AsyncMock()
+        instance.disconnect = AsyncMock()
+        instance.write_gatt_char = AsyncMock()
+        instance.read_gatt_char = AsyncMock(return_value=bytearray(b"\x01\x02"))
+        instance.start_notify = AsyncMock()
+        instance.stop_notify = AsyncMock()
+        mock_cls.return_value = instance
+        yield instance
+
+
+# ── connect / disconnect ──────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_connect_calls_bleak_connect(mock_bleak) -> None:
+    client = {{ class_prefix }}BleClient(_ADDR)
+    await client.connect()
+    mock_bleak.connect.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_is_connected_after_connect(mock_bleak) -> None:
+    client = {{ class_prefix }}BleClient(_ADDR)
+    await client.connect()
+    assert client.is_connected
+
+
+@pytest.mark.asyncio
+async def test_disconnect_calls_bleak_disconnect(mock_bleak) -> None:
+    client = {{ class_prefix }}BleClient(_ADDR)
+    await client.connect()
+    await client.disconnect()
+    mock_bleak.disconnect.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_context_manager(mock_bleak) -> None:
+    async with {{ class_prefix }}BleClient(_ADDR) as client:
+        assert client.is_connected
+    mock_bleak.disconnect.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_connect_retries_on_failure() -> None:
+    from bleak import BleakError
+    with patch("{{ sdk_package }}.ble_client.BleakClient") as mock_cls, \
+         patch("{{ sdk_package }}.ble_client.asyncio.sleep", new_callable=AsyncMock):
+        instance = MagicMock()
+        instance.is_connected = False
+        instance.connect = AsyncMock(side_effect=BleakError("timeout"))
+        mock_cls.return_value = instance
+        client = {{ class_prefix }}BleClient(_ADDR)
+        with pytest.raises(BleakError):
+            await client.connect()
+        assert instance.connect.call_count == 3
+
+
+# ── characteristic operations ─────────────────────────────────────────────────
+{% for char in ble_chars %}
+{% if "write" in char.access %}
+
+@pytest.mark.asyncio
+async def test_write_{{ char.key }}(mock_bleak) -> None:
+    client = {{ class_prefix }}BleClient(_ADDR)
+    await client.connect()
+    await client.write_{{ char.key }}(b"\x01")
+    mock_bleak.write_gatt_char.assert_called_once_with("{{ char.uuid }}", b"\x01")
+{% endif %}
+{% if "read" in char.access %}
+
+@pytest.mark.asyncio
+async def test_read_{{ char.key }}(mock_bleak) -> None:
+    client = {{ class_prefix }}BleClient(_ADDR)
+    await client.connect()
+    result = await client.read_{{ char.key }}()
+    assert isinstance(result, bytearray)
+    mock_bleak.read_gatt_char.assert_called_once_with("{{ char.uuid }}")
+{% endif %}
+{% if "notify" in char.access %}
+
+@pytest.mark.asyncio
+async def test_start_{{ char.key }}_notify(mock_bleak) -> None:
+    client = {{ class_prefix }}BleClient(_ADDR)
+    await client.connect()
+    await client.start_{{ char.key }}_notify()
+    mock_bleak.start_notify.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_stop_{{ char.key }}_notify(mock_bleak) -> None:
+    client = {{ class_prefix }}BleClient(_ADDR)
+    await client.connect()
+    await client.start_{{ char.key }}_notify()
+    await client.stop_{{ char.key }}_notify()
+    mock_bleak.stop_notify.assert_called_once_with("{{ char.uuid }}")
+
+
+def test_{{ char.key }}_notify_callback_registered() -> None:
+    client = {{ class_prefix }}BleClient(_ADDR)
+    cb = MagicMock()
+    client.on_{{ char.key }}_update(cb)
+    client._handle_{{ char.key }}_notify(MagicMock(), bytearray(b"\xff"))
+    cb.assert_called_once_with(bytearray(b"\xff"))
+{% endif %}
+{% endfor %}

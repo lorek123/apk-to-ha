@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ..extraction.signing_emitter import build as build_signing_ctx
-from ..ir.models import EntityHint, ProtocolIR, TransportType
+from ..ir.models import Direction, EntityHint, ProtocolIR, TransportType
 
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
 
@@ -23,6 +23,12 @@ _SKIP_CMDS = {
 
 # Commands that have an `enable` field but aren't semantic toggles
 _NOT_SWITCH = {"connectWifi", "move"}
+
+
+def _to_snake(camel: str) -> str:
+    """'batteryLevel' → 'battery_level', preserves existing underscores."""
+    s = re.sub(r"([A-Z])", r"_\1", camel).lower().lstrip("_")
+    return re.sub(r"[^a-z0-9_]", "_", s)
 
 
 def _slugify(text: str) -> str:
@@ -117,6 +123,34 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         else:
             sensors.append(spec)
 
+    # ── BLE characteristics for P4-6 Bleak client template ───────────────────
+    ble_char_uuids: dict[str, str] = ir.extra.get("ble_char_uuids", {})
+    ble_char_access: dict[str, list[str]] = ir.extra.get("ble_char_access", {})
+    ble_chars: list[dict] = []
+    for ep in ir.commands + ir.events:
+        if ep.transport != TransportType.BLE:
+            continue
+        uuid = ble_char_uuids.get(ep.cmd)
+        if not uuid:
+            continue
+        access: list[str] = list(ble_char_access.get(ep.cmd, []))
+        if not access:
+            access = ["write"] if ep.direction == Direction.TO_DEVICE else ["read"]
+        ble_chars.append({
+            "cmd": ep.cmd,
+            "key": _to_snake(ep.cmd),
+            "uuid": uuid,
+            "access": access,
+        })
+    # De-duplicate by UUID (same char may appear in both commands and events)
+    seen_uuids: set[str] = set()
+    deduped_ble: list[dict] = []
+    for ch in ble_chars:
+        if ch["uuid"] not in seen_uuids:
+            seen_uuids.add(ch["uuid"])
+            deduped_ble.append(ch)
+    ble_chars = deduped_ble
+
     ps = ir.play_store
     return {
         # identifiers
@@ -148,6 +182,10 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "mode_actions": mode_actions,
         # platforms present
         "platforms": _platforms(switches, buttons, selects, numbers, sensors, binary_sensors),
+        # P4-6 BLE client
+        "has_ble": bool(ble_chars),
+        "ble_chars": ble_chars,
+        "ble_service_uuids": ir.extra.get("ble_service_uuids", []),
         # P2-6 signing (merged in; has_signing=False when no trace)
         **build_signing_ctx(ir.signing_traces),
     }
