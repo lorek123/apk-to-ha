@@ -138,7 +138,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     # ── BLE characteristics for P4-6 Bleak client template ───────────────────
     ble_char_uuids: dict[str, str] = ir.extra.get("ble_char_uuids", {})
     ble_char_access: dict[str, list[str]] = ir.extra.get("ble_char_access", {})
-    ble_chars: list[dict] = []
+    ble_chars: list[dict[str, Any]] = []
     for ep in ir.commands + ir.events:
         if ep.transport != TransportType.BLE:
             continue
@@ -156,7 +156,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         })
     # De-duplicate by UUID (same char may appear in both commands and events)
     seen_uuids: set[str] = set()
-    deduped_ble: list[dict] = []
+    deduped_ble: list[dict[str, Any]] = []
     for ch in ble_chars:
         if ch["uuid"] not in seen_uuids:
             seen_uuids.add(ch["uuid"])
@@ -164,12 +164,12 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     ble_chars = deduped_ble
 
     # Derived entity lists for BLE platform emission
-    ble_sensors: list[dict] = [
+    ble_sensors: list[dict[str, Any]] = [
         {**ch, "name": _human(ch["cmd"])}
         for ch in ble_chars
         if "notify" in ch["access"] or "read" in ch["access"]
     ]
-    ble_switches: list[dict] = [
+    ble_switches: list[dict[str, Any]] = [
         {**ch, "name": _human(ch["cmd"])}
         for ch in ble_chars
         if "write" in ch["access"]
@@ -177,7 +177,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
 
     # ── P5-6 Android string resources → HA translation strings ───────────────
     android_strings: dict[str, str] = ir.extra.get("android_strings", {})
-    device_errors: list[dict] = []
+    device_errors: list[dict[str, Any]] = []
     for raw_key, msg in android_strings.items():
         k_lower = raw_key.lower()
         if any(t in k_lower for t in ("error", "fail", "warn", "alert", "unavail")):
@@ -186,19 +186,19 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     # Entity name translations for translations/en.json (Gold rule)
     all_sensors = sensors + (ble_sensors or [])
     all_switches = switches + (ble_switches or [])
-    entity_sections: dict[str, dict] = {}
+    entity_sections: dict[str, dict[str, Any]] = {}
     if all_sensors:
-        entity_sections["sensor"] = {s["key"]: {"name": s["name"]} for s in all_sensors}
+        entity_sections["sensor"] = {str(s["key"]): {"name": s["name"]} for s in all_sensors}
     if binary_sensors:
-        entity_sections["binary_sensor"] = {s["key"]: {"name": s["name"]} for s in binary_sensors}
+        entity_sections["binary_sensor"] = {str(s["key"]): {"name": s["name"]} for s in binary_sensors}
     if all_switches:
-        entity_sections["switch"] = {s["key"]: {"name": s["name"]} for s in all_switches}
+        entity_sections["switch"] = {str(s["key"]): {"name": s["name"]} for s in all_switches}
     if buttons:
-        entity_sections["button"] = {s["key"]: {"name": s["name"]} for s in buttons}
+        entity_sections["button"] = {str(s["key"]): {"name": s["name"]} for s in buttons}
     if selects:
-        entity_sections["select"] = {s["key"]: {"name": s["name"]} for s in selects}
+        entity_sections["select"] = {str(s["key"]): {"name": s["name"]} for s in selects}
     if numbers:
-        entity_sections["number"] = {s["key"]: {"name": s["name"]} for s in numbers}
+        entity_sections["number"] = {str(s["key"]): {"name": s["name"]} for s in numbers}
 
     ps = ir.play_store
     return {
@@ -262,9 +262,9 @@ def _infer_iot_class(transport_type: TransportType) -> str:
 
 
 def _platforms(
-    switches: list, buttons: list, selects: list, numbers: list,
-    sensors: list, binary_sensors: list,
-    ble_sensors: list | None = None, ble_switches: list | None = None,
+    switches: list[Any], buttons: list[Any], selects: list[Any], numbers: list[Any],
+    sensors: list[Any], binary_sensors: list[Any],
+    ble_sensors: list[Any] | None = None, ble_switches: list[Any] | None = None,
 ) -> list[str]:
     plats = []
     if sensors or ble_sensors:

@@ -6,6 +6,7 @@ No code is rendered here; this module only builds the dict that the templates co
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from ..ir.models import SigningTrace
 
@@ -33,7 +34,7 @@ _KIND_TO_PARAM: dict[str, str] = {
 }
 
 
-def build(traces: list[SigningTrace]) -> dict:
+def build(traces: list[SigningTrace]) -> dict[str, Any]:
     """Return a context dict consumed by signing.py.j2 and test_signing.py.j2.
 
     If no suitable trace exists, returns ``{"has_signing": False}``.
@@ -48,9 +49,9 @@ def build(traces: list[SigningTrace]) -> dict:
     digest = _ALGO_TO_DIGEST.get(best.algorithm.upper(), "sha256")
 
     # ── build deduplicated parameter list and message parts ──────────────────
-    params: list[dict] = []
+    params: list[dict[str, Any]] = []
     seen: set[str] = set()
-    message_parts: list[dict] = []
+    message_parts: list[dict[str, Any]] = []
 
     _unknown_counter = 0
 
@@ -109,7 +110,7 @@ def _resolve_param_name(kind: str, variable_name: str | None, seen: set[str]) ->
     return preferred
 
 
-def _build_message_expr(message_parts: list[dict]) -> str:
+def _build_message_expr(message_parts: list[dict[str, Any]]) -> str:
     """Return a Python expression that reconstructs the message from _SAMPLE_ARGS."""
     pieces: list[str] = []
     for part in message_parts:

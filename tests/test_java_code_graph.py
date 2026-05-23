@@ -47,19 +47,19 @@ public class AuthHelper {
 
 # ── build ─────────────────────────────────────────────────────────────────────
 
-def test_build_indexes_methods(tmp_path):
+def test_build_indexes_methods(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     assert any("sign" in k for k in g.method_sources)
     assert any("buildMessage" in k for k in g.method_sources)
 
 
-def test_build_empty_dir(tmp_path):
+def test_build_empty_dir(tmp_path: Path) -> None:
     g = JavaCodeGraph.build(tmp_path)
     assert g.method_sources == {}
 
 
-def test_build_multiple_files(tmp_path):
+def test_build_multiple_files(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     _write(tmp_path, "com/example/auth/AuthHelper.java", _HELPER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
@@ -67,7 +67,7 @@ def test_build_multiple_files(tmp_path):
     assert any("sign" in k for k in g.method_sources)
 
 
-def test_build_class_name_in_key(tmp_path):
+def test_build_class_name_in_key(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     # Keys should be ClassName.methodName
@@ -76,7 +76,7 @@ def test_build_class_name_in_key(tmp_path):
 
 # ── method_sources ────────────────────────────────────────────────────────────
 
-def test_method_source_contains_body(tmp_path):
+def test_method_source_contains_body(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     src = g.get_method_source("buildMessage")
@@ -84,13 +84,13 @@ def test_method_source_contains_body(tmp_path):
     assert "return ts" in src
 
 
-def test_method_source_returns_none_for_missing(tmp_path):
+def test_method_source_returns_none_for_missing(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     assert g.get_method_source("nonExistentMethod") is None
 
 
-def test_method_source_exact_key(tmp_path):
+def test_method_source_exact_key(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     src = g.get_method_source("Signer.sign")
@@ -100,7 +100,7 @@ def test_method_source_exact_key(tmp_path):
 
 # ── call graph edges ──────────────────────────────────────────────────────────
 
-def test_callees_recorded(tmp_path):
+def test_callees_recorded(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     sign_key = next(k for k in g.method_sources if k.endswith(".sign"))
@@ -108,14 +108,14 @@ def test_callees_recorded(tmp_path):
     assert "buildMessage" in callees
 
 
-def test_callers_recorded(tmp_path):
+def test_callers_recorded(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     callers = g.callers_of("buildMessage")
     assert any("sign" in c for c in callers)
 
 
-def test_callers_of_missing_returns_empty(tmp_path):
+def test_callers_of_missing_returns_empty(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     assert g.callers_of("neverCalledMethod") == []
@@ -123,7 +123,7 @@ def test_callers_of_missing_returns_empty(tmp_path):
 
 # ── bfs_from ──────────────────────────────────────────────────────────────────
 
-def test_bfs_from_short_name(tmp_path):
+def test_bfs_from_short_name(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     reachable = g.bfs_from("sign")
@@ -132,7 +132,7 @@ def test_bfs_from_short_name(tmp_path):
     assert "buildMessage" in names
 
 
-def test_bfs_from_max_hops_zero(tmp_path):
+def test_bfs_from_max_hops_zero(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     reachable = g.bfs_from("sign", max_hops=0)
@@ -140,13 +140,13 @@ def test_bfs_from_max_hops_zero(tmp_path):
     assert reachable[0].endswith(".sign")
 
 
-def test_bfs_from_missing_returns_empty(tmp_path):
+def test_bfs_from_missing_returns_empty(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     assert g.bfs_from("ghostMethod") == []
 
 
-def test_bfs_cross_file(tmp_path):
+def test_bfs_cross_file(tmp_path: Path) -> None:
     """BFS follows calls across files."""
     caller = """\
 package com.example;
@@ -175,14 +175,14 @@ public class B {
 
 # ── subgraph_text ─────────────────────────────────────────────────────────────
 
-def test_subgraph_text_includes_method_bodies(tmp_path):
+def test_subgraph_text_includes_method_bodies(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     text = g.subgraph_text("sign", max_hops=2)
     assert "doFinal" in text or "buildMessage" in text
 
 
-def test_subgraph_text_missing_start_returns_empty(tmp_path):
+def test_subgraph_text_missing_start_returns_empty(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
     assert g.subgraph_text("ghostMethod") == ""
@@ -190,7 +190,7 @@ def test_subgraph_text_missing_start_returns_empty(tmp_path):
 
 # ── integration: signing_tracer uses graph ────────────────────────────────────
 
-def test_tracer_uses_graph_for_cross_method(tmp_path):
+def test_tracer_uses_graph_for_cross_method(tmp_path: Path) -> None:
     """Graph enables the tracer to resolve a helper in a *separate* file."""
     auth_java = """\
 package com.example.auth;

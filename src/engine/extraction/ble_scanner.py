@@ -302,7 +302,7 @@ def _uuid_to_cmd(const_name: str | None, uuid: str) -> str:
 
 # ── defaults ───────────────────────────────────────────────────────────────────
 
-def _defaults() -> tuple[TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list, list]:
+def _defaults() -> tuple[TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list[Any], list[Any]]:
     return (
         TransportContract(type=TransportType.BLE),
         DiscoveryMechanism(type=DiscoveryType.NONE),

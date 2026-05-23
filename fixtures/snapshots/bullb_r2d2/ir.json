@@ -762,7 +762,7 @@
   ],
   "events": [
     {
-      "cmd": "streaming",
+      "cmd": "gin",
       "transport": "websocket",
       "direction": "from_device",
       "awaits_response": false,
@@ -774,7 +774,7 @@
       "entity_hint": "sensor"
     },
     {
-      "cmd": "gin",
+      "cmd": "streaming",
       "transport": "websocket",
       "direction": "from_device",
       "awaits_response": false,
@@ -798,6 +798,17 @@
       "entity_hint": "sensor"
     }
   ],
+  "play_store": {
+    "title": "Build Your Own R2-D2",
+    "description": "- Use with Build Your Own R2-D2 to control his functions and see his camera view. This app works with DeAgostini's Build Your Own R2-D2 and gives access to the droid's advanced functions. It will only operate when your R2-D2 has been fully assembled and powered up. Once the app is installed on your smartphone, you have two ways to pair it with R2-D2. You can either connect it directly to his internal router (Direct mode), or connect both devices via a local Wifi network (Local mode). To go into Local mode, you teach R2-D2 the Wifi connection of the area he is in using a unique QR code, which he will read using his camera. In either connection mode, you have a choice of Video or Normal Control: - When Video Control is on, your smartphone screen displays the view from R2-D2's camera, which will change as you drive him around or turn his head. A set of remote controls are superimposed at the bottom. You can capture still pictures or video from his point of view, storing the images in a Gallery within the app or copying them to the library on your phone. You also have a scrollable menu of automatic routines, which include being able to set him exploring his surroundings in an autonomous Patrol mode, turning on his lights and sounds, ejecting a lightsaber, and displaying video clips from his projector. - When Normal Control is on, your smartphone operates like a conventional remote control, so you can watch as you direct R2-D2 around his environment. You also have access to the same automatic routines as in Video Control. - An additional Settings control enables you to turn on voice control so that R2-D2 will respond to a range of spoken commands. Turning on facial recognition allows him to pick out a human face from the background and turn to follow it. You can also turn R2-D2's sound effects on or off.",
+    "summary": "Remote control app for Build Your Own R2-D2",
+    "category": "Entertainment",
+    "developer": "De Agostini Publishing S.p.A.",
+    "developer_id": "De+Agostini+Publishing+S.p.A.",
+    "rating": 3.368421,
+    "installs": "50,000+",
+    "play_store_url": "https://play.google.com/store/apps/details?id=com.bullb.r2d2"
+  },
   "duplicate_check": {
     "found": false,
     "location": null,

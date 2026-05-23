@@ -27,7 +27,9 @@ from __future__ import annotations
 
 from ..ir.models import (
     Direction,
+    Endpoint,
     EntityHint,
+    FieldDef,
     FieldKind,
     ProtocolIR,
     TransportType,
@@ -63,7 +65,7 @@ def classify(ir: ProtocolIR) -> ProtocolIR:
     })
 
 
-def _hint_endpoint(ep, mode_action_keys: set[int]):  # type: ignore[no-untyped-def]
+def _hint_endpoint(ep: Endpoint, mode_action_keys: set[int]) -> Endpoint:
     if ep.entity_hint is not None:
         return ep  # already set (BLE scanner pre-populates these)
 
@@ -100,7 +102,7 @@ def _hint_endpoint(ep, mode_action_keys: set[int]):  # type: ignore[no-untyped-d
     return ep.model_copy(update={"entity_hint": EntityHint.BUTTON})
 
 
-def _hint_field(field):  # type: ignore[no-untyped-def]
+def _hint_field(field: FieldDef) -> FieldDef:
     if field.entity_hint is not None:
         return field
     field_key = (field.serialized_name or field.name).lower()

@@ -17,8 +17,9 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
 from pathlib import Path
+
+from ..ir.models import CryptoUsage as CryptoUsage
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,15 +42,6 @@ _IMPORT_CRYPTO = re.compile(
     r"|org\.apache\.commons\.codec\.digest"
     r"|com\.google\.crypto\.tink)"
 )
-
-
-@dataclass
-class CryptoUsage:
-    """One detected cryptographic primitive usage."""
-    algorithm: str           # normalised algorithm name, e.g. "HMAC-SHA256"
-    call_site: str           # Java class name (dot-separated)
-    context_snippet: str     # up to 3 lines around the call
-    confidence: float = 1.0  # 0..1; lower when inferred from import only
 
 
 def scan(sources_dir: Path) -> list[CryptoUsage]:

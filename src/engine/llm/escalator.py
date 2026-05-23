@@ -112,7 +112,10 @@ async def call(
             return None
 
         latency_ms = int((time.monotonic() - t0) * 1000)
-        raw = response.content[0].text if response.content else ""
+        raw = next(
+            (t for b in response.content if isinstance(t := getattr(b, "text", None), str)),
+            "",
+        )
         resp_hash = _sha8(raw)
         input_tok = response.usage.input_tokens
         output_tok = response.usage.output_tokens

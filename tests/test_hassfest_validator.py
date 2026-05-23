@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from typing import Any
 from engine.validation.hassfest import (
     HassfestResult,
     _check_config_flow,
@@ -22,7 +23,7 @@ def _write(d: Path, name: str, content: str) -> None:
     (d / name).write_text(content)
 
 
-def _good_manifest(domain="test") -> dict:
+def _good_manifest(domain: str = "test") -> dict[str, Any]:
     return {
         "domain": domain,
         "name": "Test Device",
@@ -39,114 +40,114 @@ def _good_manifest(domain="test") -> dict:
 
 # ── manifest checks ───────────────────────────────────────────────────────────
 
-def test_manifest_missing(tmp_path):
-    findings = []
+def test_manifest_missing(tmp_path: Path) -> None:
+    findings: list[Finding] = []
     _check_manifest(tmp_path, findings)
     assert any(f.severity == "error" and "missing" in f.message for f in findings)
 
 
-def test_manifest_valid(tmp_path):
+def test_manifest_valid(tmp_path: Path) -> None:
     (tmp_path / "translations").mkdir()
     _write(tmp_path, "manifest.json", json.dumps(_good_manifest()))
     _write(tmp_path, "strings.json", "{}")
     _write(tmp_path / "translations", "en.json", "{}")
-    findings = []
+    findings: list[Finding] = []
     _check_manifest(tmp_path, findings)
     assert not any(f.severity == "error" for f in findings)
 
 
-def test_manifest_missing_key(tmp_path):
+def test_manifest_missing_key(tmp_path: Path) -> None:
     m = _good_manifest()
     del m["iot_class"]
     _write(tmp_path, "manifest.json", json.dumps(m))
-    findings = []
+    findings: list[Finding] = []
     _check_manifest(tmp_path, findings)
     assert any("iot_class" in f.message for f in findings)
 
 
-def test_manifest_bad_iot_class(tmp_path):
+def test_manifest_bad_iot_class(tmp_path: Path) -> None:
     m = _good_manifest()
     m["iot_class"] = "magic_push"
     _write(tmp_path, "manifest.json", json.dumps(m))
-    findings = []
+    findings: list[Finding] = []
     _check_manifest(tmp_path, findings)
     assert any("iot_class" in f.message for f in findings)
 
 
-def test_manifest_missing_translations(tmp_path):
+def test_manifest_missing_translations(tmp_path: Path) -> None:
     _write(tmp_path, "manifest.json", json.dumps(_good_manifest()))
-    findings = []
+    findings: list[Finding] = []
     _check_manifest(tmp_path, findings)
     assert any("translations/en.json" in f.message for f in findings)
 
 
 # ── platform checks ───────────────────────────────────────────────────────────
 
-def test_platform_missing_setup_entry(tmp_path):
+def test_platform_missing_setup_entry(tmp_path: Path) -> None:
     _write(tmp_path, "manifest.json", json.dumps(_good_manifest()))
     _write(tmp_path, "sensor.py", "# no setup entry here\n")
-    findings = []
+    findings: list[Finding] = []
     _check_platforms(tmp_path, findings)
     assert any("sensor.py" in f.message for f in findings)
 
 
-def test_platform_has_setup_entry(tmp_path):
+def test_platform_has_setup_entry(tmp_path: Path) -> None:
     _write(tmp_path, "manifest.json", json.dumps(_good_manifest()))
     _write(tmp_path, "sensor.py", "async def async_setup_entry(hass, entry, add): pass\n")
-    findings = []
+    findings: list[Finding] = []
     _check_platforms(tmp_path, findings)
     assert not any("sensor.py" in f.message for f in findings)
 
 
 # ── config flow checks ────────────────────────────────────────────────────────
 
-def test_config_flow_missing(tmp_path):
-    findings = []
+def test_config_flow_missing(tmp_path: Path) -> None:
+    findings: list[Finding] = []
     _check_config_flow(tmp_path, findings)
     assert any("config_flow.py missing" in f.message for f in findings)
 
 
-def test_config_flow_valid(tmp_path):
+def test_config_flow_valid(tmp_path: Path) -> None:
     _write(tmp_path, "config_flow.py", """
 class TestConfigFlow(ConfigFlow, domain="test"):
     async def async_step_user(self, user_input=None): pass
 """)
-    findings = []
+    findings: list[Finding] = []
     _check_config_flow(tmp_path, findings)
     assert not any(f.severity == "error" for f in findings)
 
 
 # ── SPDX checks ───────────────────────────────────────────────────────────────
 
-def test_spdx_missing(tmp_path):
+def test_spdx_missing(tmp_path: Path) -> None:
     _write(tmp_path, "sensor.py", "# no spdx header\n")
-    findings = []
+    findings: list[Finding] = []
     _check_spdx(tmp_path, findings)
     assert any("SPDX" in f.message for f in findings)
 
 
-def test_spdx_present(tmp_path):
+def test_spdx_present(tmp_path: Path) -> None:
     _write(tmp_path, "sensor.py", "# SPDX-License-Identifier: MIT\n")
-    findings = []
+    findings: list[Finding] = []
     _check_spdx(tmp_path, findings)
     assert not findings
 
 
 # ── platinum via base class ───────────────────────────────────────────────────
 
-def test_platinum_via_base_class(tmp_path):
+def test_platinum_via_base_class(tmp_path: Path) -> None:
     _write(tmp_path, "entity_base.py",
            "class Base:\n    _attr_has_entity_name = True\n    _attr_unique_id = None\n")
     _write(tmp_path, "sensor.py",
            "from .entity_base import Base\nclass MySensor(Base): pass\n")
-    findings = []
+    findings: list[Finding] = []
     _check_platinum(tmp_path, findings)
     assert not any(f.severity == "warning" for f in findings)
 
 
 # ── generated integration smoke test ─────────────────────────────────────────
 
-def test_generated_r2d2_passes_structural():
+def test_generated_r2d2_passes_structural() -> None:
     """The integration we generated from the R2-D2 snapshot must pass all structural checks."""
     import asyncio
     from engine.validation.hassfest import validate

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -13,12 +14,12 @@ from engine.validation.quality_rubric import QualityRule, coverage, deterministi
 
 # ── rubric loader ─────────────────────────────────────────────────────────────
 
-def test_load_returns_rules():
+def test_load_returns_rules() -> None:
     rules = load()
     assert len(rules) >= 12
 
 
-def test_all_rules_have_required_fields():
+def test_all_rules_have_required_fields() -> None:
     for r in load():
         assert r.id.startswith("PLT-")
         assert r.name
@@ -27,14 +28,14 @@ def test_all_rules_have_required_fields():
         assert r.severity in ("error", "warning")
 
 
-def test_deterministic_rules_subset():
+def test_deterministic_rules_subset() -> None:
     all_rules = load()
     det = deterministic_rules()
     assert len(det) == 10
     assert all(r.check_type == "deterministic" for r in det)
 
 
-def test_coverage_keyed_by_id():
+def test_coverage_keyed_by_id() -> None:
     cov = coverage()
     assert "PLT-001" in cov
     assert isinstance(cov["PLT-001"], QualityRule)
@@ -42,7 +43,7 @@ def test_coverage_keyed_by_id():
 
 # ── helper: build a minimal valid integration dir ─────────────────────────────
 
-def _make_integration(tmp_path: Path, **overrides) -> Path:
+def _make_integration(tmp_path: Path, **overrides: Any) -> Path:
     """Create a minimal platinum-compliant integration under tmp_path."""
     d = tmp_path / "custom_components" / "mydevice"
     d.mkdir(parents=True)
@@ -94,13 +95,13 @@ def _make_integration(tmp_path: Path, **overrides) -> Path:
 
 # ── check() function ──────────────────────────────────────────────────────────
 
-def test_check_passes_for_valid_integration(tmp_path):
+def test_check_passes_for_valid_integration(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
     report = check(d)
     assert report.passed, [r.detail for r in report.errors]
 
 
-def test_check_fails_plt001_missing_entity_name(tmp_path):
+def test_check_fails_plt001_missing_entity_name(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, **{"entity_base.py": (
         "# SPDX-License-Identifier: MIT\n"
         "_attr_unique_id = 'stub'\n"
@@ -111,7 +112,7 @@ def test_check_fails_plt001_missing_entity_name(tmp_path):
     assert "PLT-001" in ids
 
 
-def test_check_fails_plt002_missing_unique_id(tmp_path):
+def test_check_fails_plt002_missing_unique_id(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, **{"entity_base.py": (
         "# SPDX-License-Identifier: MIT\n"
         "_attr_has_entity_name = True\n"
@@ -122,7 +123,7 @@ def test_check_fails_plt002_missing_unique_id(tmp_path):
     assert "PLT-002" in ids
 
 
-def test_check_fails_plt003_missing_runtime_data(tmp_path):
+def test_check_fails_plt003_missing_runtime_data(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, **{"__init__.py": (
         "# SPDX-License-Identifier: MIT\n"
         "from homeassistant.helpers import aiohttp_client\n"
@@ -133,7 +134,7 @@ def test_check_fails_plt003_missing_runtime_data(tmp_path):
     assert "PLT-003" in ids
 
 
-def test_check_fails_plt004_missing_aiohttp_client(tmp_path):
+def test_check_fails_plt004_missing_aiohttp_client(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, **{
         "__init__.py": "# SPDX-License-Identifier: MIT\nentry.runtime_data = None\n",
         "config_flow.py": (
@@ -148,7 +149,7 @@ def test_check_fails_plt004_missing_aiohttp_client(tmp_path):
     assert "PLT-004" in ids
 
 
-def test_check_fails_plt005_missing_update_failed(tmp_path):
+def test_check_fails_plt005_missing_update_failed(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, **{"coordinator.py": (
         "# SPDX-License-Identifier: MIT\n"
         "# no UpdateFailed here\n"
@@ -158,14 +159,14 @@ def test_check_fails_plt005_missing_update_failed(tmp_path):
     assert "PLT-005" in ids
 
 
-def test_check_fails_plt007_missing_spdx(tmp_path):
+def test_check_fails_plt007_missing_spdx(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, **{"coordinator.py": "# no spdx header\npass\n"})
     report = check(d)
     ids = {r.rule.id for r in report.errors}
     assert "PLT-007" in ids
 
 
-def test_check_fails_plt009_invalid_iot_class(tmp_path):
+def test_check_fails_plt009_invalid_iot_class(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, **{"manifest.json": json.dumps({
         "domain": "mydevice", "name": "My Device",
         "iot_class": "magic_cloud", "version": "0.1.0",
@@ -175,14 +176,14 @@ def test_check_fails_plt009_invalid_iot_class(tmp_path):
     assert "PLT-009" in ids
 
 
-def test_check_warns_plt010_invalid_strings_json(tmp_path):
+def test_check_warns_plt010_invalid_strings_json(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, **{"strings.json": "NOT JSON {"})
     report = check(d)
     ids = {r.rule.id for r in report.warnings}
     assert "PLT-010" in ids
 
 
-def test_quality_report_properties(tmp_path):
+def test_quality_report_properties(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, **{"manifest.json": json.dumps({
         "domain": "mydevice", "name": "My Device",
         "iot_class": "bogus", "version": "0.1.0",
@@ -193,7 +194,7 @@ def test_quality_report_properties(tmp_path):
     assert all(r.rule.severity == "error" for r in report.errors)
 
 
-def test_check_tolerates_missing_optional_files(tmp_path):
+def test_check_tolerates_missing_optional_files(tmp_path: Path) -> None:
     """integration_dir with only mandatory files should not crash."""
     d = tmp_path / "custom_components" / "bare"
     d.mkdir(parents=True)

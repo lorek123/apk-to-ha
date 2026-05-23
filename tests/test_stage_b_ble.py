@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -13,7 +14,7 @@ from engine.duplicate_check.checker import check, _fetch_ble_uuid_index
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
-def _resp(status: int, data: dict | None = None) -> MagicMock:
+def _resp(status: int, data: dict[str, Any] | list[Any] | None = None) -> MagicMock:
     """Build a synchronous async-context-manager mock for one aiohttp response."""
     r = MagicMock()
     r.status = status
@@ -26,7 +27,7 @@ def _resp(status: int, data: dict | None = None) -> MagicMock:
     return r
 
 
-def _mock_session(manifest_map: dict[str, dict]) -> MagicMock:
+def _mock_session(manifest_map: dict[str, dict[str, Any]]) -> MagicMock:
     """Return an aiohttp.ClientSession mock that serves manifests from manifest_map.
 
     manifest_map: {component_name: manifest_dict}
@@ -46,7 +47,7 @@ def _mock_session(manifest_map: dict[str, dict]) -> MagicMock:
 
 def _mock_components_session(
     components: list[str],
-    manifest_map: dict[str, dict],
+    manifest_map: dict[str, dict[str, Any]],
 ) -> MagicMock:
     """Session that serves both the component listing AND per-manifest calls."""
     session = MagicMock()
@@ -68,7 +69,7 @@ def _mock_components_session(
 # ── _fetch_ble_uuid_index unit tests ──────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_ble_uuid_index_extracts_service_uuid(tmp_path):
+async def test_ble_uuid_index_extracts_service_uuid(tmp_path: Path) -> None:
     session = _mock_session({
         "switchbot": {
             "domain": "switchbot",
@@ -83,7 +84,7 @@ async def test_ble_uuid_index_extracts_service_uuid(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_ble_uuid_index_extracts_service_data_uuid(tmp_path):
+async def test_ble_uuid_index_extracts_service_data_uuid(tmp_path: Path) -> None:
     session = _mock_session({
         "govee_ble": {
             "domain": "govee_ble",
@@ -96,7 +97,7 @@ async def test_ble_uuid_index_extracts_service_data_uuid(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_ble_uuid_index_normalises_to_lowercase(tmp_path):
+async def test_ble_uuid_index_normalises_to_lowercase(tmp_path: Path) -> None:
     session = _mock_session({
         "mydevice": {
             "domain": "mydevice",
@@ -109,7 +110,7 @@ async def test_ble_uuid_index_normalises_to_lowercase(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_ble_uuid_index_skips_non_bluetooth_manifests(tmp_path):
+async def test_ble_uuid_index_skips_non_bluetooth_manifests(tmp_path: Path) -> None:
     session = _mock_session({
         "shelly": {"domain": "shelly", "iot_class": "local_polling"},
     })
@@ -119,7 +120,7 @@ async def test_ble_uuid_index_skips_non_bluetooth_manifests(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_ble_uuid_index_uses_cache(tmp_path):
+async def test_ble_uuid_index_uses_cache(tmp_path: Path) -> None:
     cached = {"0000abcd-0000-1000-8000-00805f9b34fb": {"location": "core", "name": "cached"}}
     cache_file = tmp_path / "ha_core_ble_uuids.json"
     cache_file.write_text(json.dumps(cached))
@@ -131,7 +132,7 @@ async def test_ble_uuid_index_uses_cache(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_ble_uuid_index_returns_empty_on_all_404(tmp_path):
+async def test_ble_uuid_index_returns_empty_on_all_404(tmp_path: Path) -> None:
     session = _mock_session({})  # all 404
     with patch("engine.duplicate_check.checker._CACHE_DIR", tmp_path):
         result = await _fetch_ble_uuid_index(session, ["unknown_comp"])
@@ -141,7 +142,7 @@ async def test_ble_uuid_index_returns_empty_on_all_404(tmp_path):
 # ── check() Stage B integration tests ────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_check_stage_b_matches_ble_service_uuid(tmp_path):
+async def test_check_stage_b_matches_ble_service_uuid(tmp_path: Path) -> None:
     switchbot_uuid = "0000cba2-0000-1000-8000-00805f9b34fb"
     session = _mock_components_session(
         components=["switchbot"],
@@ -164,7 +165,7 @@ async def test_check_stage_b_matches_ble_service_uuid(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_check_stage_b_no_match_returns_not_found(tmp_path):
+async def test_check_stage_b_no_match_returns_not_found(tmp_path: Path) -> None:
     session = _mock_components_session(
         components=["switchbot"],
         manifest_map={
@@ -184,7 +185,7 @@ async def test_check_stage_b_no_match_returns_not_found(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_check_stage_b_skipped_when_no_ble_uuids(tmp_path):
+async def test_check_stage_b_skipped_when_no_ble_uuids(tmp_path: Path) -> None:
     """Stage B is not called when ble_service_uuids is None."""
     session = _mock_components_session(components=[], manifest_map={})
     with patch("engine.duplicate_check.checker._CACHE_DIR", tmp_path):
@@ -193,7 +194,7 @@ async def test_check_stage_b_skipped_when_no_ble_uuids(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_check_stage_a_still_takes_priority(tmp_path):
+async def test_check_stage_a_still_takes_priority(tmp_path: Path) -> None:
     """Known package names short-circuit before Stage B."""
     session = _mock_components_session(components=[], manifest_map={})
     with patch("engine.duplicate_check.checker._CACHE_DIR", tmp_path):
@@ -206,7 +207,7 @@ async def test_check_stage_a_still_takes_priority(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_ble_uuid_index_written_to_cache(tmp_path):
+async def test_ble_uuid_index_written_to_cache(tmp_path: Path) -> None:
     session = _mock_session({
         "mydev": {
             "domain": "mydev",

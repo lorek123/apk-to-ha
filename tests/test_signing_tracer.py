@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from engine.extraction.crypto_scanner import CryptoUsage
+from typing import Any
 from engine.extraction.signing_tracer import (
     LLM_THRESHOLD,
     _classify_name,
@@ -22,32 +23,32 @@ from engine.ir.models import SigningTrace
 
 # ── unit: _split_concat ───────────────────────────────────────────────────────
 
-def test_split_concat_simple():
+def test_split_concat_simple() -> None:
     assert _split_concat('a + b + c') == ['a', 'b', 'c']
 
 
-def test_split_concat_with_literal():
+def test_split_concat_with_literal() -> None:
     assert _split_concat('timestamp + ":" + path') == ['timestamp', '":"', 'path']
 
 
-def test_split_concat_preserves_parens():
+def test_split_concat_preserves_parens() -> None:
     parts = _split_concat('(a + b) + c')
     assert '(a + b)' in parts
     assert 'c' in parts
 
 
-def test_split_concat_nested_call():
+def test_split_concat_nested_call() -> None:
     # String.valueOf(x) should not be split inside the call
     parts = _split_concat('String.valueOf(ts) + "\\n" + path')
     assert any('valueOf' in p for p in parts)
     assert any('path' in p for p in parts)
 
 
-def test_split_concat_empty():
+def test_split_concat_empty() -> None:
     assert _split_concat('') == []
 
 
-def test_split_concat_no_concat():
+def test_split_concat_no_concat() -> None:
     assert _split_concat('timestamp') == ['timestamp']
 
 
@@ -70,48 +71,48 @@ def test_split_concat_no_concat():
     ("var0", "unknown"),
     ("someWeirdThing", "unknown"),
 ])
-def test_classify_name(name, expected):
+def test_classify_name(name: Any, expected: Any) -> None:
     assert _classify_name(name) == expected
 
 
 # ── unit: _unwrap_bytes ───────────────────────────────────────────────────────
 
-def test_unwrap_bytes_getbytes():
+def test_unwrap_bytes_getbytes() -> None:
     assert _unwrap_bytes('signStr.getBytes()') == 'signStr'
 
 
-def test_unwrap_bytes_charset():
+def test_unwrap_bytes_charset() -> None:
     assert _unwrap_bytes('s.getBytes(StandardCharsets.UTF_8)') == 's'
 
 
-def test_unwrap_bytes_chain():
+def test_unwrap_bytes_chain() -> None:
     assert _unwrap_bytes('data.trim().getBytes()') == 'data.trim()'
 
 
-def test_unwrap_bytes_plain():
+def test_unwrap_bytes_plain() -> None:
     assert _unwrap_bytes('timestamp') == 'timestamp'
 
 
 # ── unit: _is_string_literal / _find_assignment ───────────────────────────────
 
-def test_is_string_literal():
+def test_is_string_literal() -> None:
     assert _is_string_literal('"hello"')
     assert not _is_string_literal('hello')
     assert not _is_string_literal('"unterminated')
 
 
-def test_find_assignment_string():
+def test_find_assignment_string() -> None:
     method = 'String msg = timestamp + ":" + path;'
     assert _find_assignment("msg", method) == 'timestamp + ":" + path'
 
 
-def test_find_assignment_missing():
+def test_find_assignment_missing() -> None:
     assert _find_assignment("ghost", "String x = 1;") is None
 
 
 # ── unit: _parse_stringbuilder ────────────────────────────────────────────────
 
-def test_parse_stringbuilder_appends():
+def test_parse_stringbuilder_appends() -> None:
     method = """
         StringBuilder sb = new StringBuilder();
         sb.append(timestamp);
@@ -127,7 +128,7 @@ def test_parse_stringbuilder_appends():
     assert comps[2].kind == "path"
 
 
-def test_parse_stringbuilder_chained():
+def test_parse_stringbuilder_chained() -> None:
     method = """
         String s = new StringBuilder().append(ts).append(body).toString();
     """
@@ -171,7 +172,7 @@ public class Signer {
 }
 """
 
-def test_trace_direct_concat(tmp_path):
+def test_trace_direct_concat(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _JAVA_DIRECT_CONCAT)
     usages = [_usage("com.example.auth.Signer")]
     result = trace(usages, tmp_path)
@@ -185,14 +186,14 @@ def test_trace_direct_concat(tmp_path):
     assert "literal" in kinds  # the "\n" separators
 
 
-def test_trace_direct_concat_has_key_source(tmp_path):
+def test_trace_direct_concat_has_key_source(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _JAVA_DIRECT_CONCAT)
     result = trace([_usage("com.example.auth.Signer")], tmp_path)
     assert result[0].key_source is not None
     assert "apiKey" in result[0].key_source or "key" in result[0].key_source.lower()
 
 
-def test_trace_direct_concat_high_confidence(tmp_path):
+def test_trace_direct_concat_high_confidence(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _JAVA_DIRECT_CONCAT)
     result = trace([_usage("com.example.auth.Signer")], tmp_path)
     assert result[0].confidence >= LLM_THRESHOLD
@@ -217,7 +218,7 @@ public class HmacUtil {
 }
 """
 
-def test_trace_stringbuilder(tmp_path):
+def test_trace_stringbuilder(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/HmacUtil.java", _JAVA_STRINGBUILDER)
     usages = [_usage("com.example.auth.HmacUtil", "HMAC-SHA1")]
     result = trace(usages, tmp_path)
@@ -246,7 +247,7 @@ public class RequestSigner {
 }
 """
 
-def test_trace_multi_update(tmp_path):
+def test_trace_multi_update(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/sign/RequestSigner.java", _JAVA_MULTI_UPDATE)
     usages = [_usage("com.example.sign.RequestSigner")]
     result = trace(usages, tmp_path)
@@ -259,7 +260,7 @@ def test_trace_multi_update(tmp_path):
     assert "body" in kinds
 
 
-def test_trace_multi_update_ordering(tmp_path):
+def test_trace_multi_update_ordering(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/sign/RequestSigner.java", _JAVA_MULTI_UPDATE)
     result = trace([_usage("com.example.sign.RequestSigner")], tmp_path)
     kinds = [c.kind for c in result[0].components]
@@ -287,7 +288,7 @@ public class ApiAuth {
 }
 """
 
-def test_trace_cross_method(tmp_path):
+def test_trace_cross_method(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/ApiAuth.java", _JAVA_CROSS_METHOD)
     usages = [_usage("com.example.auth.ApiAuth")]
     result = trace(usages, tmp_path)
@@ -301,7 +302,7 @@ def test_trace_cross_method(tmp_path):
 
 # ── edge cases ────────────────────────────────────────────────────────────────
 
-def test_trace_skips_low_confidence_usage(tmp_path):
+def test_trace_skips_low_confidence_usage(tmp_path: Path) -> None:
     usages = [CryptoUsage(
         algorithm="unknown",
         call_site="com.example.Base",
@@ -312,7 +313,7 @@ def test_trace_skips_low_confidence_usage(tmp_path):
     assert result == []
 
 
-def test_trace_missing_source_file(tmp_path):
+def test_trace_missing_source_file(tmp_path: Path) -> None:
     usages = [_usage("com.example.NonExistent")]
     result = trace(usages, tmp_path)
     assert len(result) == 1
@@ -320,13 +321,13 @@ def test_trace_missing_source_file(tmp_path):
     assert result[0].unresolved
 
 
-def test_trace_returns_signingtrace_model(tmp_path):
+def test_trace_returns_signingtrace_model(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _JAVA_DIRECT_CONCAT)
     result = trace([_usage("com.example.auth.Signer")], tmp_path)
     assert isinstance(result[0], SigningTrace)
 
 
-def test_trace_unresolved_marks_low_confidence(tmp_path):
+def test_trace_unresolved_marks_low_confidence(tmp_path: Path) -> None:
     java = """\
 package com.example;
 import javax.crypto.Mac;
@@ -349,7 +350,7 @@ public class Mystery {
     assert t.confidence < 0.9 or t.unresolved
 
 
-def test_signing_trace_ir_model_serialises():
+def test_signing_trace_ir_model_serialises() -> None:
     from engine.ir.models import SigningComponent, SigningTrace
     t = SigningTrace(
         algorithm="HMAC-SHA256",

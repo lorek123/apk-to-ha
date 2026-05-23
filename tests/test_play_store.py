@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,19 +14,19 @@ from engine.ir.models import PlayStoreInfo
 
 # ── _clean helper ─────────────────────────────────────────────────────────────
 
-def test_clean_strips_html_tags():
+def test_clean_strips_html_tags() -> None:
     assert _clean("<b>Smart</b> lights") == "Smart lights"
 
 
-def test_clean_unescapes_html_entities():
+def test_clean_unescapes_html_entities() -> None:
     assert _clean("R&amp;D") == "R&D"
 
 
-def test_clean_collapses_whitespace():
+def test_clean_collapses_whitespace() -> None:
     assert _clean("a  b\n\tc") == "a b c"
 
 
-def test_clean_returns_empty_for_none():
+def test_clean_returns_empty_for_none() -> None:
     assert _clean(None) == ""
 
 
@@ -43,7 +44,7 @@ _MOCK_SCRAPER_RESPONSE = {
 }
 
 
-def test_fetch_sync_returns_play_store_info():
+def test_fetch_sync_returns_play_store_info() -> None:
     with patch("engine.ingestion.play_store._fetch_sync") as mock:
         mock.return_value = PlayStoreInfo(
             title="Govee Home",
@@ -65,8 +66,8 @@ def test_fetch_sync_returns_play_store_info():
     assert result.rating == 4.5
 
 
-def test_fetch_sync_not_found_returns_none():
-    from google_play_scraper import exceptions  # type: ignore[import-untyped]
+def test_fetch_sync_not_found_returns_none() -> None:
+    from google_play_scraper import exceptions  # noqa: PLC0415
 
     with patch("google_play_scraper.app", side_effect=exceptions.NotFoundError):
         result = _fetch_sync("com.nonexistent.package")
@@ -74,7 +75,7 @@ def test_fetch_sync_not_found_returns_none():
     assert result is None
 
 
-def test_fetch_sync_maps_all_fields():
+def test_fetch_sync_maps_all_fields() -> None:
     with patch("google_play_scraper.app", return_value=_MOCK_SCRAPER_RESPONSE):
         result = _fetch_sync("com.govee.home")
 
@@ -93,11 +94,11 @@ def test_fetch_sync_maps_all_fields():
 # ── async fetch (graceful degradation) ───────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_fetch_returns_none_on_timeout():
+async def test_fetch_returns_none_on_timeout() -> None:
     import asyncio
 
     # Simulate timeout by making _fetch_sync raise TimeoutError via asyncio.wait_for
-    async def _raise_timeout(*_args, **_kwargs):
+    async def _raise_timeout(*_args: Any, **_kwargs: Any) -> None:
         raise TimeoutError("simulated timeout")
 
     with patch("engine.ingestion.play_store.asyncio.wait_for", side_effect=TimeoutError):
@@ -106,7 +107,7 @@ async def test_fetch_returns_none_on_timeout():
 
 
 @pytest.mark.asyncio
-async def test_fetch_returns_none_on_exception():
+async def test_fetch_returns_none_on_exception() -> None:
     with patch("engine.ingestion.play_store.asyncio.to_thread",
                side_effect=RuntimeError("network error")):
         result = await fetch("com.example.app")
@@ -114,7 +115,7 @@ async def test_fetch_returns_none_on_exception():
 
 
 @pytest.mark.asyncio
-async def test_fetch_returns_info_on_success():
+async def test_fetch_returns_info_on_success() -> None:
     expected = PlayStoreInfo(
         title="My App",
         description="A great smart home app.",
@@ -128,7 +129,7 @@ async def test_fetch_returns_info_on_success():
 
 # ── IR model ──────────────────────────────────────────────────────────────────
 
-def test_play_store_info_optional_fields():
+def test_play_store_info_optional_fields() -> None:
     info = PlayStoreInfo(title="App", description="Desc")
     assert info.summary is None
     assert info.category is None
@@ -136,7 +137,7 @@ def test_play_store_info_optional_fields():
     assert info.rating is None
 
 
-def test_protocol_ir_accepts_play_store_none():
+def test_protocol_ir_accepts_play_store_none() -> None:
     from engine.ir.models import (
         AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
         Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
@@ -155,7 +156,7 @@ def test_protocol_ir_accepts_play_store_none():
     assert ir.play_store is None
 
 
-def test_protocol_ir_stores_play_store_info():
+def test_protocol_ir_stores_play_store_info() -> None:
     from engine.ir.models import (
         AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
         Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
@@ -178,7 +179,7 @@ def test_protocol_ir_stores_play_store_info():
 
 # ── context propagation ───────────────────────────────────────────────────────
 
-def test_context_includes_play_store_fields():
+def test_context_includes_play_store_fields() -> None:
     from engine.ir.models import (
         AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
         Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
@@ -211,7 +212,7 @@ def test_context_includes_play_store_fields():
     assert ctx["play_developer"] == "Govee International Co. Ltd"
 
 
-def test_context_empty_strings_when_no_play_store():
+def test_context_empty_strings_when_no_play_store() -> None:
     from engine.ir.models import (
         AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
         Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
@@ -237,7 +238,7 @@ def test_context_empty_strings_when_no_play_store():
     assert ctx["play_developer"] == ""
 
 
-def test_app_summary_falls_back_to_description_prefix():
+def test_app_summary_falls_back_to_description_prefix() -> None:
     """When summary is None, app_summary is the first 200 chars of description."""
     from engine.ir.models import (
         AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,

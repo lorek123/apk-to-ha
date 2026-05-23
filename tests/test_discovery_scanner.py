@@ -16,41 +16,41 @@ from engine.ir.models import DiscoveryType
 
 # ── _normalize_service_type ───────────────────────────────────────────────────
 
-def test_normalize_adds_local_suffix():
+def test_normalize_adds_local_suffix() -> None:
     assert _normalize_service_type("_device._tcp") == "_device._tcp.local."
 
 
-def test_normalize_already_local():
+def test_normalize_already_local() -> None:
     assert _normalize_service_type("_device._tcp.local.") == "_device._tcp.local."
 
 
-def test_normalize_partial_local():
+def test_normalize_partial_local() -> None:
     assert _normalize_service_type("_device._tcp.local") == "_device._tcp.local."
 
 
-def test_normalize_udp():
+def test_normalize_udp() -> None:
     assert _normalize_service_type("_device._udp") == "_device._udp.local."
 
 
-def test_normalize_invalid_returns_none():
+def test_normalize_invalid_returns_none() -> None:
     assert _normalize_service_type("not_a_service_type") is None
 
 
-def test_normalize_trailing_dot():
+def test_normalize_trailing_dot() -> None:
     assert _normalize_service_type("_device._tcp.") == "_device._tcp.local."
 
 
 # ── _hostname_from_package ────────────────────────────────────────────────────
 
-def test_hostname_from_package_simple():
+def test_hostname_from_package_simple() -> None:
     assert _hostname_from_package("com.example.mydevice") == "mydevice"
 
 
-def test_hostname_from_package_strips_com():
+def test_hostname_from_package_strips_com() -> None:
     assert _hostname_from_package("com.example.device") == "device"
 
 
-def test_hostname_from_package_empty():
+def test_hostname_from_package_empty() -> None:
     result = _hostname_from_package("com")
     assert isinstance(result, str)
 
@@ -137,77 +137,77 @@ public class Constants {
 """
 
 
-def test_scan_nsd_discover_returns_zeroconf(tmp_path):
+def test_scan_nsd_discover_returns_zeroconf(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_NSD_DISCOVER)
     result = scan(tmp_path / "sources", "com.example")
     assert result.type == DiscoveryType.ZEROCONF
 
 
-def test_scan_nsd_discover_service_type(tmp_path):
+def test_scan_nsd_discover_service_type(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_NSD_DISCOVER)
     result = scan(tmp_path / "sources", "com.example")
     assert result.service_type == "_mydevice._tcp.local."
 
 
-def test_scan_set_service_type(tmp_path):
+def test_scan_set_service_type(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_NSD_SET_TYPE)
     result = scan(tmp_path / "sources", "com.example")
     assert result.type == DiscoveryType.ZEROCONF
     assert result.service_type == "_lightbulb._tcp.local."
 
 
-def test_scan_jmdns(tmp_path):
+def test_scan_jmdns(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_JMDNS)
     result = scan(tmp_path / "sources", "com.example")
     assert result.type == DiscoveryType.ZEROCONF
     assert "_thermostat._tcp" in (result.service_type or "")
 
 
-def test_scan_multicast_lock_zeroconf(tmp_path):
+def test_scan_multicast_lock_zeroconf(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_MULTICAST)
     result = scan(tmp_path / "sources", "com.example.mylight")
     assert result.type == DiscoveryType.ZEROCONF
 
 
-def test_scan_multicast_no_service_type(tmp_path):
+def test_scan_multicast_no_service_type(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_MULTICAST)
     result = scan(tmp_path / "sources", "com.example.mylight")
     assert result.service_type is None
 
 
-def test_scan_multicast_hostname_pattern(tmp_path):
+def test_scan_multicast_hostname_pattern(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_MULTICAST)
     result = scan(tmp_path / "sources", "com.example.mylight")
     assert result.hostname_pattern is not None
     assert result.hostname_pattern.endswith("*")
 
 
-def test_scan_udp_broadcast(tmp_path):
+def test_scan_udp_broadcast(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_UDP_BROADCAST)
     result = scan(tmp_path / "sources", "com.example")
     assert result.type == DiscoveryType.UDP_BROADCAST
 
 
-def test_scan_udp_broadcast_port(tmp_path):
+def test_scan_udp_broadcast_port(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_UDP_BROADCAST)
     result = scan(tmp_path / "sources", "com.example")
     assert result.port == 6445
 
 
-def test_scan_mdns_const(tmp_path):
+def test_scan_mdns_const(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", _JAVA_MDNS_CONST, "Constants.java")
     result = scan(tmp_path / "sources", "com.example")
     assert result.type == DiscoveryType.ZEROCONF
     assert "_smartplug._tcp" in (result.service_type or "")
 
 
-def test_scan_no_discovery(tmp_path):
+def test_scan_no_discovery(tmp_path: Path) -> None:
     _write_java(tmp_path / "sources", "public class Foo { }", "Foo.java")
     result = scan(tmp_path / "sources", "com.example")
     assert result.type == DiscoveryType.NONE
 
 
-def test_scan_zeroconf_wins_over_udp(tmp_path):
+def test_scan_zeroconf_wins_over_udp(tmp_path: Path) -> None:
     # File has both NSD and UDP — zeroconf takes priority
     combined = _JAVA_NSD_SET_TYPE + "\n" + _JAVA_UDP_BROADCAST
     _write_java(tmp_path / "sources", combined)
@@ -215,7 +215,7 @@ def test_scan_zeroconf_wins_over_udp(tmp_path):
     assert result.type == DiscoveryType.ZEROCONF
 
 
-def test_scan_empty_sources_dir(tmp_path):
+def test_scan_empty_sources_dir(tmp_path: Path) -> None:
     (tmp_path / "sources").mkdir()
     result = scan(tmp_path / "sources", "com.example")
     assert result.type == DiscoveryType.NONE

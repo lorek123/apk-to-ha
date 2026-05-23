@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 _RUBRIC_PATH = Path(__file__).parents[3] / "config" / "quality_rubric.yaml"
 

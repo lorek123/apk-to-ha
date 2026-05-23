@@ -11,49 +11,49 @@ from engine.extraction.crypto_scanner import CryptoUsage, scan, _normalise, _ext
 
 # ── normalise helper ──────────────────────────────────────────────────────────
 
-def test_normalise_hmacsha256():
+def test_normalise_hmacsha256() -> None:
     assert _normalise("HmacSHA256") == "HMAC-SHA256"
 
 
-def test_normalise_hmacsha1():
+def test_normalise_hmacsha1() -> None:
     assert _normalise("HmacSHA1") == "HMAC-SHA1"
 
 
-def test_normalise_sha256_no_hyphen():
+def test_normalise_sha256_no_hyphen() -> None:
     assert _normalise("SHA256") == "SHA-256"
 
 
-def test_normalise_aes_passthrough():
+def test_normalise_aes_passthrough() -> None:
     assert _normalise("AES") == "AES"
 
 
-def test_normalise_aes_cbc():
+def test_normalise_aes_cbc() -> None:
     assert _normalise("AES/CBC/PKCS5Padding") == "AES/CBC/PKCS5PADDING"
 
 
 # ── extract_algorithm helper ──────────────────────────────────────────────────
 
-def test_extract_algorithm_getinstance():
+def test_extract_algorithm_getinstance() -> None:
     line = '    Mac mac = Mac.getInstance("HmacSHA256");'
     assert _extract_algorithm(line) == "HmacSHA256"
 
 
-def test_extract_algorithm_message_digest():
+def test_extract_algorithm_message_digest() -> None:
     line = '    MessageDigest md = MessageDigest.getInstance("SHA-256");'
     assert _extract_algorithm(line) == "SHA-256"
 
 
-def test_extract_algorithm_cipher():
+def test_extract_algorithm_cipher() -> None:
     line = '    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");'
     assert _extract_algorithm(line) == "AES/CBC/PKCS5Padding"
 
 
-def test_extract_algorithm_secret_key_spec():
+def test_extract_algorithm_secret_key_spec() -> None:
     line = '    SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");'
     assert _extract_algorithm(line) == "AES"
 
 
-def test_extract_algorithm_no_match():
+def test_extract_algorithm_no_match() -> None:
     assert _extract_algorithm("    int x = 5;") is None
 
 
@@ -66,7 +66,7 @@ def _write_java(tmp_path: Path, filename: str, content: str) -> Path:
     return p
 
 
-def test_scan_finds_hmac(tmp_path):
+def test_scan_finds_hmac(tmp_path: Path) -> None:
     _write_java(tmp_path, "com/example/Signer.java", """
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -85,7 +85,7 @@ public class Signer {
     assert "HMAC-SHA256" in algos
 
 
-def test_scan_finds_message_digest(tmp_path):
+def test_scan_finds_message_digest(tmp_path: Path) -> None:
     _write_java(tmp_path, "com/example/Hasher.java", """
 import java.security.MessageDigest;
 
@@ -101,7 +101,7 @@ public class Hasher {
     assert "SHA--256" in algos or "SHA-256" in algos or any("SHA" in a for a in algos)
 
 
-def test_scan_returns_empty_for_no_crypto(tmp_path):
+def test_scan_returns_empty_for_no_crypto(tmp_path: Path) -> None:
     _write_java(tmp_path, "com/example/Simple.java", """
 public class Simple {
     public void hello() {
@@ -113,7 +113,7 @@ public class Simple {
     assert usages == []
 
 
-def test_scan_records_call_site(tmp_path):
+def test_scan_records_call_site(tmp_path: Path) -> None:
     _write_java(tmp_path, "com/example/auth/TokenSigner.java", """
 import javax.crypto.Mac;
 public class TokenSigner {
@@ -126,7 +126,7 @@ public class TokenSigner {
     assert any("TokenSigner" in u.call_site for u in usages)
 
 
-def test_scan_low_confidence_for_import_only(tmp_path):
+def test_scan_low_confidence_for_import_only(tmp_path: Path) -> None:
     _write_java(tmp_path, "com/example/Base.java", """
 import javax.crypto.Cipher;
 public class Base {
@@ -137,7 +137,7 @@ public class Base {
     assert any(u.confidence < 0.7 for u in usages)
 
 
-def test_scan_deduplicates_same_algo_in_class(tmp_path):
+def test_scan_deduplicates_same_algo_in_class(tmp_path: Path) -> None:
     _write_java(tmp_path, "com/example/Multi.java", """
 import javax.crypto.Mac;
 public class Multi {
@@ -150,7 +150,7 @@ public class Multi {
     assert len(hmac_usages) == 1
 
 
-def test_crypto_usage_in_ir(tmp_path):
+def test_crypto_usage_in_ir(tmp_path: Path) -> None:
     """CryptoUsage can be serialised to/from the IR JSON."""
     from engine.ir.models import CryptoUsage as IRCryptoUsage
     cu = IRCryptoUsage(algorithm="HMAC-SHA256", call_site="com.example.Signer",

@@ -11,8 +11,12 @@ from __future__ import annotations
 import json
 import tomllib
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from engine.ir.models import ProtocolIR
 
 _ROOT = Path(__file__).parents[1]
 _HA_TARGET = _ROOT / "config" / "ha_target.toml"
@@ -63,7 +67,7 @@ def test_ha_image_tag_matches_core_major_minor() -> None:
 
 # ── context propagation ───────────────────────────────────────────────────────
 
-def _make_minimal_ir():
+def _make_minimal_ir() -> "ProtocolIR":
     from engine.ir.models import (
         AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
         Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
@@ -144,7 +148,7 @@ def test_emitted_manifest_iot_class_http_rest(tmp_path: Path) -> None:
 
 def test_bump_script_updates_all_fields(tmp_path: Path) -> None:
     import shutil
-    from scripts.bump_ha_version import bump  # type: ignore[import]
+    from scripts.bump_ha_version import bump
 
     target_copy = tmp_path / "ha_target.toml"
     shutil.copy(_HA_TARGET, target_copy)
@@ -162,7 +166,7 @@ def test_bump_script_updates_all_fields(tmp_path: Path) -> None:
 
 def test_bump_script_strips_leading_v(tmp_path: Path) -> None:
     import shutil
-    from scripts.bump_ha_version import bump  # type: ignore[import]
+    from scripts.bump_ha_version import bump
 
     target_copy = tmp_path / "ha_target.toml"
     shutil.copy(_HA_TARGET, target_copy)

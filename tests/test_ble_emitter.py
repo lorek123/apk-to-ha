@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -24,7 +25,7 @@ from engine.ir.models import (
 )
 
 
-def _make_ble_ir(**overrides) -> ProtocolIR:
+def _make_ble_ir(**overrides: Any) -> ProtocolIR:
     """IR with two BLE characteristics: one write, one notify."""
     defaults = dict(
         apk_path="/tmp/test.apk",
@@ -70,18 +71,18 @@ def _make_ble_ir(**overrides) -> ProtocolIR:
     return ProtocolIR(**defaults)
 
 
-def _build_ctx(ir: ProtocolIR) -> dict:
+def _build_ctx(ir: ProtocolIR) -> dict[str, Any]:
     return ctx_mod.build(ir)
 
 
 # ── context builder ───────────────────────────────────────────────────────────
 
-def test_has_ble_true_for_ble_ir():
+def test_has_ble_true_for_ble_ir() -> None:
     ctx = _build_ctx(_make_ble_ir())
     assert ctx["has_ble"] is True
 
 
-def test_has_ble_false_for_http_ir():
+def test_has_ble_false_for_http_ir() -> None:
     ir = _make_ble_ir(
         transport=TransportContract(type=TransportType.HTTP_REST, port=8080),
         commands=[
@@ -98,26 +99,26 @@ def test_has_ble_false_for_http_ir():
     assert ctx["has_ble"] is False
 
 
-def test_ble_chars_populated():
+def test_ble_chars_populated() -> None:
     ctx = _build_ctx(_make_ble_ir())
     keys = {c["cmd"] for c in ctx["ble_chars"]}
     assert "write" in keys
     assert "notify" in keys
 
 
-def test_ble_char_has_uuid():
+def test_ble_char_has_uuid() -> None:
     ctx = _build_ctx(_make_ble_ir())
     write_char = next(c for c in ctx["ble_chars"] if c["cmd"] == "write")
     assert write_char["uuid"] == "0000fff1-0000-1000-8000-00805f9b34fb"
 
 
-def test_ble_char_has_access():
+def test_ble_char_has_access() -> None:
     ctx = _build_ctx(_make_ble_ir())
     write_char = next(c for c in ctx["ble_chars"] if c["cmd"] == "write")
     assert "write" in write_char["access"]
 
 
-def test_ble_char_key_is_snake_case():
+def test_ble_char_key_is_snake_case() -> None:
     ir = _make_ble_ir(
         commands=[
             Endpoint(cmd="batteryLevel", transport=TransportType.BLE,
@@ -134,12 +135,12 @@ def test_ble_char_key_is_snake_case():
     assert char["key"] == "battery_level"
 
 
-def test_ble_service_uuids_in_ctx():
+def test_ble_service_uuids_in_ctx() -> None:
     ctx = _build_ctx(_make_ble_ir())
     assert "0000fff0-0000-1000-8000-00805f9b34fb" in ctx["ble_service_uuids"]
 
 
-def test_ble_chars_deduped():
+def test_ble_chars_deduped() -> None:
     # Same UUID in commands and events — should appear once
     uuid = "0000fff1-0000-1000-8000-00805f9b34fb"
     ir = _make_ble_ir(
@@ -158,20 +159,20 @@ def test_ble_chars_deduped():
 
 # ── template rendering ────────────────────────────────────────────────────────
 
-def test_ble_client_file_emitted(tmp_path):
+def test_ble_client_file_emitted(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
     sdk_emitter.emit(ctx, tmp_path)
     pkg_dir = tmp_path / ctx["sdk_package"]
     assert (pkg_dir / "ble_client.py").exists()
 
 
-def test_ble_test_file_emitted(tmp_path):
+def test_ble_test_file_emitted(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
     sdk_emitter.emit(ctx, tmp_path)
     assert (tmp_path / "tests" / "test_ble_client.py").exists()
 
 
-def test_ble_client_not_emitted_for_http(tmp_path):
+def test_ble_client_not_emitted_for_http(tmp_path: Path) -> None:
     ir = _make_ble_ir(
         transport=TransportContract(type=TransportType.HTTP_REST, port=8080),
         commands=[
@@ -187,7 +188,7 @@ def test_ble_client_not_emitted_for_http(tmp_path):
     assert not (pkg_dir / "ble_client.py").exists()
 
 
-def test_ble_client_contains_write_method(tmp_path):
+def test_ble_client_contains_write_method(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
     sdk_emitter.emit(ctx, tmp_path)
     pkg_dir = tmp_path / ctx["sdk_package"]
@@ -196,7 +197,7 @@ def test_ble_client_contains_write_method(tmp_path):
     assert "0000fff1-0000-1000-8000-00805f9b34fb" in content
 
 
-def test_ble_client_contains_notify_methods(tmp_path):
+def test_ble_client_contains_notify_methods(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
     sdk_emitter.emit(ctx, tmp_path)
     pkg_dir = tmp_path / ctx["sdk_package"]
@@ -206,7 +207,7 @@ def test_ble_client_contains_notify_methods(tmp_path):
     assert "on_notify_update" in content
 
 
-def test_ble_client_has_spdx_header(tmp_path):
+def test_ble_client_has_spdx_header(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
     sdk_emitter.emit(ctx, tmp_path)
     pkg_dir = tmp_path / ctx["sdk_package"]
@@ -214,7 +215,7 @@ def test_ble_client_has_spdx_header(tmp_path):
     assert "SPDX-License-Identifier: MIT" in first_line
 
 
-def test_ble_client_has_reconnect_logic(tmp_path):
+def test_ble_client_has_reconnect_logic(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
     sdk_emitter.emit(ctx, tmp_path)
     pkg_dir = tmp_path / ctx["sdk_package"]
@@ -223,7 +224,7 @@ def test_ble_client_has_reconnect_logic(tmp_path):
     assert "_MAX_RECONNECT_ATTEMPTS" in content
 
 
-def test_ble_client_is_async_context_manager(tmp_path):
+def test_ble_client_is_async_context_manager(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
     sdk_emitter.emit(ctx, tmp_path)
     pkg_dir = tmp_path / ctx["sdk_package"]
@@ -232,14 +233,14 @@ def test_ble_client_is_async_context_manager(tmp_path):
     assert "__aexit__" in content
 
 
-def test_ble_test_contains_retry_test(tmp_path):
+def test_ble_test_contains_retry_test(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
     sdk_emitter.emit(ctx, tmp_path)
     content = (tmp_path / "tests" / "test_ble_client.py").read_text()
     assert "test_connect_retries_on_failure" in content
 
 
-def test_ble_test_has_spdx_header(tmp_path):
+def test_ble_test_has_spdx_header(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
     sdk_emitter.emit(ctx, tmp_path)
     first_line = (tmp_path / "tests" / "test_ble_client.py").read_text().splitlines()[0]

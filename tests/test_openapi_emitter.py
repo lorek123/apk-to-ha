@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from typing import Any
+from pathlib import Path
 from engine.ir.models import (
     AuthScheme,
     AuthType,
@@ -30,7 +32,7 @@ from engine.ir.openapi_validator import validate
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
-def _make_ir(**overrides) -> ProtocolIR:
+def _make_ir(**overrides: Any) -> ProtocolIR:
     defaults = dict(
         apk_path="/tmp/test.apk",
         package_name="com.example.device",
@@ -81,19 +83,19 @@ def _make_ir(**overrides) -> ProtocolIR:
     (FieldKind.OBJECT, "object"),
     (FieldKind.ARRAY, "array"),
 ])
-def test_field_schema_type_mapping(kind, expected_type):
+def test_field_schema_type_mapping(kind: Any, expected_type: Any) -> None:
     f = FieldDef(name="x", kind=kind)
     assert _field_schema(f)["type"] == expected_type
 
 
-def test_field_schema_enum():
+def test_field_schema_enum() -> None:
     f = FieldDef(name="mode", kind=FieldKind.ENUM, enum_values=["low", "high"])
     schema = _field_schema(f)
     assert schema["type"] == "string"
     assert schema["enum"] == ["low", "high"]
 
 
-def test_fields_to_schema_required():
+def test_fields_to_schema_required() -> None:
     fields = [
         FieldDef(name="enable", kind=FieldKind.BOOLEAN, required=True),
         FieldDef(name="level", kind=FieldKind.INTEGER, required=False),
@@ -103,83 +105,83 @@ def test_fields_to_schema_required():
     assert "level" not in schema.get("required", [])
 
 
-def test_fields_to_schema_nullable():
+def test_fields_to_schema_nullable() -> None:
     fields = [FieldDef(name="temp", kind=FieldKind.NUMBER, nullable=True)]
     schema = _fields_to_schema(fields)
     assert schema["properties"]["temp"]["nullable"] is True
 
 
-def test_fields_to_schema_serialized_name():
+def test_fields_to_schema_serialized_name() -> None:
     fields = [FieldDef(name="myField", serialized_name="my_field", kind=FieldKind.STRING)]
     schema = _fields_to_schema(fields)
     assert "my_field" in schema["properties"]
     assert "myField" not in schema["properties"]
 
 
-def test_schema_name():
+def test_schema_name() -> None:
     assert _schema_name("powerControl", "Request") == "PowerControlRequest"
     assert _schema_name("stateUpdate", "Response") == "StateUpdateResponse"
 
 
 # ── unit: emit() structure ────────────────────────────────────────────────────
 
-def test_emit_returns_dict():
+def test_emit_returns_dict() -> None:
     doc = emit(_make_ir())
     assert isinstance(doc, dict)
 
 
-def test_emit_openapi_version():
+def test_emit_openapi_version() -> None:
     doc = emit(_make_ir())
     assert doc["openapi"] == "3.0.3"
 
 
-def test_emit_info_fields():
+def test_emit_info_fields() -> None:
     doc = emit(_make_ir())
     assert doc["info"]["title"] == "My Device Device API"
     assert doc["info"]["version"] == "1.2.3"
 
 
-def test_emit_info_version_fallback():
+def test_emit_info_version_fallback() -> None:
     ir = _make_ir(version_name=None)
     doc = emit(ir)
     assert doc["info"]["version"] == "1.0.0"
 
 
-def test_emit_paths_contain_commands():
+def test_emit_paths_contain_commands() -> None:
     doc = emit(_make_ir())
     assert "/powerControl" in doc["paths"]
 
 
-def test_emit_paths_contain_events():
+def test_emit_paths_contain_events() -> None:
     doc = emit(_make_ir())
     assert "/stateUpdate" in doc["paths"]
 
 
-def test_emit_command_uses_post():
+def test_emit_command_uses_post() -> None:
     doc = emit(_make_ir())
     assert "post" in doc["paths"]["/powerControl"]
 
 
-def test_emit_event_uses_get():
+def test_emit_event_uses_get() -> None:
     doc = emit(_make_ir())
     assert "get" in doc["paths"]["/stateUpdate"]
 
 
-def test_emit_request_body_ref():
+def test_emit_request_body_ref() -> None:
     doc = emit(_make_ir())
     body = doc["paths"]["/powerControl"]["post"]["requestBody"]
     ref = body["content"]["application/json"]["schema"]["$ref"]
     assert "PowerControlRequest" in ref
 
 
-def test_emit_response_ref():
+def test_emit_response_ref() -> None:
     doc = emit(_make_ir())
     resp = doc["paths"]["/powerControl"]["post"]["responses"]["200"]
     ref = resp["content"]["application/json"]["schema"]["$ref"]
     assert "PowerControlResponse" in ref
 
 
-def test_emit_components_schemas_populated():
+def test_emit_components_schemas_populated() -> None:
     doc = emit(_make_ir())
     schemas = doc["components"]["schemas"]
     assert "PowerControlRequest" in schemas
@@ -187,7 +189,7 @@ def test_emit_components_schemas_populated():
     assert "StateUpdateResponse" in schemas
 
 
-def test_emit_no_request_body_for_no_fields():
+def test_emit_no_request_body_for_no_fields() -> None:
     ir = _make_ir(commands=[
         Endpoint(
             cmd="ping",
@@ -199,14 +201,14 @@ def test_emit_no_request_body_for_no_fields():
     assert "requestBody" not in doc["paths"]["/ping"]["post"]
 
 
-def test_emit_ws_server_url():
+def test_emit_ws_server_url() -> None:
     doc = emit(_make_ir())
     url = doc["servers"][0]["url"]
     assert url.startswith("ws://")
     assert "8887" in url
 
 
-def test_emit_http_server_url():
+def test_emit_http_server_url() -> None:
     ir = _make_ir(transport=TransportContract(type=TransportType.HTTP_REST, port=8080))
     doc = emit(ir)
     url = doc["servers"][0]["url"]
@@ -214,14 +216,14 @@ def test_emit_http_server_url():
     assert "8080" in url
 
 
-def test_emit_tags_on_operations():
+def test_emit_tags_on_operations() -> None:
     doc = emit(_make_ir())
     tags = doc["paths"]["/powerControl"]["post"]["tags"]
     assert len(tags) > 0
     assert "websocket" in tags[0]
 
 
-def test_emit_empty_ir_no_crash():
+def test_emit_empty_ir_no_crash() -> None:
     ir = _make_ir(commands=[], events=[])
     doc = emit(ir)
     assert doc["paths"] == {}
@@ -230,20 +232,20 @@ def test_emit_empty_ir_no_crash():
 
 # ── P3-3 validator ────────────────────────────────────────────────────────────
 
-def test_valid_doc_passes():
+def test_valid_doc_passes() -> None:
     doc = emit(_make_ir())
     report = validate(doc)
     assert report.passed
     assert report.error_count == 0
 
 
-def test_invalid_doc_fails():
+def test_invalid_doc_fails() -> None:
     report = validate({"openapi": "3.0.3", "info": {}, "paths": {}})
     assert not report.passed
     assert report.error_count > 0
 
 
-def test_duplicate_operation_id_fails():
+def test_duplicate_operation_id_fails() -> None:
     # Craft a doc with two different paths sharing the same operationId
     doc = emit(_make_ir())
     doc["paths"]["/aliasControl"] = {
@@ -258,14 +260,14 @@ def test_duplicate_operation_id_fails():
     assert any("Duplicate" in e for e in report.errors)
 
 
-def test_validator_warns_missing_version():
+def test_validator_warns_missing_version() -> None:
     doc = emit(_make_ir())
     doc["info"].pop("version")
     report = validate(doc)
     assert any("version" in w for w in report.warnings)
 
 
-def test_validator_round_trip_ir():
+def test_validator_round_trip_ir() -> None:
     """Full round-trip: IR → OpenAPI dict → YAML string → validate."""
     import yaml
     ir = _make_ir()
@@ -278,7 +280,7 @@ def test_validator_round_trip_ir():
 
 # ── snapshot integration ──────────────────────────────────────────────────────
 
-def test_snapshot_writes_openapi_yaml(tmp_path):
+def test_snapshot_writes_openapi_yaml(tmp_path: Path) -> None:
     from unittest.mock import patch
     import engine.snapshot.harness as harness
     with patch.object(harness, "_SNAPSHOTS_DIR", tmp_path):
@@ -287,7 +289,7 @@ def test_snapshot_writes_openapi_yaml(tmp_path):
     assert (snap_dir / "openapi_validation.json").exists()
 
 
-def test_snapshot_openapi_yaml_is_valid(tmp_path):
+def test_snapshot_openapi_yaml_is_valid(tmp_path: Path) -> None:
     import json
     from unittest.mock import patch
     import engine.snapshot.harness as harness

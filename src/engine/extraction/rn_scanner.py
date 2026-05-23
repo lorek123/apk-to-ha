@@ -203,7 +203,7 @@ def _hermes_extract_strings(data: bytes) -> str:
 
 def _ast_extract(tree: Any) -> dict[str, Any]:
     """Walk esprima AST and collect fetch calls, WS constructors, cmd literals."""
-    fetch_calls: list[str | dict] = []
+    fetch_calls: list[str | dict[str, Any]] = []
     ws_ctors: list[str] = []
     cmd_literals: list[str] = []
     field_maps: dict[str, dict[str, Any]] = {}
@@ -296,7 +296,7 @@ def _prop_key(prop: Any) -> str | None:
     if key is None:
         return None
     if hasattr(key, "name"):
-        return key.name
+        return str(key.name)
     if hasattr(key, "value"):
         return str(key.value)
     return None
@@ -307,9 +307,9 @@ def _port_from_url(url: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def _path_to_cmd(url: str | dict) -> str | None:
+def _path_to_cmd(url: str | dict[str, Any]) -> str | None:
     if isinstance(url, dict):
-        url = url.get("url", "")
+        url = str(url.get("url", ""))
     path = re.sub(r"https?://[^/]+", "", url).split("?")[0].rstrip("/")
     if not path:
         return None
@@ -322,9 +322,9 @@ def _path_to_cmd(url: str | dict) -> str | None:
     return parts[0] + "".join(p.capitalize() for p in parts[1:])
 
 
-def _is_auth_url(url: str | dict) -> bool:
+def _is_auth_url(url: str | dict[str, Any]) -> bool:
     if isinstance(url, dict):
-        url = url.get("url", "")
+        url = str(url.get("url", ""))
     return bool(re.search(r"auth|login|token|session", str(url), re.I))
 
 
@@ -345,7 +345,7 @@ def _infer_kind(value: Any) -> FieldKind:
     return FieldKind.STRING
 
 
-def _defaults() -> tuple[TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list, list]:
+def _defaults() -> tuple[TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list[Any], list[Any]]:
     return (
         TransportContract(type=TransportType.HTTP_REST, port=80),
         DiscoveryMechanism(type=DiscoveryType.NONE),

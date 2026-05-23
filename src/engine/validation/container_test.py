@@ -16,6 +16,7 @@ import shutil
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
@@ -37,7 +38,7 @@ class ContainerTestResult:
     error: str = ""
 
 
-def _resolve_image(cfg: dict) -> str:
+def _resolve_image(cfg: dict[str, Any]) -> str:
     """Return the Docker image to use for V-3.
 
     Prefers the local sandbox image (built by `make sandbox`) because it has

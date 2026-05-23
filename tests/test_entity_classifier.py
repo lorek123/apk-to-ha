@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from typing import Any
 from engine.extraction.entity_classifier import classify
 from engine.ir.models import (
     Direction,
@@ -17,7 +18,7 @@ from engine.ir.models import (
 )
 
 
-def _make_ir(**kwargs) -> ProtocolIR:
+def _make_ir(**kwargs: Any) -> ProtocolIR:
     from engine.ir.models import (
         AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
         StateSchema, TransportContract,
@@ -38,7 +39,7 @@ def _make_ir(**kwargs) -> ProtocolIR:
     return ProtocolIR(**defaults)
 
 
-def _ep(cmd, direction=Direction.TO_DEVICE, fields=None, awaits=False):
+def _ep(cmd: Any, direction: Direction = Direction.TO_DEVICE, fields: list[FieldDef] | None = None, awaits: bool = False) -> Endpoint:
     return Endpoint(
         cmd=cmd,
         transport=TransportType.WEBSOCKET,
@@ -48,29 +49,29 @@ def _ep(cmd, direction=Direction.TO_DEVICE, fields=None, awaits=False):
     )
 
 
-def _bool_field(name):
+def _bool_field(name: str) -> FieldDef:
     return FieldDef(name=name, kind=FieldKind.BOOLEAN)
 
 
-def _int_field(name):
+def _int_field(name: str) -> FieldDef:
     return FieldDef(name=name, kind=FieldKind.INTEGER)
 
 
 # ── TO_DEVICE classification ──────────────────────────────────────────────────
 
-def test_switch_has_enable_field():
+def test_switch_has_enable_field() -> None:
     ir = _make_ir(commands=[_ep("mute", fields=[_bool_field("enable")])])
     result = classify(ir)
     assert result.commands[0].entity_hint == EntityHint.SWITCH
 
 
-def test_button_no_fields():
+def test_button_no_fields() -> None:
     ir = _make_ir(commands=[_ep("reset_mcu")])
     result = classify(ir)
     assert result.commands[0].entity_hint == EntityHint.BUTTON
 
 
-def test_select_mode_cmd_with_known_actions():
+def test_select_mode_cmd_with_known_actions() -> None:
     ir = _make_ir(
         commands=[_ep("mode", fields=[_int_field("mode")])],
         extra={"mode_actions": {3: "turn_left", 4: "turn_right"}},
@@ -79,13 +80,13 @@ def test_select_mode_cmd_with_known_actions():
     assert result.commands[0].entity_hint == EntityHint.SELECT
 
 
-def test_number_integer_field_no_mode():
+def test_number_integer_field_no_mode() -> None:
     ir = _make_ir(commands=[_ep("play_sound", fields=[_int_field("sound_id")])])
     result = classify(ir)
     assert result.commands[0].entity_hint == EntityHint.NUMBER
 
 
-def test_from_device_always_sensor():
+def test_from_device_always_sensor() -> None:
     ir = _make_ir(events=[_ep("gin", direction=Direction.FROM_DEVICE)])
     result = classify(ir)
     assert result.events[0].entity_hint == EntityHint.SENSOR
@@ -93,14 +94,14 @@ def test_from_device_always_sensor():
 
 # ── state field classification ────────────────────────────────────────────────
 
-def test_boolean_state_field_becomes_binary_sensor():
+def test_boolean_state_field_becomes_binary_sensor() -> None:
     from engine.ir.models import StateSchema
     ir = _make_ir(state=StateSchema(fields=[_bool_field("arm")]))
     result = classify(ir)
     assert result.state.fields[0].entity_hint == EntityHint.BINARY_SENSOR
 
 
-def test_integer_state_field_becomes_sensor():
+def test_integer_state_field_becomes_sensor() -> None:
     from engine.ir.models import StateSchema
     ir = _make_ir(state=StateSchema(fields=[_int_field("battery")]))
     result = classify(ir)
@@ -109,7 +110,7 @@ def test_integer_state_field_becomes_sensor():
 
 # ── idempotency ───────────────────────────────────────────────────────────────
 
-def test_classify_is_idempotent():
+def test_classify_is_idempotent() -> None:
     ir = _make_ir(commands=[_ep("mute", fields=[_bool_field("enable")])])
     once = classify(ir)
     twice = classify(once)

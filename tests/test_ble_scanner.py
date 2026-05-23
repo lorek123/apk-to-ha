@@ -98,68 +98,68 @@ public class BleDevice {
 
 # ── _uuid_to_cmd ──────────────────────────────────────────────────────────────
 
-def test_uuid_to_cmd_strips_char_prefix():
+def test_uuid_to_cmd_strips_char_prefix() -> None:
     assert _uuid_to_cmd("CHAR_WRITE_UUID", "0000fff1-0000-1000-8000-00805f9b34fb") == "write"
 
 
-def test_uuid_to_cmd_strips_uuid_suffix():
+def test_uuid_to_cmd_strips_uuid_suffix() -> None:
     assert _uuid_to_cmd("CMD_UUID", "abcd1234-0000-1000-8000-00805f9b34fb") == "cmd"
 
 
-def test_uuid_to_cmd_camel_case():
+def test_uuid_to_cmd_camel_case() -> None:
     assert _uuid_to_cmd("CHAR_BATTERY_LEVEL_UUID", "...") == "batteryLevel"
 
 
-def test_uuid_to_cmd_no_const_name():
+def test_uuid_to_cmd_no_const_name() -> None:
     cmd = _uuid_to_cmd(None, "abcd1234-5678-9abc-def0-123456789abc")
     assert cmd.startswith("char")
     assert len(cmd) > 4
 
 
-def test_uuid_to_cmd_characteristic_prefix():
+def test_uuid_to_cmd_characteristic_prefix() -> None:
     assert _uuid_to_cmd("CHARACTERISTIC_POWER", "...") == "power"
 
 
 # ── _char_to_endpoint ─────────────────────────────────────────────────────────
 
-def test_char_to_endpoint_write_is_to_device():
+def test_char_to_endpoint_write_is_to_device() -> None:
     ch = _CharInfo(const_name="CMD_UUID", uuid="0000fff1-...", access={"write"})
     ep = _char_to_endpoint(ch)
     assert ep.direction == Direction.TO_DEVICE
     assert ep.transport == TransportType.BLE
 
 
-def test_char_to_endpoint_notify_is_from_device():
+def test_char_to_endpoint_notify_is_from_device() -> None:
     ch = _CharInfo(const_name="NOTIFY_UUID", uuid="0000fff2-...", access={"notify"})
     ep = _char_to_endpoint(ch)
     assert ep.direction == Direction.FROM_DEVICE
 
 
-def test_char_to_endpoint_read_is_from_device():
+def test_char_to_endpoint_read_is_from_device() -> None:
     ch = _CharInfo(const_name="READ_UUID", uuid="0000fff3-...", access={"read"})
     ep = _char_to_endpoint(ch)
     assert ep.direction == Direction.FROM_DEVICE
 
 
-def test_char_to_endpoint_write_hint_is_switch():
+def test_char_to_endpoint_write_hint_is_switch() -> None:
     ch = _CharInfo(const_name="CMD_UUID", uuid="0000fff1-...", access={"write"})
     ep = _char_to_endpoint(ch)
     assert ep.entity_hint == EntityHint.SWITCH
 
 
-def test_char_to_endpoint_notify_hint_is_sensor():
+def test_char_to_endpoint_notify_hint_is_sensor() -> None:
     ch = _CharInfo(const_name="NOTIFY_UUID", uuid="0000fff2-...", access={"notify"})
     ep = _char_to_endpoint(ch)
     assert ep.entity_hint == EntityHint.SENSOR
 
 
-def test_char_to_endpoint_read_hint_is_sensor():
+def test_char_to_endpoint_read_hint_is_sensor() -> None:
     ch = _CharInfo(const_name="READ_UUID", uuid="0000fff3-...", access={"read"})
     ep = _char_to_endpoint(ch)
     assert ep.entity_hint == EntityHint.SENSOR
 
 
-def test_char_to_endpoint_confidence_below_1():
+def test_char_to_endpoint_confidence_below_1() -> None:
     ch = _CharInfo(const_name="CMD_UUID", uuid="0000fff1-...", access={"write"})
     ep = _char_to_endpoint(ch)
     assert ep.confidence < 1.0
@@ -167,42 +167,42 @@ def test_char_to_endpoint_confidence_below_1():
 
 # ── _scan_file ────────────────────────────────────────────────────────────────
 
-def test_scan_file_finds_service_uuid():
+def test_scan_file_finds_service_uuid() -> None:
     chars, services = _scan_file(_JAVA_BLE, "BleManager")
     assert "0000fff0-0000-1000-8000-00805f9b34fb" in services
 
 
-def test_scan_file_service_not_in_chars():
+def test_scan_file_service_not_in_chars() -> None:
     chars, _ = _scan_file(_JAVA_BLE, "BleManager")
     uuids = {c.uuid for c in chars}
     assert "0000fff0-0000-1000-8000-00805f9b34fb" not in uuids
 
 
-def test_scan_file_finds_write_characteristic():
+def test_scan_file_finds_write_characteristic() -> None:
     chars, _ = _scan_file(_JAVA_BLE, "BleManager")
     uuids = {c.uuid for c in chars}
     assert "0000fff1-0000-1000-8000-00805f9b34fb" in uuids
 
 
-def test_scan_file_write_access():
+def test_scan_file_write_access() -> None:
     chars, _ = _scan_file(_JAVA_BLE, "BleManager")
     ch = next(c for c in chars if c.uuid == "0000fff1-0000-1000-8000-00805f9b34fb")
     assert "write" in ch.access
 
 
-def test_scan_file_notify_access():
+def test_scan_file_notify_access() -> None:
     chars, _ = _scan_file(_JAVA_BLE, "BleManager")
     ch = next(c for c in chars if c.uuid == "0000fff2-0000-1000-8000-00805f9b34fb")
     assert "notify" in ch.access
 
 
-def test_scan_file_read_access():
+def test_scan_file_read_access() -> None:
     chars, _ = _scan_file(_JAVA_BLE, "BleManager")
     ch = next(c for c in chars if c.uuid == "0000fff3-0000-1000-8000-00805f9b34fb")
     assert "read" in ch.access
 
 
-def test_scan_file_no_ble_returns_empty():
+def test_scan_file_no_ble_returns_empty() -> None:
     chars, services = _scan_file(_JAVA_NO_BLE, "NetworkClient")
     assert chars == []
     assert services == []
@@ -217,39 +217,39 @@ def _write_java(tmp_path: Path, content: str, name: str = "BleManager.java") -> 
     return p
 
 
-def test_ble_scanner_transport(tmp_path):
+def test_ble_scanner_transport(tmp_path: Path) -> None:
     _write_java(tmp_path, _JAVA_BLE)
     t, *_ = BLEScanner(tmp_path).scan("com.example")
     assert t.type == TransportType.BLE
 
 
-def test_ble_scanner_commands(tmp_path):
+def test_ble_scanner_commands(tmp_path: Path) -> None:
     _write_java(tmp_path, _JAVA_BLE)
     _, _, _, _, commands, _ = BLEScanner(tmp_path).scan("com.example")
     assert any(ep.direction == Direction.TO_DEVICE for ep in commands)
 
 
-def test_ble_scanner_events(tmp_path):
+def test_ble_scanner_events(tmp_path: Path) -> None:
     _write_java(tmp_path, _JAVA_BLE)
     _, _, _, _, _, events = BLEScanner(tmp_path).scan("com.example")
     assert any(ep.direction == Direction.FROM_DEVICE for ep in events)
 
 
-def test_ble_scanner_service_uuid_in_extra(tmp_path):
+def test_ble_scanner_service_uuid_in_extra(tmp_path: Path) -> None:
     _write_java(tmp_path, _JAVA_BLE)
     scanner = BLEScanner(tmp_path)
     scanner.scan("com.example")
     assert "0000fff0-0000-1000-8000-00805f9b34fb" in scanner.extra["ble_service_uuids"]
 
 
-def test_ble_scanner_no_java_returns_defaults(tmp_path):
+def test_ble_scanner_no_java_returns_defaults(tmp_path: Path) -> None:
     t, disc, auth, state, cmds, evts = BLEScanner(tmp_path).scan("com.example")
     assert t.type == TransportType.BLE
     assert cmds == []
     assert evts == []
 
 
-def test_ble_scanner_write_only(tmp_path):
+def test_ble_scanner_write_only(tmp_path: Path) -> None:
     _write_java(tmp_path, _JAVA_BLE_ONLY_WRITE, "BleWriter.java")
     _, _, _, _, commands, events = BLEScanner(tmp_path).scan("com.example")
     assert any(ep.cmd == "cmd" for ep in commands)
@@ -258,21 +258,21 @@ def test_ble_scanner_write_only(tmp_path):
     assert "cmd" not in uuids
 
 
-def test_ble_scanner_notify_is_event(tmp_path):
+def test_ble_scanner_notify_is_event(tmp_path: Path) -> None:
     _write_java(tmp_path, _JAVA_BLE_WRITE_NOTIFY, "BleDevice.java")
     _, _, _, _, commands, events = BLEScanner(tmp_path).scan("com.example")
     assert any(ep.direction == Direction.TO_DEVICE for ep in commands)
     assert any(ep.direction == Direction.FROM_DEVICE for ep in events)
 
 
-def test_ble_scanner_all_confidence_below_1(tmp_path):
+def test_ble_scanner_all_confidence_below_1(tmp_path: Path) -> None:
     _write_java(tmp_path, _JAVA_BLE)
     _, _, _, _, commands, events = BLEScanner(tmp_path).scan("com.example")
     for ep in commands + events:
         assert ep.confidence < 1.0
 
 
-def test_ble_scanner_no_ble_java_returns_empty(tmp_path):
+def test_ble_scanner_no_ble_java_returns_empty(tmp_path: Path) -> None:
     _write_java(tmp_path, _JAVA_NO_BLE, "NetworkClient.java")
     _, _, _, _, commands, events = BLEScanner(tmp_path).scan("com.example")
     assert commands == []

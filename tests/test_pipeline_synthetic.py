@@ -19,6 +19,7 @@ from engine.extraction.entity_classifier import classify
 from engine.extraction.protocol_scanner import ProtocolScanner
 from engine.ingestion import classifier, manifest_parser
 from engine.ir.models import AuthType, DiscoveryType, Framework, TransportType
+from typing import Any
 
 _FIXTURES = Path(__file__).parent / "fixtures"
 _GOVEE_DIR = _FIXTURES / "synthetic_govee"
@@ -30,30 +31,30 @@ class TestGoveeHTTPRest:
     """synthetic_govee: Retrofit service + NsdManager discovery + Govee-API-Key header."""
 
     @pytest.fixture(scope="class")
-    def scanner_result(self):
+    def scanner_result(self) -> Any:
         scanner = ProtocolScanner(_GOVEE_DIR)
         return scanner.scan("com.govee.home")
 
-    def test_transport_is_http_rest(self, scanner_result):
+    def test_transport_is_http_rest(self, scanner_result: Any) -> None:
         transport, *_ = scanner_result
         assert transport.type == TransportType.HTTP_REST
 
-    def test_discovery_is_zeroconf(self, scanner_result):
+    def test_discovery_is_zeroconf(self, scanner_result: Any) -> None:
         _, discovery, *_ = scanner_result
         assert discovery.type == DiscoveryType.ZEROCONF
 
-    def test_auth_is_api_key(self, scanner_result):
+    def test_auth_is_api_key(self, scanner_result: Any) -> None:
         _, _, auth, *_ = scanner_result
         assert auth.type == AuthType.API_KEY
 
-    def test_retrofit_endpoints_extracted(self, scanner_result):
+    def test_retrofit_endpoints_extracted(self, scanner_result: Any) -> None:
         *_, commands, events = scanner_result
         cmd_names = [c.cmd for c in commands]
         assert any("govee/v1/dev/devList" in c for c in cmd_names)
         assert any("govee/v1/dev/control" in c for c in cmd_names)
         assert any("govee/v1/dev/devState" in c for c in cmd_names)
 
-    def test_state_fields_from_serialized_name(self, scanner_result):
+    def test_state_fields_from_serialized_name(self, scanner_result: Any) -> None:
         *_, state, commands, events = scanner_result
         field_names = {f.serialized_name for f in state.fields}
         # DeviceState.java has @SerializedName annotations
@@ -61,7 +62,7 @@ class TestGoveeHTTPRest:
         assert "brightness" in field_names
         assert "powerState" in field_names
 
-    def test_entity_hints_on_govee(self, scanner_result):
+    def test_entity_hints_on_govee(self, scanner_result: Any) -> None:
         transport, discovery, auth, state, commands, events = scanner_result
         from engine.ir.models import (
             Framework, ProtocolIR, AuthScheme, DiscoveryMechanism, StateSchema,
@@ -87,19 +88,19 @@ class TestGoveeHTTPRest:
 
 # ── Govee manifest parsing ─────────────────────────────────────────────────────
 
-def test_govee_manifest_parse():
+def test_govee_manifest_parse() -> None:
     info = manifest_parser.parse(_GOVEE_DIR)
     assert info.package_name == "com.govee.home"
     assert info.version_name == "5.6.01"
     assert "android.permission.INTERNET" in info.permissions
 
 
-def test_govee_framework_classified_as_native():
+def test_govee_framework_classified_as_native() -> None:
     framework = classifier.classify(_GOVEE_DIR)
     assert framework == Framework.NATIVE
 
 
-def test_govee_not_tuya():
+def test_govee_not_tuya() -> None:
     assert not classifier.check_tuya(_GOVEE_DIR, "com.govee.home")
 
 
@@ -126,12 +127,12 @@ def _make_tuya_tree(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def test_tuya_detection(tmp_path):
+def test_tuya_detection(tmp_path: Path) -> None:
     apk_dir = _make_tuya_tree(tmp_path)
     assert classifier.check_tuya(apk_dir, "com.example.tuya_clone")
 
 
-def test_non_tuya_not_flagged(tmp_path):
+def test_non_tuya_not_flagged(tmp_path: Path) -> None:
     pkg = tmp_path / "sources" / "com" / "example" / "myapp"
     pkg.mkdir(parents=True)
     (pkg / "MainActivity.java").write_text("package com.example.myapp; public class MainActivity {}")
@@ -140,7 +141,7 @@ def test_non_tuya_not_flagged(tmp_path):
 
 # ── Emitter context for Govee ─────────────────────────────────────────────────
 
-def test_govee_emitter_context():
+def test_govee_emitter_context() -> None:
     """Govee's HTTP REST transport should produce a context with correct domain."""
     from engine.ir.models import (
         Framework, ProtocolIR, AuthScheme, AuthType,
@@ -175,7 +176,7 @@ def test_govee_emitter_context():
 
 # ── Cross-fixture: pipeline produces valid ruff-clean output ──────────────────
 
-def test_govee_emitter_output_passes_ruff(tmp_path):
+def test_govee_emitter_output_passes_ruff(tmp_path: Path) -> None:
     """Run emitter on Govee IR and verify output is ruff-clean."""
     import asyncio
     from engine.ir.models import Framework, ProtocolIR

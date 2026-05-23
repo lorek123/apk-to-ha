@@ -91,9 +91,40 @@ warn_return_any = true
 warn_unused_ignores = true
 disallow_any_unimported = true
 plugins = ["pydantic.mypy"]
+mypy_path = ["src"]
+explicit_package_bases = true
 
 [[tool.mypy.overrides]]
 module = ["bleak.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["esprima.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["frida.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = ["google_play_scraper.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["openapi_spec_validator.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["structlog.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["tree_sitter.*", "tree_sitter_java.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["anthropic.*"]
 ignore_missing_imports = true
 
 # ────────────────────────────────────────────────────────────────
@@ -114,3 +145,8 @@ filterwarnings = [
 [tool.coverage.run]
 branch = true
 source = ["src"]
+
+[dependency-groups]
+dev = [
+    "types-pyyaml>=6.0.12.20260518",
+]

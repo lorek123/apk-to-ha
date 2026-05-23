@@ -11,6 +11,8 @@ from pathlib import Path
 
 import hashlib
 
+from typing import Any
+
 import aiohttp
 
 from .duplicate_check import checker as dup_checker
@@ -47,9 +49,9 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
     """Run the full extraction pipeline on one APK. Returns the populated IR."""
     run_id = str(uuid.uuid4())[:8]
     apk_id = apk_id or apk_path.stem.lower().replace(" ", "_")
-    log_entries: list[dict] = []
+    log_entries: list[dict[str, Any]] = []
 
-    def log(phase: str, step: str, level: str, message: str, **ctx) -> None:  # type: ignore[no-untyped-def]
+    def log(phase: str, step: str, level: str, message: str, **ctx: object) -> None:
         entry = {
             "run_id": run_id,
             "phase": phase,
@@ -87,7 +89,7 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         log("P1", "classify", "WARNING", "Flutter path (P1-5) not yet implemented — extraction will be incomplete")
 
     # ── P2: protocol extraction ────────────────────────────────────────────────
-    extra_ctx: dict = {}
+    extra_ctx: dict[str, Any] = {}
     if framework == Framework.REACT_NATIVE:
         rn = RNScanner(out_dir)
         transport, discovery, auth, state, commands, events = rn.scan(manifest.package_name)
@@ -299,9 +301,9 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
 
         # ── V-7: HA log analysis ──────────────────────────────────────────────
         v7_findings = log_analyzer.analyze(v3.output if v3.ran else "")
-        for f in v7_findings:
-            log("V7", "log_analyzer", f.severity.upper(),
-                f"[{f.category}] {f.message}")
+        for lf in v7_findings:
+            log("V7", "log_analyzer", lf.severity.upper(),
+                f"[{lf.category}] {lf.message}")
 
         ir = ir.model_copy(update={"extra": {
             **ir.extra,
@@ -317,8 +319,8 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
             "_v4_warnings": [{"id": r.rule.id, "name": r.rule.name, "detail": r.detail} for r in v4.warnings],
             "_v3_ran": v3.ran,
             "_v3_passed": v3.passed,
-            "_v7_findings": [{"category": f.category, "severity": f.severity, "message": f.message}
-                             for f in v7_findings],
+            "_v7_findings": [{"category": lf.category, "severity": lf.severity, "message": lf.message}
+                             for lf in v7_findings],
         }})
 
     # ── V-6: write run state ──────────────────────────────────────────────────
@@ -339,10 +341,10 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         hacs_path = Path(ir.extra.get("_hacs_dir", ""))
         if hacs_path.exists():
             h = hashlib.sha256()
-            for f in sorted(hacs_path.rglob("*")):
-                if f.is_file():
-                    h.update(f.name.encode())
-                    h.update(f.read_bytes())
+            for fp in sorted(hacs_path.rglob("*")):
+                if fp.is_file():
+                    h.update(fp.name.encode())
+                    h.update(fp.read_bytes())
             output_hash = h.hexdigest()[:16]
 
     # Human-readable run summary
@@ -375,7 +377,7 @@ class TuyaDetectedError(Exception):
 
 def _count_hints(ir: ProtocolIR) -> str:
     from collections import Counter
-    c: Counter = Counter()
+    c: Counter[str] = Counter()
     for ep in ir.commands + ir.events:
         c[ep.entity_hint.value if ep.entity_hint else "none"] += 1
     return ", ".join(f"{k}={v}" for k, v in sorted(c.items()))

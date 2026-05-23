@@ -6,6 +6,7 @@ import pytest
 
 from engine.emitters.context import build, _class_prefix, _slugify
 from engine.snapshot.harness import load
+from typing import Any
 
 
 # ── unit helpers ──────────────────────────────────────────────────────────────
@@ -17,7 +18,7 @@ from engine.snapshot.harness import load
     ("r2d2_hub", "R2D2Hub"),
     ("esphome", "Esphome"),
 ])
-def test_class_prefix(domain, expected):
+def test_class_prefix(domain: Any, expected: Any) -> None:
     assert _class_prefix(domain) == expected
 
 
@@ -26,40 +27,40 @@ def test_class_prefix(domain, expected):
     ("my device", "my_device"),
     ("r2d2", "r2d2"),
 ])
-def test_slugify(text, expected):
+def test_slugify(text: Any, expected: Any) -> None:
     assert _slugify(text) == expected
 
 
 # ── context from snapshot ─────────────────────────────────────────────────────
 
 @pytest.fixture(scope="module")
-def r2d2_ctx():
+def r2d2_ctx() -> Any:
     return build(load("bullb_r2d2"))
 
 
-def test_domain(r2d2_ctx):
+def test_domain(r2d2_ctx: Any) -> None:
     assert r2d2_ctx["domain"] == "r2d2"
 
 
-def test_class_prefix_r2d2(r2d2_ctx):
+def test_class_prefix_r2d2(r2d2_ctx: Any) -> None:
     assert r2d2_ctx["class_prefix"] == "R2D2"
 
 
-def test_name_cleaned(r2d2_ctx):
+def test_name_cleaned(r2d2_ctx: Any) -> None:
     # APK stem has version/build suffix stripped
     assert "1.1.31" not in r2d2_ctx["name"]
     assert "R2-D2" in r2d2_ctx["name"]
 
 
-def test_sdk_package(r2d2_ctx):
+def test_sdk_package(r2d2_ctx: Any) -> None:
     assert r2d2_ctx["sdk_package"] == "r2d2_sdk"
 
 
-def test_ws_port(r2d2_ctx):
+def test_ws_port(r2d2_ctx: Any) -> None:
     assert r2d2_ctx["ws_port"] == 8887
 
 
-def test_switches_present(r2d2_ctx):
+def test_switches_present(r2d2_ctx: Any) -> None:
     keys = {s["cmd"] for s in r2d2_ctx["switches"]}
     assert "mute" in keys
     assert "power" in keys
@@ -69,13 +70,13 @@ def test_switches_present(r2d2_ctx):
     assert "connectWifi" not in keys
 
 
-def test_select_is_mode(r2d2_ctx):
+def test_select_is_mode(r2d2_ctx: Any) -> None:
     assert len(r2d2_ctx["selects"]) == 1
     assert r2d2_ctx["selects"][0]["cmd"] == "mode"
     assert "turn_left" in r2d2_ctx["selects"][0]["options"]
 
 
-def test_sensors_and_binary_sensors(r2d2_ctx):
+def test_sensors_and_binary_sensors(r2d2_ctx: Any) -> None:
     assert len(r2d2_ctx["sensors"]) > 0
     assert len(r2d2_ctx["binary_sensors"]) > 0
     sensor_keys = {s["key"] for s in r2d2_ctx["sensors"]}
@@ -84,18 +85,18 @@ def test_sensors_and_binary_sensors(r2d2_ctx):
     assert "arm" in bin_keys
 
 
-def test_numbers_present(r2d2_ctx):
+def test_numbers_present(r2d2_ctx: Any) -> None:
     keys = {n["cmd"] for n in r2d2_ctx["numbers"]}
     assert "play_sound" in keys
     assert "head-shift" in keys
 
 
-def test_platforms_include_number(r2d2_ctx):
+def test_platforms_include_number(r2d2_ctx: Any) -> None:
     assert "number" in r2d2_ctx["platforms"]
     assert "binary_sensor" in r2d2_ctx["platforms"]
 
 
-def test_skip_cmds_not_in_any_entity(r2d2_ctx):
+def test_skip_cmds_not_in_any_entity(r2d2_ctx: Any) -> None:
     all_cmds = (
         {s["cmd"] for s in r2d2_ctx["switches"]}
         | {b["cmd"] for b in r2d2_ctx["buttons"]}

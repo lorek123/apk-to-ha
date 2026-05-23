@@ -12,6 +12,7 @@ import hmac
 import json
 import logging
 from dataclasses import dataclass, field
+from typing import Any
 
 from ..extraction.signing_emitter import build as build_signing_ctx
 from ..ir.models import (
@@ -46,14 +47,14 @@ class ReconciliationReport:
     # IR patches
     new_commands: list[str] = field(default_factory=list)
     removed_commands: list[str] = field(default_factory=list)
-    field_corrections: list[dict] = field(default_factory=list)  # {cmd, old, new}
+    field_corrections: list[dict[str, Any]] = field(default_factory=list)  # {cmd, old, new}
     discovery_port_correction: int | None = None
     auth_cmd_correction: str | None = None
     # Patched IR (None if no changes needed)
     patched_ir: ProtocolIR | None = None
     # Confidence delta applied to all signing traces
     confidence_boost: float = 0.0
-    capture_summary: dict = field(default_factory=dict)
+    capture_summary: dict[str, Any] = field(default_factory=dict)
 
 
 def reconcile(
@@ -238,10 +239,10 @@ def _extract_commands_from_session(session: CaptureSession) -> set[str]:
     return cmds
 
 
-def _field_corrections(session: CaptureSession, ir: ProtocolIR) -> list[dict]:
+def _field_corrections(session: CaptureSession, ir: ProtocolIR) -> list[dict[str, Any]]:
     """Find field name mismatches between observed JSON and IR field definitions."""
-    corrections: list[dict] = []
-    observed_bodies: list[dict] = []
+    corrections: list[dict[str, Any]] = []
+    observed_bodies: list[dict[str, Any]] = []
 
     for frame in session.ws_sends():
         try:
@@ -280,7 +281,7 @@ def _field_corrections(session: CaptureSession, ir: ProtocolIR) -> list[dict]:
 
 def _apply_patches(ir: ProtocolIR, report: ReconciliationReport) -> ProtocolIR | None:
     """Return a patched IR copy, or None if nothing changed."""
-    updates: dict = {}
+    updates: dict[str, Any] = {}
     changed = False
 
     # Boost signing trace confidence
@@ -329,5 +330,3 @@ def _apply_patches(ir: ProtocolIR, report: ReconciliationReport) -> ProtocolIR |
     return ir.model_copy(update=updates)
 
 
-# avoid circular import issues at runtime
-from typing import Any  # noqa: E402

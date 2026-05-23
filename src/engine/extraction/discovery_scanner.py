@@ -86,9 +86,9 @@ def scan(sources_dir: Path, app_package: str) -> DiscoveryMechanism:
 
         if _DATAGRAM_RE.search(text):
             has_datagram = True
-            m = _UDP_PORT_RE.search(text)
-            if m and udp_port is None:
-                udp_port = int(m.group(1))
+            pm = _UDP_PORT_RE.search(text)
+            if pm and udp_port is None:
+                udp_port = int(pm.group(1))
 
     # ── pick best discovery type ───────────────────────────────────────────────
     if service_types:

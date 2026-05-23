@@ -48,7 +48,7 @@ async def capture(
     ready_event = asyncio.Event()
     loop = asyncio.get_event_loop()
 
-    def _on_message(message: dict, _data: Any) -> None:
+    def _on_message(message: dict[str, Any], _data: bytes | None) -> None:
         if message.get("type") == "send":
             payload = message.get("payload", {})
             events.append(payload)

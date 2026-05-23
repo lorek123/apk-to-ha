@@ -14,7 +14,7 @@ _TEMPLATES_DIR = Path(__file__).parents[1] / "templates" / "sdk"
 
 def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     """Render the SDK package into *out_root*/{sdk_package}/. Returns that dir."""
-    pkg_dir = out_root / ctx["sdk_package"]
+    pkg_dir = out_root / str(ctx["sdk_package"])
     pkg_dir.mkdir(parents=True, exist_ok=True)
 
     env = Environment(
@@ -53,6 +53,6 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     return pkg_dir
 
 
-def _render(env: Environment, ctx: dict, out_dir: Path, template: str, filename: str) -> None:
+def _render(env: Environment, ctx: dict[str, Any], out_dir: Path, template: str, filename: str) -> None:
     rendered = env.get_template(template).render(**ctx)
     (out_dir / filename).write_text(rendered)

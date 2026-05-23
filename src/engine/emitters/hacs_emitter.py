@@ -15,7 +15,7 @@ _TEMPLATES_DIR = Path(__file__).parents[1] / "templates" / "hacs"
 
 def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     """Render HACS integration into *out_root*/custom_components/{domain}/."""
-    domain_dir = out_root / "custom_components" / ctx["domain"]
+    domain_dir = out_root / "custom_components" / str(ctx["domain"])
     domain_dir.mkdir(parents=True, exist_ok=True)
     (domain_dir / "translations").mkdir(exist_ok=True)
 
@@ -69,6 +69,6 @@ def _fix_imports(directory: Path) -> None:
         _LOGGER.debug("ruff not found; skipping import sort")
 
 
-def _render(env: Environment, ctx: dict, out_dir: Path, template: str, filename: str) -> None:
+def _render(env: Environment, ctx: dict[str, Any], out_dir: Path, template: str, filename: str) -> None:
     rendered = env.get_template(template).render(**ctx)
     (out_dir / filename).write_text(rendered)

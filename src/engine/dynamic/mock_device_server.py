@@ -11,14 +11,16 @@ import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import AsyncIterator, Callable, Awaitable
 
 from aiohttp import web
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _ws_handler_factory(auth_cmd: str, state_cmd: str) -> web.WebSocketResponse:
+def _ws_handler_factory(
+    auth_cmd: str, state_cmd: str
+) -> Callable[[web.Request], Awaitable[web.WebSocketResponse]]:
     async def ws_handler(request: web.Request) -> web.WebSocketResponse:
         ws = web.WebSocketResponse()
         await ws.prepare(request)
@@ -84,7 +86,7 @@ class MockDeviceServer:
             def connection_made(inner_self, transport: asyncio.BaseTransport) -> None:
                 inner_self.transport = transport  # type: ignore[assignment]
 
-            def datagram_received(inner_self, data: bytes, addr: tuple) -> None:
+            def datagram_received(inner_self, data: bytes, addr: tuple[str, int]) -> None:
                 _LOGGER.debug("mock: UDP recv %d bytes from %s", len(data), addr)
                 # Respond with a fake device discovery packet
                 reply = json.dumps({
@@ -94,8 +96,9 @@ class MockDeviceServer:
                     "model": "MockDevice",
                 }).encode()
                 if inner_self.transport:
-                    inner_self.transport.sendto(reply, addr)  # type: ignore[union-attr]
+                    inner_self.transport.sendto(reply, addr)
 
+        assert self.udp_port is not None
         transport, _ = await loop.create_datagram_endpoint(
             _UdpProtocol,
             local_addr=("0.0.0.0", self.udp_port),

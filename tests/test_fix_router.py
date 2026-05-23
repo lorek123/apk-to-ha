@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -39,7 +40,7 @@ def _make_integration(tmp_path: Path, *, iot_class: str = "local_push") -> Path:
     return d
 
 
-def _base_ctx() -> dict:
+def _base_ctx() -> dict[str, Any]:
     return {
         "domain": "myapp",
         "name": "My App",
@@ -66,7 +67,7 @@ def _base_ctx() -> dict:
 
 # ── iot_class patch ───────────────────────────────────────────────────────────
 
-def test_patches_invalid_iot_class(tmp_path):
+def test_patches_invalid_iot_class(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, iot_class="cloud_magic")
     ctx = {**_base_ctx(), "iot_class": "local_polling"}
 
@@ -82,7 +83,7 @@ def test_patches_invalid_iot_class(tmp_path):
     assert data["iot_class"] == "local_polling"
 
 
-def test_no_patch_when_iot_class_already_valid(tmp_path):
+def test_no_patch_when_iot_class_already_valid(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, iot_class="local_push")
     ctx = {**_base_ctx(), "iot_class": "local_push"}
 
@@ -93,7 +94,7 @@ def test_no_patch_when_iot_class_already_valid(tmp_path):
 
 # ── missing manifest key ──────────────────────────────────────────────────────
 
-def test_patches_missing_manifest_key(tmp_path):
+def test_patches_missing_manifest_key(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
     manifest = json.loads((d / "manifest.json").read_text())
     del manifest["version"]
@@ -112,7 +113,7 @@ def test_patches_missing_manifest_key(tmp_path):
     assert data["version"] == "0.2.0"
 
 
-def test_skips_unknown_manifest_key(tmp_path):
+def test_skips_unknown_manifest_key(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
     ctx = _base_ctx()
 
@@ -129,7 +130,7 @@ def test_skips_unknown_manifest_key(tmp_path):
 
 # ── SPDX header ───────────────────────────────────────────────────────────────
 
-def test_prepends_spdx_header(tmp_path):
+def test_prepends_spdx_header(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
     sensor = d / "sensor.py"
     sensor.write_text('"""Sensor platform."""\n')
@@ -146,7 +147,7 @@ def test_prepends_spdx_header(tmp_path):
     assert "SPDX-License-Identifier" in first_line
 
 
-def test_spdx_not_prepended_twice(tmp_path):
+def test_spdx_not_prepended_twice(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
     # __init__.py already has the header from _make_integration
     finding = Finding(
@@ -162,7 +163,7 @@ def test_spdx_not_prepended_twice(tmp_path):
 
 # ── warnings are skipped ──────────────────────────────────────────────────────
 
-def test_warnings_not_counted_as_errors(tmp_path):
+def test_warnings_not_counted_as_errors(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
     finding = Finding(
         severity="warning",
@@ -177,7 +178,7 @@ def test_warnings_not_counted_as_errors(tmp_path):
 
 # ── ruff fixable detection ────────────────────────────────────────────────────
 
-def test_ruff_fixable_codes_are_routed():
+def test_ruff_fixable_codes_are_routed() -> None:
     from engine.validation.fix_router import _is_ruff_fixable
     assert _is_ruff_fixable("I001")
     assert _is_ruff_fixable("F401")
@@ -186,7 +187,7 @@ def test_ruff_fixable_codes_are_routed():
     assert not _is_ruff_fixable("F811")
 
 
-def test_unfixable_ruff_findings_are_skipped(tmp_path):
+def test_unfixable_ruff_findings_are_skipped(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
     finding = RuffFinding(
         file=str(d / "sensor.py"),
@@ -203,7 +204,7 @@ def test_unfixable_ruff_findings_are_skipped(tmp_path):
 
 # ── iot_class inference from context ─────────────────────────────────────────
 
-def test_context_iot_class_http_rest():
+def test_context_iot_class_http_rest() -> None:
     from engine.emitters.context import _infer_iot_class
     from engine.ir.models import TransportType
     assert _infer_iot_class(TransportType.HTTP_REST) == "local_polling"

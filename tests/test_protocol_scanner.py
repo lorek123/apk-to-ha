@@ -21,7 +21,7 @@ def _make_sources(tmp_path: Path, files: dict[str, str]) -> Path:
 
 # ── constant resolution ───────────────────────────────────────────────────────
 
-def test_collect_str_constants(tmp_path):
+def test_collect_str_constants(tmp_path: Path) -> None:
     src = _make_sources(tmp_path, {"Api.java": """
         public static final String MUTE = "mute";
         private static final String GRANT = "grantAccess";
@@ -33,7 +33,7 @@ def test_collect_str_constants(tmp_path):
     assert scanner._str_constants["GRANT"] == "grantAccess"
 
 
-def test_collect_cmd_lists(tmp_path):
+def test_collect_cmd_lists(tmp_path: Path) -> None:
     src = _make_sources(tmp_path, {"Api.java": """
         public static final String MUTE = "mute";
         public static final String POWER = "power";
@@ -54,7 +54,7 @@ def test_collect_cmd_lists(tmp_path):
 
 # ── constant-based command extraction ────────────────────────────────────────
 
-def test_constant_based_commands_resolved(tmp_path):
+def test_constant_based_commands_resolved(tmp_path: Path) -> None:
     src = _make_sources(tmp_path, {"Api.java": """
         public static final String MUTE = "mute";
         public static final String POWER = "power";
@@ -80,7 +80,7 @@ def test_constant_based_commands_resolved(tmp_path):
     assert "power" in cmd_names
 
 
-def test_constant_commands_awaits_response(tmp_path):
+def test_constant_commands_awaits_response(tmp_path: Path) -> None:
     src = _make_sources(tmp_path, {"Api.java": """
         public static final String MUTE = "mute";
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
@@ -96,7 +96,7 @@ def test_constant_commands_awaits_response(tmp_path):
     assert mute.awaits_response is True
 
 
-def test_literal_commands_not_in_response_list(tmp_path):
+def test_literal_commands_not_in_response_list(tmp_path: Path) -> None:
     src = _make_sources(tmp_path, {"Api.java": """
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
@@ -114,7 +114,7 @@ def test_literal_commands_not_in_response_list(tmp_path):
 
 # ── events (no-response list → FROM_DEVICE) ───────────────────────────────────
 
-def test_no_response_cmds_become_events(tmp_path):
+def test_no_response_cmds_become_events(tmp_path: Path) -> None:
     src = _make_sources(tmp_path, {"Api.java": """
         public static final String GIN = "gin";
         public static final String STREAMING = "streaming";
@@ -137,7 +137,7 @@ def test_no_response_cmds_become_events(tmp_path):
 
 # ── mode→action extraction ────────────────────────────────────────────────────
 
-def test_mode_actions_extracted(tmp_path):
+def test_mode_actions_extracted(tmp_path: Path) -> None:
     src = _make_sources(tmp_path, {"Adapter.java": """
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
@@ -160,7 +160,7 @@ def test_mode_actions_extracted(tmp_path):
 
 # ── field extraction ──────────────────────────────────────────────────────────
 
-def test_fields_extracted_for_literal_cmd(tmp_path):
+def test_fields_extracted_for_literal_cmd(tmp_path: Path) -> None:
     src = _make_sources(tmp_path, {"Api.java": """
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
@@ -183,7 +183,7 @@ def test_fields_extracted_for_literal_cmd(tmp_path):
 
 # ── transport detection ───────────────────────────────────────────────────────
 
-def test_websocket_port_detected(tmp_path):
+def test_websocket_port_detected(tmp_path: Path) -> None:
     src = _make_sources(tmp_path, {"WsClient.java": """
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
@@ -199,7 +199,7 @@ def test_websocket_port_detected(tmp_path):
 
 # ── snapshot round-trip ───────────────────────────────────────────────────────
 
-def test_bullb_r2d2_snapshot():
+def test_bullb_r2d2_snapshot() -> None:
     """Integration smoke test: the committed snapshot has the expected shape."""
     from engine.snapshot.harness import load
     ir = load("bullb_r2d2")

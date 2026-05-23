@@ -40,7 +40,7 @@ async def fetch(package_name: str) -> PlayStoreInfo | None:
 
 def _fetch_sync(package_name: str) -> PlayStoreInfo | None:
     """Blocking call to google-play-scraper. Run via asyncio.to_thread."""
-    from google_play_scraper import app, exceptions  # type: ignore[import-untyped]
+    from google_play_scraper import app, exceptions  # noqa: PLC0415
 
     try:
         data = app(package_name, lang="en", country="us")

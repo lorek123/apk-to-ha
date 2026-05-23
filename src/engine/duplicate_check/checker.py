@@ -17,6 +17,8 @@ from pathlib import Path
 
 import aiohttp
 
+from typing import cast
+
 from ..ir.models import DuplicateCheckResult
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,7 +63,7 @@ async def check(
             )
             return DuplicateCheckResult(
                 found=True,
-                location=location,  # type: ignore[arg-type]
+                location=location,
                 name=name,
                 coverage_estimate="full",
             )
@@ -93,7 +95,7 @@ async def check(
                 )
                 return DuplicateCheckResult(
                     found=True,
-                    location=match["location"],  # type: ignore[arg-type]
+                    location=match["location"],
                     name=match["name"],
                     coverage_estimate="full",
                 )
@@ -105,7 +107,7 @@ async def check(
 async def _fetch_core_components(session: aiohttp.ClientSession) -> list[str]:
     cache_file = _CACHE_DIR / "ha_core_components.json"
     if _cache_valid(cache_file):
-        return json.loads(cache_file.read_text())
+        return cast(list[str], json.loads(cache_file.read_text()))
 
     try:
         async with session.get(
@@ -117,7 +119,7 @@ async def _fetch_core_components(session: aiohttp.ClientSession) -> list[str]:
     except Exception as exc:
         _LOGGER.warning("Failed to fetch HA Core component list: %s", exc)
         if cache_file.exists():
-            return json.loads(cache_file.read_text())
+            return cast(list[str], json.loads(cache_file.read_text()))
         return []
 
     _cache_dir_ensure()
@@ -128,7 +130,7 @@ async def _fetch_core_components(session: aiohttp.ClientSession) -> list[str]:
 async def _fetch_ble_uuid_index(
     session: aiohttp.ClientSession,
     core_components: list[str],
-) -> dict[str, dict]:
+) -> dict[str, dict[str, str]]:
     """Return {service_uuid_lower: {location, name}} from HA Core manifests.
 
     Fetches raw manifest JSON for all components from github CDN in parallel.
@@ -136,7 +138,7 @@ async def _fetch_ble_uuid_index(
     """
     cache_file = _CACHE_DIR / "ha_core_ble_uuids.json"
     if _cache_valid(cache_file):
-        return json.loads(cache_file.read_text())
+        return cast(dict[str, dict[str, str]], json.loads(cache_file.read_text()))
 
     try:
         with _HA_TARGET.open("rb") as fh:
@@ -150,7 +152,7 @@ async def _fetch_ble_uuid_index(
     )
 
     sem = asyncio.Semaphore(_MANIFEST_FETCH_SEM)
-    index: dict[str, dict] = {}
+    index: dict[str, dict[str, str]] = {}
 
     async def _fetch_one(name: str) -> None:
         url = f"{base}/{name}/manifest.json"
