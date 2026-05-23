@@ -163,6 +163,13 @@ class PayloadSchema(BaseModel):
     is_collection: bool = False   # True when the wire type is List<class_name>
 
 
+class StreamingContract(BaseModel):
+    """Binary frame-over-WebSocket stream from the device (e.g. camera video)."""
+    port: int
+    frame_format: str = "jpeg"
+    rotate_degrees: int = 0
+
+
 class PlayStoreInfo(BaseModel):
     """Metadata fetched from Google Play Store during P1."""
     title: str
@@ -194,6 +201,9 @@ class ProtocolIR(BaseModel):
     state: StateSchema
     commands: list[Endpoint] = Field(default_factory=list)    # app → device
     events: list[Endpoint] = Field(default_factory=list)      # device → app
+
+    # secondary streaming channel (e.g. camera video WebSocket)
+    streaming: StreamingContract | None = None
 
     # crypto findings (P2-4) and signing traces (P2-5)
     crypto: list[CryptoUsage] = Field(default_factory=list)

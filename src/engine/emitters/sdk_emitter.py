@@ -49,6 +49,11 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
         _render(env, ctx, tests_dir, "tests/test_ble_client.py.j2", "test_ble_client.py")
         _LOGGER.info("BLE client emitted (%d characteristics)", len(ctx["ble_chars"]))
 
+    # Camera: emit JPEG-over-WebSocket stream client when a streaming contract exists
+    if ctx.get("has_camera"):
+        _render(env, ctx, pkg_dir, "video_stream.py.j2", "video_stream.py")
+        _LOGGER.info("Video stream client emitted (port=%s)", ctx.get("video_port"))
+
     _LOGGER.info("SDK emitted to %s", pkg_dir)
     return pkg_dir
 

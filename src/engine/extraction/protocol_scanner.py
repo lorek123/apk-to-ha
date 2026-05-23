@@ -25,6 +25,7 @@ from ..ir.models import (
     FieldDef,
     FieldKind,
     StateSchema,
+    StreamingContract,
     TransportContract,
     TransportType,
 )
@@ -58,6 +59,12 @@ _CMD_LIST_RE = re.compile(
 )
 _WS_PORT_RE = re.compile(r'(?:WEBSOCKET_PORT|WS_PORT|PORT)\s*=\s*(\d+)')
 _UDP_PORT_RE = re.compile(r'(?:SERVER_PORT|UDP_PORT)\s*=\s*(\d+)')
+
+# Streaming / camera detection
+_VIDEO_CLASS_KEYWORDS = frozenset({"video", "camera", "stream"})
+_VIDEO_PORT_RE = re.compile(r'\b(?:WEBSOCKET_PORT|VIDEO_PORT|STREAM_PORT|CAMERA_PORT)\s*=\s*(\d{4,5})\b')
+_BITMAP_RE = re.compile(r'\bBitmapFactory\b|\bdecodeByteArray\b')
+_ROTATE_RE = re.compile(r'postRotate\s*\(\s*(-?\d+(?:\.\d+)?)f?\s*[,)]')
 _SERIALIZED_RE = re.compile(
     r'@SerializedName\("([^"]+)"\)\s*(?:private\s+)?(\w+)\s+(\w+);'
 )
@@ -74,6 +81,7 @@ class ProtocolScanner:
         self._no_response_cmds: set[str] = set()    # fire-and-forget / push cmds
         self._retrofit_endpoints: list[Endpoint] = []  # populated by _detect_transport when Retrofit found
         self.extra: dict[str, Any] = {}             # caller merges into ProtocolIR.extra
+        self._streaming_contract: StreamingContract | None = None
 
     def scan(self, app_package: str) -> tuple[
         TransportContract,
@@ -107,6 +115,7 @@ class ProtocolScanner:
         state = self._detect_state_schema()
         commands, events = self._extract_endpoints()
         self._extract_mode_actions()
+        self._detect_streaming()
 
         return transport, discovery, auth, state, commands, events
 
@@ -386,6 +395,34 @@ class ProtocolScanner:
         if mode_actions:
             _LOGGER.info("Mode→action enum: %s", mode_actions)
             self.extra["mode_actions"] = mode_actions
+
+    def _detect_streaming(self) -> None:
+        """Detect a secondary binary WebSocket stream (camera/video).
+
+        Looks for class files whose name contains 'video', 'camera', or
+        'stream', that also reference BitmapFactory (proof of binary image
+        decoding).  Extracts the port constant and optional rotation angle.
+        """
+        for f in self._app_sources:
+            if not any(kw in f.stem.lower() for kw in _VIDEO_CLASS_KEYWORDS):
+                continue
+            src = self._read(f)
+            if not _BITMAP_RE.search(src):
+                continue
+            port_m = _VIDEO_PORT_RE.search(src)
+            if not port_m:
+                continue
+            port = int(port_m.group(1))
+            rot_m = _ROTATE_RE.search(src)
+            rotate = int(float(rot_m.group(1))) if rot_m else 0
+            self._streaming_contract = StreamingContract(
+                port=port, frame_format="jpeg", rotate_degrees=rotate,
+            )
+            self.extra["streaming_contract"] = self._streaming_contract
+            _LOGGER.info(
+                "Streaming detected in %s: port=%d rotate=%d", f.name, port, rotate
+            )
+            return
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────

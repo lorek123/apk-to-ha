@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ..extraction.signing_emitter import build as build_signing_ctx
-from ..ir.models import Direction, DiscoveryType, EntityHint, ProtocolIR, TransportType
+from ..ir.models import Direction, DiscoveryType, EntityHint, ProtocolIR, StreamingContract, TransportType
 
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
 
@@ -200,6 +200,16 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     if numbers:
         entity_sections["number"] = {str(s["key"]): {"name": s["name"]} for s in numbers}
 
+    # ── Camera / video stream ─────────────────────────────────────────────────
+    streaming: StreamingContract | None = ir.streaming
+    has_camera = streaming is not None
+    video_port: int = streaming.port if streaming else 0
+    video_frame_format: str = streaming.frame_format if streaming else "jpeg"
+    video_rotate_degrees: int = streaming.rotate_degrees if streaming else 0
+
+    if has_camera:
+        entity_sections["camera"] = {"stream": {"name": "Camera"}}
+
     ps = ir.play_store
     return {
         # identifiers
@@ -231,7 +241,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "mode_actions": mode_actions,
         # platforms present
         "platforms": _platforms(switches, buttons, selects, numbers, sensors, binary_sensors,
-                                ble_sensors, ble_switches),
+                                ble_sensors, ble_switches, has_camera=has_camera),
         # P5-7 discovery
         "has_zeroconf": bool(zeroconf_types),
         "has_dhcp": bool(dhcp_hostnames),
@@ -246,6 +256,11 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         # P5-6 translation strings
         "device_errors": device_errors,
         "entity_sections": entity_sections,
+        # camera
+        "has_camera": has_camera,
+        "video_port": video_port,
+        "video_frame_format": video_frame_format,
+        "video_rotate_degrees": video_rotate_degrees,
         # P2-6 signing (merged in; has_signing=False when no trace)
         **build_signing_ctx(ir.signing_traces),
     }
@@ -265,6 +280,7 @@ def _platforms(
     switches: list[Any], buttons: list[Any], selects: list[Any], numbers: list[Any],
     sensors: list[Any], binary_sensors: list[Any],
     ble_sensors: list[Any] | None = None, ble_switches: list[Any] | None = None,
+    has_camera: bool = False,
 ) -> list[str]:
     plats = []
     if sensors or ble_sensors:
@@ -279,4 +295,6 @@ def _platforms(
         plats.append("select")
     if numbers:
         plats.append("number")
+    if has_camera:
+        plats.append("camera")
     return plats

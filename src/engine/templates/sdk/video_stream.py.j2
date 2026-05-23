@@ -1,0 +1,79 @@
+# SPDX-License-Identifier: MIT
+"""JPEG-over-WebSocket video stream client for {{ name }}."""
+from __future__ import annotations
+
+import asyncio
+import logging
+from collections.abc import AsyncGenerator
+
+import aiohttp
+
+_LOGGER = logging.getLogger(__name__)
+_RECONNECT_BASE = 1.0
+_RECONNECT_MAX = 30.0
+
+
+class {{ class_prefix }}VideoStreamClient:
+    """Opens ws://{host}:{{ video_port }} and yields raw JPEG frames.
+
+    Usage::
+
+        async with {{ class_prefix }}VideoStreamClient(host) as client:
+            async for frame in client.stream():
+                # frame is bytes containing one JPEG image
+                ...
+
+    Pass an external *session* (e.g. HA's managed session) to avoid creating
+    a second ``aiohttp.ClientSession``; the client will not close it on exit.
+    """
+
+    def __init__(
+        self,
+        host: str,
+        port: int = {{ video_port }},
+        session: aiohttp.ClientSession | None = None,
+    ) -> None:
+        self._url = f"ws://{host}:{port}"
+        self._latest: bytes | None = None
+        self._session = session
+        self._own_session = session is None
+
+    async def __aenter__(self) -> "{{ class_prefix }}VideoStreamClient":
+        if self._own_session:
+            self._session = aiohttp.ClientSession()
+        return self
+
+    async def __aexit__(self, *_: object) -> None:
+        if self._own_session and self._session is not None:
+            await self._session.close()
+            self._session = None
+
+    def latest_frame(self) -> bytes | None:
+        """Return the most recently received JPEG frame, or None."""
+        return self._latest
+
+    async def stream(self) -> AsyncGenerator[bytes, None]:
+        """Yield binary JPEG frames; reconnects with exponential back-off on error."""
+        if self._session is None:
+            raise RuntimeError("Use as async context manager or pass a session")
+        delay = _RECONNECT_BASE
+        while True:
+            try:
+                async with self._session.ws_connect(self._url) as ws:
+                    _LOGGER.debug("Video stream connected: %s", self._url)
+                    delay = _RECONNECT_BASE
+                    async for msg in ws:
+                        if msg.type == aiohttp.WSMsgType.BINARY:
+                            self._latest = msg.data
+                            yield msg.data
+                        elif msg.type in (
+                            aiohttp.WSMsgType.CLOSE,
+                            aiohttp.WSMsgType.ERROR,
+                        ):
+                            break
+            except (aiohttp.ClientError, OSError) as exc:
+                _LOGGER.warning(
+                    "Video stream error (%s); reconnecting in %.1fs", exc, delay
+                )
+            await asyncio.sleep(delay)
+            delay = min(delay * 2, _RECONNECT_MAX)

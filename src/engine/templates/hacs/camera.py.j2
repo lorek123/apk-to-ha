@@ -1,0 +1,79 @@
+# SPDX-License-Identifier: MIT
+"""Camera platform for {{ name }}."""
+from __future__ import annotations
+
+import asyncio
+import logging
+
+from homeassistant.components.camera import Camera
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import aiohttp_client
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .const import DOMAIN
+from {{ sdk_package }}.video_stream import {{ class_prefix }}VideoStreamClient
+
+_LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    async_add_entities([{{ class_prefix }}Camera(hass, entry)])
+
+
+class {{ class_prefix }}Camera(Camera):
+    """Streams JPEG frames from ws://{host}:{{ video_port }}."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Camera"
+    _attr_is_streaming = False  # no HLS/RTSP — HA fetches frames on demand
+
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        super().__init__()
+        self._hass = hass
+        self._entry = entry
+        self._host: str = entry.data[CONF_HOST]
+        self._latest_frame: bytes | None = None
+        self._stream_task: asyncio.Task[None] | None = None
+        self._attr_unique_id = f"{entry.entry_id}_camera"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name=entry.title,
+            manufacturer="{{ name }}",
+        )
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._stream_task = self.hass.async_create_background_task(
+            self._receive_frames(),
+            name=f"{self._attr_unique_id}_stream",
+        )
+
+    async def async_will_remove_from_hass(self) -> None:
+        if self._stream_task is not None:
+            self._stream_task.cancel()
+            try:
+                await self._stream_task
+            except asyncio.CancelledError:
+                pass
+            self._stream_task = None
+
+    async def async_camera_image(
+        self, width: int | None = None, height: int | None = None
+    ) -> bytes | None:
+        return self._latest_frame
+
+    async def _receive_frames(self) -> None:
+        """Background task: connect to video WebSocket and buffer latest frame."""
+        session = aiohttp_client.async_get_clientsession(self.hass)
+        async with {{ class_prefix }}VideoStreamClient(
+            self._host, {{ video_port }}, session=session
+        ) as client:
+            async for frame in client.stream():
+                self._latest_frame = frame

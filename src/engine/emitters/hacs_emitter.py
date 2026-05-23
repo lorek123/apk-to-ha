@@ -51,6 +51,8 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
         _render(env, ctx, domain_dir, "select.py.j2", "select.py")
     if "number" in platforms:
         _render(env, ctx, domain_dir, "number.py.j2", "number.py")
+    if ctx.get("has_camera"):
+        _render(env, ctx, domain_dir, "camera.py.j2", "camera.py")
 
     _fix_imports(domain_dir)
     _LOGGER.info("HACS integration emitted to %s", domain_dir)
