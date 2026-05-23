@@ -139,6 +139,129 @@ def test_non_tuya_not_flagged(tmp_path: Path) -> None:
     assert not classifier.check_tuya(tmp_path, "com.example.myapp")
 
 
+# ── Tuya whitelabel detection ─────────────────────────────────────────────────
+# These represent obfuscated whitelabel apps where the Tuya package dir is gone
+# but other signals survive.
+
+def _make_obfuscated_tree(tmp_path: Path) -> None:
+    """Minimal decompiled APK with obfuscated package dirs (no com/tuya/ dir)."""
+    pkg = tmp_path / "sources" / "com" / "mycompany" / "smartbulb"
+    pkg.mkdir(parents=True)
+    resources = tmp_path / "resources"
+    resources.mkdir(exist_ok=True)
+
+
+def test_whitelabel_detected_via_manifest(tmp_path: Path) -> None:
+    """Tuya service name in AndroidManifest.xml flags the app even without SDK dirs."""
+    _make_obfuscated_tree(tmp_path)
+    (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "App.java").write_text(
+        "package com.mycompany.smartbulb; public class App {}"
+    )
+    (tmp_path / "resources" / "AndroidManifest.xml").write_text(
+        '<?xml version="1.0"?>'
+        '<manifest package="com.mycompany.smartbulb">'
+        '<application>'
+        '<service android:name="com.thingclips.smart.camera.middleware.MqttService"/>'
+        '</application>'
+        '</manifest>'
+    )
+    assert classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
+
+
+def test_whitelabel_detected_via_import(tmp_path: Path) -> None:
+    """import com.tuya.* in a Java file flags the app even without SDK dirs."""
+    _make_obfuscated_tree(tmp_path)
+    (tmp_path / "resources" / "AndroidManifest.xml").write_text(
+        '<?xml version="1.0"?><manifest package="com.mycompany.smartbulb"/>'
+    )
+    (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "DeviceManager.java").write_text(
+        "package com.mycompany.smartbulb;\n"
+        "import com.tuya.smart.home.sdk.TuyaHomeSdk;\n"
+        "public class DeviceManager {}"
+    )
+    assert classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
+
+
+def test_whitelabel_detected_via_thingclips_import(tmp_path: Path) -> None:
+    """import com.thingclips.* also triggers detection."""
+    _make_obfuscated_tree(tmp_path)
+    (tmp_path / "resources" / "AndroidManifest.xml").write_text(
+        '<?xml version="1.0"?><manifest package="com.mycompany.smartbulb"/>'
+    )
+    (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "Sdk.java").write_text(
+        "package com.mycompany.smartbulb;\n"
+        "import com.thingclips.smart.sdk.api.ITuyaSmartDevice;\n"
+        "public class Sdk {}"
+    )
+    assert classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
+
+
+def test_whitelabel_detected_via_api_host_in_source(tmp_path: Path) -> None:
+    """Tuya cloud API hostname in a string constant flags the app."""
+    _make_obfuscated_tree(tmp_path)
+    (tmp_path / "resources" / "AndroidManifest.xml").write_text(
+        '<?xml version="1.0"?><manifest package="com.mycompany.smartbulb"/>'
+    )
+    (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "Config.java").write_text(
+        'package com.mycompany.smartbulb;\n'
+        'public class Config {\n'
+        '    static final String API_HOST = "openapi.tuyacn.com";\n'
+        '}'
+    )
+    assert classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
+
+
+def test_whitelabel_detected_via_api_host_in_strings_xml(tmp_path: Path) -> None:
+    """Tuya API hostname in strings.xml resource flags the app."""
+    _make_obfuscated_tree(tmp_path)
+    (tmp_path / "resources" / "AndroidManifest.xml").write_text(
+        '<?xml version="1.0"?><manifest package="com.mycompany.smartbulb"/>'
+    )
+    (tmp_path / "resources" / "strings.xml").write_text(
+        '<?xml version="1.0"?><resources>'
+        '<string name="tuya_host">openapi.tuyaeu.com</string>'
+        '</resources>'
+    )
+    assert classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
+
+
+def test_import_scan_reads_only_top_of_file(tmp_path: Path) -> None:
+    """Import detection should NOT trigger on a Tuya string buried deep in a non-import context."""
+    _make_obfuscated_tree(tmp_path)
+    (tmp_path / "resources" / "AndroidManifest.xml").write_text(
+        '<?xml version="1.0"?><manifest package="com.mycompany.smartbulb"/>'
+    )
+    # 'import com.tuya.' buried far past 4 KB — should not be detected
+    padding = "// " + "x" * 80 + "\n"
+    deep_content = (
+        "package com.mycompany.smartbulb;\n"
+        + padding * 60   # >4 KB of padding
+        + "import com.tuya.smart.SomeClass;  // too deep, not a real import\n"
+        + "public class Hidden {}"
+    )
+    (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "Hidden.java").write_text(deep_content)
+    assert not classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
+
+
+def test_clean_app_not_flagged(tmp_path: Path) -> None:
+    """A non-Tuya whitelabel with no Tuya signals should not be flagged."""
+    _make_obfuscated_tree(tmp_path)
+    (tmp_path / "resources" / "AndroidManifest.xml").write_text(
+        '<?xml version="1.0"?>'
+        '<manifest package="com.mycompany.smartbulb">'
+        '<application>'
+        '<service android:name="com.mycompany.smartbulb.SyncService"/>'
+        '</application>'
+        '</manifest>'
+    )
+    (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "App.java").write_text(
+        "package com.mycompany.smartbulb;\n"
+        "import com.mycompany.smartbulb.internal.Client;\n"
+        "public class App {}"
+    )
+    assert not classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
+
+
 # ── Emitter context for Govee ─────────────────────────────────────────────────
 
 def test_govee_emitter_context() -> None:
