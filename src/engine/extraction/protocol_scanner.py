@@ -29,6 +29,8 @@ from ..ir.models import (
     TransportType,
 )
 from .discovery_scanner import scan as discovery_scan
+from .retrofit_scanner import RetrofitScanner
+from .payload_resolver import PayloadResolver
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,12 +65,14 @@ _SERIALIZED_RE = re.compile(
 
 class ProtocolScanner:
     def __init__(self, apk_out_dir: Path) -> None:
+        self._apk_out_dir = apk_out_dir
         self._sources = apk_out_dir / "sources"
         self._app_sources: list[Path] = []
         self._app_package: str = ""
         self._str_constants: dict[str, str] = {}   # CONST_NAME → "string_value"
         self._response_cmds: set[str] = set()       # cmds that receive a reply
         self._no_response_cmds: set[str] = set()    # fire-and-forget / push cmds
+        self._retrofit_endpoints: list[Endpoint] = []  # populated by _detect_transport when Retrofit found
         self.extra: dict[str, Any] = {}             # caller merges into ProtocolIR.extra
 
     def scan(self, app_package: str) -> tuple[
@@ -169,7 +173,16 @@ class ProtocolScanner:
                 url_template=f"ws://{{host}}:{port}" if port else "ws://{host}",
             )
         if has_retrofit:
-            _LOGGER.info("Transport: HTTP REST (Retrofit)")
+            # P2-1: use dedicated RetrofitScanner for richer extraction
+            ret_scanner = RetrofitScanner(self._apk_out_dir)
+            ret_eps, interceptors = ret_scanner.scan(self._app_package)
+            self._retrofit_endpoints = ret_scanner.to_ir_endpoints(ret_eps)
+            if interceptors:
+                self.extra["okhttp_interceptors"] = [
+                    {"class": ic.class_name, "headers": ic.injected_headers}
+                    for ic in interceptors
+                ]
+            _LOGGER.info("Transport: HTTP REST (Retrofit, %d endpoints)", len(ret_eps))
             return TransportContract(type=TransportType.HTTP_REST, port=80, host_source="manual")
 
         _LOGGER.warning("Transport: unknown, defaulting to HTTP_REST")
@@ -257,7 +270,7 @@ class ProtocolScanner:
                 if cmd_value:
                     self._register(src, cmd_value, const_name, class_name, endpoints_by_cmd)
 
-            # Retrofit HTTP endpoints
+            # Retrofit HTTP endpoints (basic pass — enriched below via _retrofit_endpoints)
             for m in _RETROFIT_METHOD_RE.finditer(src):
                 key = f"{m.group(1)} {m.group(2)}"
                 if key not in endpoints_by_cmd:
@@ -268,6 +281,38 @@ class ProtocolScanner:
                         awaits_response=True,
                         source_class=class_name,
                     )
+
+        # P2-1: merge richer RetrofitScanner results (set by _detect_transport)
+        for ep in self._retrofit_endpoints:
+            if ep.cmd not in endpoints_by_cmd:
+                endpoints_by_cmd[ep.cmd] = ep
+            else:
+                # Prefer the richer entry
+                existing = endpoints_by_cmd[ep.cmd]
+                if len(ep.request_fields) > len(existing.request_fields):
+                    endpoints_by_cmd[ep.cmd] = ep
+
+        # P2-2: enrich @Body / response types via PayloadResolver
+        resolver = PayloadResolver(self._apk_out_dir)
+        for key, ep in endpoints_by_cmd.items():
+            enriched_req = list(ep.request_fields)
+            enriched_resp = list(ep.response_fields)
+            for fld in ep.request_fields:
+                if fld.kind == FieldKind.OBJECT and fld.description:
+                    schema = resolver.resolve(fld.description)
+                    if schema.fields:
+                        enriched_req = [f for f in enriched_req if f.name != fld.name]
+                        enriched_req.extend(schema.fields)
+            for fld in ep.response_fields:
+                if fld.kind == FieldKind.OBJECT and fld.description:
+                    schema = resolver.resolve(fld.description)
+                    if schema.fields:
+                        enriched_resp = [f for f in enriched_resp if f.name != fld.name]
+                        enriched_resp.extend(schema.fields)
+            if enriched_req != list(ep.request_fields) or enriched_resp != list(ep.response_fields):
+                endpoints_by_cmd[key] = ep.model_copy(
+                    update={"request_fields": enriched_req, "response_fields": enriched_resp}
+                )
 
         # Split by direction: no-response minus user_control → events
         user_control = self._str_constants.get("USER_CONTROL", "user_control")

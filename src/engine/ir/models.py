@@ -156,6 +156,13 @@ class CryptoUsage(BaseModel):
     confidence: float = 1.0  # 0..1; <0.5 means inferred from import only
 
 
+class PayloadSchema(BaseModel):
+    """P2-2 — Resolved fields for one @Body parameter or response type."""
+    class_name: str               # Java class name (e.g. "PowerRequest")
+    fields: list[FieldDef]
+    is_collection: bool = False   # True when the wire type is List<class_name>
+
+
 class PlayStoreInfo(BaseModel):
     """Metadata fetched from Google Play Store during P1."""
     title: str
