@@ -6,24 +6,24 @@
 # and runs the full fixture suite. Auto-merges if green.
 
 [target]
-ha_core_version = "2026.5.2"
+ha_core_version = "2026.8.2"
 python_version = "3.14"
 quality_scale_target = "platinum"
 
 # minimum_required_version emitted into generated manifest.json files.
 # Usually matches ha_core_version but can lag by one release cycle
 # for compatibility with users on the prior monthly.
-generated_minimum_required = "2026.5.0"
+generated_minimum_required = "2026.8.0"
 
 [docker]
 # Image tag for V-3's HA container test.
 ha_image = "homeassistant/home-assistant"
-ha_image_tag = "2026.5.2"
+ha_image_tag = "2026.8.2"
 
 [anchors]
 # Pulled from HA Core at this commit/tag for fixtures/anchors/.
 # Bump in lockstep with ha_core_version.
-ref = "2026.5.2"
+ref = "2026.8.2"
 
 [sandbox]
 # F-5: local Docker image built by `make sandbox`.
