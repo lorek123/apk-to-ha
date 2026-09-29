@@ -25,6 +25,7 @@ from typing import Any
 from ..ir.models import (
     AuthScheme,
     AuthType,
+    ChallengeResponseProfile,
     Direction,
     DiscoveryMechanism,
     DiscoveryType,
@@ -203,6 +204,8 @@ def _detect_challenge_auth(commands: list[Endpoint], events: list[Endpoint]) -> 
         type=AuthType.CHALLENGE_RESPONSE,
         handshake_cmd=proof,
         description=f"Read '{challenge}', write the signed response to '{proof}'",
+        # Roles only; the pipeline completes it once crypto and traces are known.
+        challenge=ChallengeResponseProfile(challenge=challenge, proof=proof),
     )
 
 

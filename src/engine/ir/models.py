@@ -114,11 +114,53 @@ class DiscoveryMechanism(BaseModel):
     response_fields: list[FieldDef] = Field(default_factory=list)
 
 
+class ChallengeResponseProfile(BaseModel):
+    """How a client proves itself to a challenge-response device (derived from code).
+
+    Names are the endpoint (characteristic) cmds; ``message`` is the signed
+    concatenation in order, using the roles "challenge" and "client_nonce".
+    """
+
+    challenge: str  # read: the device's nonce
+    proof: str  # write: the signature
+    ack: str | None = None  # read: first byte 1 means accepted
+    client_key: str | None = None  # write: our public key
+    client_nonce: str | None = None  # write: our fresh random bytes
+    client_nonce_length: int | None = None
+    message: list[str] = Field(default_factory=list)
+    algorithm: str | None = None  # e.g. "ecdsa-p256-sha256"
+    signature_encoding: Literal["raw_rs", "der"] | None = None
+    public_key_encoding: Literal["sec1_compressed", "sec1_uncompressed"] | None = None
+    action: str | None = None  # write: the action code, before the handshake
+    primary_action: int | None = None  # the app's main action (e.g. open the gate)
+    probe_action: int | None = None  # authenticates without actuating anything
+
+    @property
+    def missing(self) -> list[str]:
+        """Pieces a client needs but the extraction couldn't establish."""
+        required = {
+            "ack": self.ack,
+            "client_key": self.client_key,
+            "algorithm": self.algorithm,
+            "signature_encoding": self.signature_encoding,
+            "public_key_encoding": self.public_key_encoding,
+            "message": self.message or None,
+            "action": self.action,
+            "primary_action": self.primary_action,
+            "probe_action": self.probe_action,
+        }
+        if "client_nonce" in self.message:
+            required["client_nonce"] = self.client_nonce
+            required["client_nonce_length"] = self.client_nonce_length
+        return [name for name, value in required.items() if value is None]
+
+
 class AuthScheme(BaseModel):
     type: AuthType
     handshake_cmd: str | None = None  # e.g. "grantAccess"
     fields: list[FieldDef] = Field(default_factory=list)
     description: str | None = None
+    challenge: ChallengeResponseProfile | None = None
 
 
 class StateSchema(BaseModel):
