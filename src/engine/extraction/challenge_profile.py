@@ -103,6 +103,15 @@ def build(
         (c for c, launcher in sorted(codes.items()) if launcher and not c & _PROBE_BIT), None
     )
 
+    # `if (this.$action == 1) { …readCharacteristic(gatt, …getNONCE_UUID()) …}`: that code
+    # skips the action write and goes straight to the challenge.
+    implicit = re.search(
+        r"action\s*==\s*(\d+)\)\s*\{(?:(?!writeCharacteristic)[\s\S]){0,400}?"
+        rf"readCharacteristic\([^;]*{re.escape(challenge)}",
+        all_src,
+        re.IGNORECASE,
+    )
+
     return ChallengeResponseProfile(
         challenge=challenge,
         proof=proof,
@@ -123,6 +132,7 @@ def build(
         action=action,
         primary_action=primary,
         probe_action=probe,
+        implicit_action=int(implicit.group(1)) if implicit else None,
     )
 
 

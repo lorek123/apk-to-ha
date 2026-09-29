@@ -627,12 +627,12 @@ def _emit_blocker(ir: ProtocolIR) -> tuple[str, str] | None:
     if not (ir.commands or ir.events or ir.state.fields):
         # Not a partial result: an empty integration fails V-3 at import.
         return "nothing-extracted", "Nothing extracted (no commands/events/state)"
-    if ir.auth.type == AuthType.CHALLENGE_RESPONSE:
-        # The device would reject every command the integration sends.
+    if ir.auth.type == AuthType.CHALLENGE_RESPONSE and emitter_context.challenge_ctx(ir) is None:
+        # Without a complete profile the device would reject every command we send.
+        missing = ir.auth.challenge.missing if ir.auth.challenge else ["profile"]
         return (
             "unsupported-auth",
-            f"Auth '{ir.auth.type.value}' is not supported by the templates yet "
-            f"({ir.auth.description})",
+            f"Challenge-response profile incomplete (missing: {', '.join(missing)})",
         )
     if ir.transport.type == TransportType.HTTP_REST and not ir.state.poll_endpoint:
         # The HTTP templates poll a state endpoint; without one there's nothing to show.

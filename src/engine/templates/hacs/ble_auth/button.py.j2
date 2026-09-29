@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: MIT
+"""Button platform for {{ name }}: the app's main action, authenticated."""
+from __future__ import annotations
+
+from homeassistant.components import bluetooth
+from homeassistant.components.button import ButtonEntity
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from {{ sdk_package }} import (
+    PRIMARY_ACTION,
+    {{ class_prefix }}AuthError,
+    {{ class_prefix }}ConnectionError,
+)
+
+from . import {{ class_prefix }}ConfigEntry
+from .const import DOMAIN
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: {{ class_prefix }}ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    async_add_entities([{{ class_prefix }}ActionButton(entry)])
+
+
+class {{ class_prefix }}ActionButton(ButtonEntity):
+    """Runs the device's main action (connects, authenticates, acts, disconnects)."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "activate"
+
+    def __init__(self, entry: {{ class_prefix }}ConfigEntry) -> None:
+        self._entry = entry
+        address = entry.runtime_data.address
+        self._attr_unique_id = f"{address}_action_{PRIMARY_ACTION}"
+        self._attr_device_info = DeviceInfo(
+            connections={(CONNECTION_BLUETOOTH, address)},
+            identifiers={(DOMAIN, address)},
+            name=entry.title,
+            manufacturer={{ name | tojson }},
+        )
+
+    @property
+    def available(self) -> bool:
+        return bluetooth.async_address_present(
+            self.hass, self._entry.runtime_data.address, connectable=True
+        )
+
+    async def async_press(self) -> None:
+        try:
+            await self._entry.runtime_data.perform(PRIMARY_ACTION)
+        except {{ class_prefix }}AuthError as exc:
+            # Key revoked or never enrolled: ask the user to enrol a new one.
+            self._entry.async_start_reauth(self.hass)
+            raise HomeAssistantError("The device rejected Home Assistant's key") from exc
+        except {{ class_prefix }}ConnectionError as exc:
+            raise HomeAssistantError(f"Could not reach the device: {exc}") from exc

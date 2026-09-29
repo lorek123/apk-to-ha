@@ -10,6 +10,7 @@ from typing import Any
 
 from ..extraction.signing_emitter import build as build_signing_ctx
 from ..ir.models import (
+    AuthType,
     Direction,
     DiscoveryType,
     Endpoint,
@@ -118,6 +119,44 @@ def _http_key(path: str) -> str:
     """Entity/SDK key from a path's fixed segments: /goto/radec → goto_radec."""
     fixed = [s for s in path.split("/") if s and not _PATH_PARAM.fullmatch(s)]
     return _slugify("_".join(fixed)) or "root"
+
+
+_CURVE_CLASSES = {"p256": "SECP256R1", "p384": "SECP384R1"}
+
+
+def challenge_ctx(ir: ProtocolIR) -> dict[str, Any] | None:
+    """Template view of a complete challenge-response profile, with characteristic UUIDs."""
+    profile = ir.auth.challenge
+    if ir.auth.type != AuthType.CHALLENGE_RESPONSE or profile is None or profile.missing:
+        return None
+    uuids: dict[str, str] = ir.extra.get("ble_char_uuids", {})
+    roles = {
+        "challenge": profile.challenge,
+        "proof": profile.proof,
+        "ack": profile.ack,
+        "client_key": profile.client_key,
+        "client_nonce": profile.client_nonce,
+        "action": profile.action,
+    }
+    role_uuids = {role: uuids.get(cmd) for role, cmd in roles.items() if cmd}
+    if any(u is None for u in role_uuids.values()):
+        return None  # a role without a known characteristic UUID can't be driven
+    curve = (profile.algorithm or "").split("-")[1] if profile.algorithm else ""
+    if curve not in _CURVE_CLASSES:
+        return None
+    return {
+        **{f"{role}_uuid": u for role, u in role_uuids.items()},
+        "message": profile.message,
+        "curve_class": _CURVE_CLASSES[curve],
+        "coord_bytes": 32 if curve == "p256" else 48,
+        "raw_signature": profile.signature_encoding == "raw_rs",
+        "compressed_key": profile.public_key_encoding == "sec1_compressed",
+        "client_nonce_length": profile.client_nonce_length,
+        "primary_action": profile.primary_action,
+        "probe_action": profile.probe_action,
+        "implicit_action": profile.implicit_action,
+        "service_uuids": ir.extra.get("ble_service_uuids", []),
+    }
 
 
 def _required_params(ep: Endpoint) -> list[FieldDef]:
@@ -342,6 +381,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     if has_camera:
         entity_sections["camera"] = {"stream": {"name": "Camera"}}
 
+    challenge = challenge_ctx(ir)
     ps = ir.play_store
     return {
         # identifiers
@@ -364,6 +404,9 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         # discovery.py broadcasts CMD_DISCOVERY on UDP_PORT: needs both.
         "has_udp_discovery": bool(ir.discovery.port and ir.discovery.broadcast_cmd),
         "transport": ir.transport.type.value,
+        # BLE devices that verify signed challenges (None unless the profile is complete).
+        "challenge": challenge,
+        "has_challenge_auth": challenge is not None,
         # Poll-based HTTP devices: the GET that returns state ("GET /status").
         "poll_method": ir.state.poll_endpoint.split(" ", 1)[0] if ir.state.poll_endpoint else None,
         "poll_path": ir.state.poll_endpoint.split(" ", 1)[1] if ir.state.poll_endpoint else None,

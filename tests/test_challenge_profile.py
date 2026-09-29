@@ -54,6 +54,16 @@ public final class MainActivity {
 _ADMIN = """package com.example.gate;
 public final class ManualControl {
     void open() { activity.authenticate(2, callback); }
+    public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+        if (this.$action == 1) {
+            BleManager bleManager = this.this$0.bleManager;
+            if (bleManager != null) {
+                bleManager.readCharacteristic(gatt, BleManager.INSTANCE.getNONCE_UUID());
+                return;
+            }
+        }
+        bleManager2.writeCharacteristic(gatt, BleManager.INSTANCE.getACTION_UUID(), new byte[]{(byte) this.$action});
+    }
 }
 """
 
@@ -123,6 +133,7 @@ def test_complete_profile_from_code(tmp_path: Path) -> None:
     assert profile.client_nonce_length == 32
     # 1 is the launcher screen's action; 2 is admin-only; 128 authenticates without actuating
     assert (profile.primary_action, profile.probe_action) == (1, 128)
+    assert profile.implicit_action == 1  # sent by skipping the action write
 
 
 def test_unidentified_signed_component_is_not_guessed(tmp_path: Path) -> None:

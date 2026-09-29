@@ -1,0 +1,98 @@
+# SPDX-License-Identifier: MIT
+"""BLE client for {{ name }}: one authenticated action per connection (like the app)."""
+from __future__ import annotations
+
+import asyncio
+import logging
+
+from bleak.backends.device import BLEDevice
+from bleak.exc import BleakError
+from bleak_retry_connector import BleakClientWithServiceCache, establish_connection
+
+from . import auth
+
+_LOGGER = logging.getLogger(__name__)
+
+SERVICE_UUIDS = {{ challenge.service_uuids | tojson }}
+CHALLENGE_UUID = "{{ challenge.challenge_uuid }}"
+CLIENT_KEY_UUID = "{{ challenge.client_key_uuid }}"
+{% if "client_nonce" in challenge.message %}
+CLIENT_NONCE_UUID = "{{ challenge.client_nonce_uuid }}"
+{% endif %}
+PROOF_UUID = "{{ challenge.proof_uuid }}"
+ACK_UUID = "{{ challenge.ack_uuid }}"
+ACTION_UUID = "{{ challenge.action_uuid }}"
+
+PRIMARY_ACTION = {{ challenge.primary_action }}
+# Authenticates and checks permissions without actuating anything.
+PROBE_ACTION = {{ challenge.probe_action }}
+# The app sends this action by not writing ACTION_UUID at all.
+IMPLICIT_ACTION = {{ challenge.implicit_action if challenge.implicit_action is not none else "None" }}
+
+ACTION_TIMEOUT = 30.0
+
+
+class {{ class_prefix }}ConnectionError(Exception):
+    """The device couldn't be reached or broke off the exchange."""
+
+
+class {{ class_prefix }}AuthError({{ class_prefix }}ConnectionError):
+    """The device rejected our key: not enrolled yet, or revoked."""
+
+
+class {{ class_prefix }}Client:
+    """Runs authenticated actions on one device with one key."""
+
+    def __init__(self, ble_device: BLEDevice, private_key_pem: str) -> None:
+        self._device = ble_device
+        self._key = auth.load_private_key(private_key_pem)  # fails fast on a bad key
+        self._lock = asyncio.Lock()
+
+    @property
+    def address(self) -> str:
+        return self._device.address
+
+    def set_ble_device(self, ble_device: BLEDevice) -> None:
+        """Use the freshest BLEDevice (the best adapter/path) from advertisements."""
+        self._device = ble_device
+
+    async def perform(self, action: int) -> None:
+        """Authenticate and run *action*; raises AuthError if the key isn't accepted."""
+        async with self._lock, asyncio.timeout(ACTION_TIMEOUT):
+            await self._run(action)
+
+    async def verify_enrolled(self) -> None:
+        """Check the key is accepted, without actuating anything."""
+        await self.perform(PROBE_ACTION)
+
+    async def _run(self, action: int) -> None:
+        try:
+            client = await establish_connection(
+                BleakClientWithServiceCache, self._device, self._device.name or self.address
+            )
+        except (BleakError, TimeoutError) as exc:
+            raise {{ class_prefix }}ConnectionError(f"Cannot connect to {self.address}") from exc
+        try:
+            if action != IMPLICIT_ACTION:
+                await client.write_gatt_char(ACTION_UUID, bytes([action]), response=True)
+            challenge = bytes(await client.read_gatt_char(CHALLENGE_UUID))
+            await client.write_gatt_char(
+                CLIENT_KEY_UUID, auth.public_key_bytes(self._key), response=True
+            )
+{% if "client_nonce" in challenge.message %}
+            client_nonce = auth.new_client_nonce()
+            await client.write_gatt_char(CLIENT_NONCE_UUID, client_nonce, response=True)
+            message = auth.signed_message(challenge, client_nonce)
+{% else %}
+            message = auth.signed_message(challenge)
+{% endif %}
+            await client.write_gatt_char(PROOF_UUID, auth.sign(self._key, message), response=True)
+            ack = bytes(await client.read_gatt_char(ACK_UUID))
+        except BleakError as exc:
+            raise {{ class_prefix }}ConnectionError(f"Exchange with {self.address} failed") from exc
+        except auth.AuthProtocolError as exc:
+            raise {{ class_prefix }}ConnectionError(str(exc)) from exc
+        finally:
+            await client.disconnect()
+        if not ack or ack[0] != 1:
+            raise {{ class_prefix }}AuthError(f"{self.address} did not accept our key")

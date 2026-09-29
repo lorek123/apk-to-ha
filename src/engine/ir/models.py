@@ -134,6 +134,9 @@ class ChallengeResponseProfile(BaseModel):
     action: str | None = None  # write: the action code, before the handshake
     primary_action: int | None = None  # the app's main action (e.g. open the gate)
     probe_action: int | None = None  # authenticates without actuating anything
+    # Action the app sends by *not* writing the action characteristic (it reads the
+    # challenge straight away); clients must do the same for that code.
+    implicit_action: int | None = None
 
     @property
     def missing(self) -> list[str]:

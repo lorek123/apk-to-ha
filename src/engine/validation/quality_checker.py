@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -82,20 +83,46 @@ def check(integration_dir: Path) -> QualityReport:
 # ── individual checkers ───────────────────────────────────────────────────────
 
 
-def _check_entity_name(d: Path, rule: QualityRule) -> RuleResult:
-    base = d / "entity_base.py"
-    if base.exists() and "_attr_has_entity_name = True" in base.read_text():
-        return RuleResult(rule=rule, passed=True)
-    return RuleResult(
-        rule=rule, passed=False, detail="entity_base.py missing _attr_has_entity_name = True"
+_ENTITY_CLASS = re.compile(r"^class\s+\w+\(([^)]*Entity[^)]*)\):", re.MULTILINE)
+
+
+def _entity_files(d: Path) -> list[Path]:
+    """Files that define entity classes (entity_base.py included)."""
+    return sorted(
+        py
+        for py in d.glob("*.py")
+        if _ENTITY_CLASS.search(py.read_text()) or py.name == "entity_base.py"
     )
 
 
-def _check_unique_id(d: Path, rule: QualityRule) -> RuleResult:
+def _entity_rule(d: Path, rule: QualityRule, needle: str, what: str) -> RuleResult:
+    """Every entity-defining file sets *needle* itself or inherits it from entity_base.py."""
     base = d / "entity_base.py"
-    if base.exists() and "_attr_unique_id" in base.read_text():
-        return RuleResult(rule=rule, passed=True)
-    return RuleResult(rule=rule, passed=False, detail="entity_base.py missing _attr_unique_id")
+    base_ok = base.exists() and needle in base.read_text()
+    missing = []
+    for py in _entity_files(d):
+        src = py.read_text()
+        inherits = py.name != "entity_base.py" and "from .entity_base import" in src and base_ok
+        if needle not in src and not inherits:
+            missing.append(py.name)
+    if not _entity_files(d):
+        return RuleResult(rule=rule, passed=False, detail="no entity classes found")
+    if missing:
+        return RuleResult(rule=rule, passed=False, detail=f"{', '.join(missing)} missing {what}")
+    return RuleResult(rule=rule, passed=True)
+
+
+def _not_applicable(rule: QualityRule, why: str) -> RuleResult:
+    _LOGGER.info("quality_checker: %s not applicable — %s", rule.id, why)
+    return RuleResult(rule=rule, passed=True, detail=f"n/a: {why}")
+
+
+def _check_entity_name(d: Path, rule: QualityRule) -> RuleResult:
+    return _entity_rule(d, rule, "_attr_has_entity_name = True", "_attr_has_entity_name = True")
+
+
+def _check_unique_id(d: Path, rule: QualityRule) -> RuleResult:
+    return _entity_rule(d, rule, "_attr_unique_id", "_attr_unique_id")
 
 
 def _check_runtime_data(d: Path, rule: QualityRule) -> RuleResult:
@@ -106,37 +133,36 @@ def _check_runtime_data(d: Path, rule: QualityRule) -> RuleResult:
 
 
 def _check_aiohttp_client(d: Path, rule: QualityRule) -> RuleResult:
-    for filename in ("__init__.py", "config_flow.py"):
-        f = d / filename
-        if f.exists() and "async_get_clientsession" in f.read_text():
-            return RuleResult(rule=rule, passed=True)
+    sources = {py.name: py.read_text() for py in d.glob("*.py")}
+    direct = [n for n, src in sources.items() if "aiohttp.ClientSession(" in src]
+    if direct:
+        return RuleResult(
+            rule=rule, passed=False, detail=f"aiohttp.ClientSession() used directly in {direct}"
+        )
+    uses_http = any("aiohttp" in src or "session=" in src for src in sources.values())
+    if not uses_http:
+        return _not_applicable(rule, "the integration makes no HTTP/WebSocket connections")
+    if any("async_get_clientsession" in src for src in sources.values()):
+        return RuleResult(rule=rule, passed=True)
     return RuleResult(
-        rule=rule,
-        passed=False,
-        detail="async_get_clientsession not found in __init__.py or config_flow.py",
+        rule=rule, passed=False, detail="HTTP session not obtained via async_get_clientsession"
     )
 
 
 def _check_update_failed(d: Path, rule: QualityRule) -> RuleResult:
     coord = d / "coordinator.py"
-    if coord.exists():
-        src = coord.read_text()
-        if "UpdateFailed" in src and "raise UpdateFailed" in src:
-            return RuleResult(rule=rule, passed=True)
+    if not coord.exists():
+        return _not_applicable(rule, "no DataUpdateCoordinator (nothing is polled)")
+    src = coord.read_text()
+    if "UpdateFailed" in src and "raise UpdateFailed" in src:
+        return RuleResult(rule=rule, passed=True)
     return RuleResult(
         rule=rule, passed=False, detail="coordinator.py does not import and raise UpdateFailed"
     )
 
 
 def _check_device_info(d: Path, rule: QualityRule) -> RuleResult:
-    base = d / "entity_base.py"
-    if base.exists():
-        src = base.read_text()
-        if "DeviceInfo" in src and "identifiers=" in src:
-            return RuleResult(rule=rule, passed=True)
-    return RuleResult(
-        rule=rule, passed=False, detail="entity_base.py missing DeviceInfo with identifiers="
-    )
+    return _entity_rule(d, rule, "identifiers=", "DeviceInfo with identifiers=")
 
 
 def _check_spdx_headers(d: Path, rule: QualityRule) -> RuleResult:
