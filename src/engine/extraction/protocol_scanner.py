@@ -245,7 +245,9 @@ class ProtocolScanner:
                     type=AuthType.HANDSHAKE,
                     handshake_cmd=grant_access_value,
                     fields=fields,
-                    description="Send grantAccess on WebSocket open; robot responds with state + resultCode",
+                    description=(
+                        "Send grantAccess on WebSocket open; robot responds with state + resultCode"
+                    ),
                 )
             # Retrofit @Headers (class-level) or @Header (method-level) with API-key pattern
             if "@Headers" in src and ("Authorization" in src or "X-API-Key" in src):

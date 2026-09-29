@@ -78,7 +78,6 @@ class RNScanner:
         # ── extract raw signals ────────────────────────────────────────────────
         ws_urls = list(dict.fromkeys(_WS_URL_RE.findall(text) + _WS_URL_BARE_RE.findall(text)))
         http_urls = list(dict.fromkeys(_HTTP_URL_RE.findall(text)))
-        base_urls = list(dict.fromkeys(_BASE_URL_RE.findall(text)))
         cmd_names = list(dict.fromkeys(_CMD_STR_RE.findall(text)))  # [(key, value), ...]
         cmd_names_only = [v for _, v in cmd_names]
 
@@ -105,7 +104,7 @@ class RNScanner:
             transport: TransportContract = TransportContract(
                 type=TransportType.WEBSOCKET,
                 port=port,
-                url_template=all_ws[0] if "{host}" not in all_ws[0] else all_ws[0],
+                url_template=all_ws[0],
             )
         elif fetch_calls or http_urls:
             port = _port_from_url((fetch_calls + http_urls)[0]) or 80

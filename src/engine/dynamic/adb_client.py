@@ -39,7 +39,7 @@ async def adb(*args: str, check: bool = True) -> tuple[int, str, str]:
 
 async def connect() -> None:
     """Connect adb to the redroid container."""
-    rc, out, _ = await _run(["adb", "connect", "localhost:5555"], check=False)
+    _rc, out, _ = await _run(["adb", "connect", "localhost:5555"], check=False)
     _LOGGER.debug("adb connect: %s", out.strip())
     # Wait for device to be ready
     await adb("wait-for-device")
@@ -51,20 +51,26 @@ async def install_apk(apk_path: Path) -> None:
     await adb("install", "-r", "-t", str(apk_path))
 
 
+def _download_frida_server() -> None:
+    """Blocking download + unpack of frida-server; run via asyncio.to_thread."""
+    if _FRIDA_SERVER_LOCAL.exists():
+        return
+    _LOGGER.info("adb: downloading frida-server %s", _FRIDA_SERVER_VERSION)
+    _FRIDA_SERVER_LOCAL.parent.mkdir(parents=True, exist_ok=True)
+    import lzma
+    import urllib.request
+
+    xz_path = Path(str(_FRIDA_SERVER_LOCAL) + ".xz")
+    urllib.request.urlretrieve(_FRIDA_SERVER_URL, xz_path)  # noqa: S310
+    with lzma.open(xz_path) as f_in, _FRIDA_SERVER_LOCAL.open("wb") as f_out:
+        f_out.write(f_in.read())
+    xz_path.unlink()
+    _LOGGER.info("adb: frida-server downloaded")
+
+
 async def ensure_frida_server() -> None:
     """Download (if needed) and push frida-server to the device."""
-    if not _FRIDA_SERVER_LOCAL.exists():
-        _LOGGER.info("adb: downloading frida-server %s", _FRIDA_SERVER_VERSION)
-        _FRIDA_SERVER_LOCAL.parent.mkdir(parents=True, exist_ok=True)
-        import lzma
-        import urllib.request
-
-        xz_path = Path(str(_FRIDA_SERVER_LOCAL) + ".xz")
-        urllib.request.urlretrieve(_FRIDA_SERVER_URL, xz_path)  # noqa: S310
-        with lzma.open(xz_path) as f_in, _FRIDA_SERVER_LOCAL.open("wb") as f_out:
-            f_out.write(f_in.read())
-        xz_path.unlink()
-        _LOGGER.info("adb: frida-server downloaded")
+    await asyncio.to_thread(_download_frida_server)
 
     _LOGGER.debug("adb: pushing frida-server")
     await adb("push", str(_FRIDA_SERVER_LOCAL), _FRIDA_SERVER_REMOTE)

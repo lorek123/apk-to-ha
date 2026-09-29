@@ -40,7 +40,6 @@ _IMPORT_SCAN_BYTES = 4096
 
 def classify(apk_out_dir: Path) -> Framework:
     resources = apk_out_dir / "resources"
-    sources = apk_out_dir / "sources"
 
     # Flutter: look for flutter_assets dir or libflutter.so in resources
     if resources.exists():

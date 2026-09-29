@@ -28,7 +28,6 @@ def test_all_rules_have_required_fields() -> None:
 
 
 def test_deterministic_rules_subset() -> None:
-    all_rules = load()
     det = deterministic_rules()
     assert len(det) == 10
     assert all(r.check_type == "deterministic" for r in det)
@@ -238,7 +237,9 @@ def test_check_tolerates_missing_optional_files(tmp_path: Path) -> None:
     d.mkdir(parents=True)
     (d / "translations").mkdir()
     (d / "__init__.py").write_text(
-        "# SPDX-License-Identifier: MIT\nentry.runtime_data = None\naiohttp_client.async_get_clientsession(hass)\n"
+        "# SPDX-License-Identifier: MIT\n"
+        "entry.runtime_data = None\n"
+        "aiohttp_client.async_get_clientsession(hass)\n"
     )
     (d / "manifest.json").write_text(json.dumps({"domain": "bare", "iot_class": "local_push"}))
     (d / "strings.json").write_text("{}")

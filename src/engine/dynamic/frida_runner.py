@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from pathlib import Path
 from typing import Any
@@ -88,14 +89,10 @@ async def capture(
 
     # Teardown
     def _cleanup() -> None:
-        try:
+        with contextlib.suppress(Exception):
             script.unload()
-        except Exception:
-            pass
-        try:
+        with contextlib.suppress(Exception):
             proc.detach()
-        except Exception:
-            pass
 
     await loop.run_in_executor(None, _cleanup)
 

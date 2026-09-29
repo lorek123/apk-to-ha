@@ -281,7 +281,7 @@ def test_scanner_scan_finds_interceptor(tmp_path: Path) -> None:
     """,
     )
     scanner = RetrofitScanner(apk_dir)
-    endpoints, interceptors = scanner.scan("com.test")
+    _endpoints, interceptors = scanner.scan("com.test")
     assert len(interceptors) == 1
     assert interceptors[0].class_name == "AuthInterceptor"
 

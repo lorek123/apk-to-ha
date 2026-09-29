@@ -90,7 +90,7 @@ class Endpoint(BaseModel):
     response_fields: list[FieldDef] = Field(default_factory=list)
     description: str | None = None
     source_class: str | None = None  # Java class where this was found
-    confidence: float = 1.0  # 0.0–1.0; <0.7 flagged for review
+    confidence: float = 1.0  # 0.0-1.0; <0.7 flagged for review
     entity_hint: EntityHint | None = None  # suggested HA platform for this endpoint
 
 
@@ -150,7 +150,7 @@ class SigningTrace(BaseModel):
     components: list[SigningComponent]  # signing input parts, in order
     key_source: str | None = None  # variable holding the HMAC key
     source_method: str  # fully-qualified method name
-    confidence: float  # min(component confidences) × coverage factor
+    confidence: float  # min(component confidences) * coverage factor
     unresolved: list[str] = Field(default_factory=list)  # vars the tracer couldn't classify
 
 
@@ -184,7 +184,7 @@ class PlayStoreInfo(BaseModel):
 
     title: str
     description: str  # full description text
-    summary: str | None = None  # short 1–2 sentence summary
+    summary: str | None = None  # short 1-2 sentence summary
     category: str | None = None  # e.g. "House & Home", "Tools"
     developer: str | None = None
     developer_id: str | None = None

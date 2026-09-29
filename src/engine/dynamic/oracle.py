@@ -62,7 +62,7 @@ async def run(
     t0 = time.time()
 
     try:
-        async with redroid() as container_id:
+        async with redroid():
             await connect()
             await install_apk(apk_path)
             await ensure_frida_server()

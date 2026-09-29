@@ -9,7 +9,7 @@ import logging
 import sys
 from pathlib import Path
 
-from .pipeline import TuyaDetectedError, analyze
+from .pipeline import DuplicateFoundError, TuyaDetectedError, analyze
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
@@ -42,6 +42,10 @@ def main() -> None:
             print("   This device is already supported via tinytuya / HA Core 'tuya' integration.")
             print("   Pipeline halted — no integration generated.")
             sys.exit(2)
+        except DuplicateFoundError as exc:
+            print(f"\n⚠  {exc}.")
+            print("   Pipeline halted — no integration generated.")
+            sys.exit(2)
         except Exception as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             if args.verbose:
@@ -70,7 +74,8 @@ def main() -> None:
         if "_v1_passed" in ir.extra:
             v1s = "PASS" if ir.extra["_v1_passed"] else "FAIL"
             print(
-                f"\n  V-1 ruff:              {v1s} — {ir.extra['_v1_errors']} errors, {ir.extra['_v1_warnings']} warnings"
+                f"\n  V-1 ruff:              {v1s} — {ir.extra['_v1_errors']} errors, "
+                f"{ir.extra['_v1_warnings']} warnings"
             )
         if "_v2_passed" in ir.extra:
             status = "PASS" if ir.extra["_v2_passed"] else "FAIL"

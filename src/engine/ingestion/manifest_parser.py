@@ -6,7 +6,8 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from xml.etree import ElementTree as ET
+
+from defusedxml import ElementTree as ET
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,6 +42,8 @@ def parse(apk_out_dir: Path) -> ManifestInfo:
 
     tree = ET.parse(manifest_path)
     root = tree.getroot()
+    if root is None:
+        raise ValueError(f"AndroidManifest.xml at {manifest_path} has no root element")
 
     def a(name: str) -> str:
         return f"{{{_ANDROID_NS}}}{name}"

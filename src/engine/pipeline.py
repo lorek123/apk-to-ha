@@ -440,7 +440,23 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         )
 
     # ── V-6: write run state ──────────────────────────────────────────────────
-    run_dir = _RUNS_DIR / run_id
+    output_hash = await asyncio.to_thread(
+        _write_run_state, _RUNS_DIR / run_id, run_id, apk_path, ir, log_entries, emit
+    )
+
+    log("pipeline", "done", "INFO", "Pipeline complete", run_id=run_id, output_hash=output_hash)
+    return ir
+
+
+def _write_run_state(
+    run_dir: Path,
+    run_id: str,
+    apk_path: Path,
+    ir: ProtocolIR,
+    log_entries: list[dict[str, Any]],
+    emit: bool,
+) -> str | None:
+    """Write log.jsonl, ir.json and summary.json for a run; return the output hash."""
     run_dir.mkdir(parents=True, exist_ok=True)
 
     # Structured event log
@@ -482,9 +498,7 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         "output_hash": output_hash,
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2))
-
-    log("pipeline", "done", "INFO", "Pipeline complete", run_id=run_id, output_hash=output_hash)
-    return ir
+    return output_hash
 
 
 class TuyaDetectedError(Exception):

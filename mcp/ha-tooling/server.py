@@ -11,6 +11,7 @@ import asyncio
 import json
 import re
 import sys
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -51,7 +52,7 @@ async def run_ruff(path: str, fix: bool = False) -> dict:
         cmd.append("--fix")
     cmd.append(path)
 
-    rc, stdout, stderr = await _run(cmd)
+    rc, stdout, _stderr = await _run(cmd)
     try:
         raw = json.loads(stdout) if stdout.strip() else []
     except json.JSONDecodeError:
@@ -105,7 +106,7 @@ async def run_hassfest(integration_path: str) -> dict:
     Tries HA Core clone first; falls back to Docker if unavailable.
     Returns {success, error_count, errors[]}.
     """
-    int_path = Path(integration_path).resolve()
+    int_path = await asyncio.to_thread(Path(integration_path).resolve)
 
     if _HA_CORE_DIR.exists():
         return await _hassfest_local(int_path)
@@ -140,7 +141,7 @@ async def _hassfest_docker(int_path: Path) -> dict:
         "-m",
         "script.hassfest",
         "--integration-path",
-        "/tmp/integration",
+        "/tmp/integration",  # noqa: S108 — path inside the container
         "--action",
         "validate",
     ]
@@ -159,21 +160,31 @@ def _parse_hassfest_output(rc: int, output: str) -> dict:
 # ── pytest ─────────────────────────────────────────────────────────────────────
 
 
+def _read_json_report(report_file: Path) -> dict:
+    try:
+        return json.loads(report_file.read_text())
+    except OSError, json.JSONDecodeError:
+        return {}
+
+
 @mcp.tool()
 async def run_pytest(path: str, test_path: str | None = None) -> dict:
     """Run pytest. Returns {success, passed, failed, errors[]}."""
     target = test_path or path
-    cmd = [
-        sys.executable,
-        "-m",
-        "pytest",
-        target,
-        "--tb=short",
-        "-q",
-        "--json-report",
-        "--json-report-file=/tmp/pytest_report.json",
-    ]
-    rc, stdout, stderr = await _run(cmd, cwd=Path(path))
+    with tempfile.TemporaryDirectory() as tmp:
+        report_file = Path(tmp) / "pytest_report.json"
+        cmd = [
+            sys.executable,
+            "-m",
+            "pytest",
+            target,
+            "--tb=short",
+            "-q",
+            "--json-report",
+            f"--json-report-file={report_file}",
+        ]
+        rc, stdout, stderr = await _run(cmd, cwd=Path(path))
+        report = await asyncio.to_thread(_read_json_report, report_file)
 
     # Parse summary line: "X passed, Y failed in Zs"
     passed = failed = 0
@@ -185,19 +196,14 @@ async def run_pytest(path: str, test_path: str | None = None) -> dict:
         failed = int(m.group(1))
 
     # Try to read JSON report for structured errors
-    errors = []
-    try:
-        report = json.loads(Path("/tmp/pytest_report.json").read_text())
-        for t in report.get("tests", []):
-            if t.get("outcome") == "failed":
-                errors.append(
-                    {
-                        "test": t.get("nodeid"),
-                        "message": t.get("call", {}).get("longrepr", ""),
-                    }
-                )
-    except Exception:
-        pass
+    errors = [
+        {
+            "test": t.get("nodeid"),
+            "message": t.get("call", {}).get("longrepr", ""),
+        }
+        for t in report.get("tests", [])
+        if t.get("outcome") == "failed"
+    ]
 
     return {"success": rc == 0, "passed": passed, "failed": failed, "errors": errors}
 

@@ -169,7 +169,7 @@ def test_char_to_endpoint_confidence_below_1() -> None:
 
 
 def test_scan_file_finds_service_uuid() -> None:
-    chars, services = _scan_file(_JAVA_BLE, "BleManager")
+    _chars, services = _scan_file(_JAVA_BLE, "BleManager")
     assert "0000fff0-0000-1000-8000-00805f9b34fb" in services
 
 
@@ -245,7 +245,7 @@ def test_ble_scanner_service_uuid_in_extra(tmp_path: Path) -> None:
 
 
 def test_ble_scanner_no_java_returns_defaults(tmp_path: Path) -> None:
-    t, disc, auth, state, cmds, evts = BLEScanner(tmp_path).scan("com.example")
+    t, _disc, _auth, _state, cmds, evts = BLEScanner(tmp_path).scan("com.example")
     assert t.type == TransportType.BLE
     assert cmds == []
     assert evts == []

@@ -195,7 +195,7 @@ def _attempt_signing_correction(
         if len(parts) == len(non_literal_comps):
             # Found a plausible splitting — build a corrected trace
             new_components: list[SigningComponent] = []
-            for i, (part, comp) in enumerate(zip(parts, non_literal_comps)):
+            for i, (_part, comp) in enumerate(zip(parts, non_literal_comps, strict=True)):
                 new_components.append(
                     SigningComponent(
                         kind=comp.kind,
@@ -275,15 +275,15 @@ def _field_corrections(session: CaptureSession, ir: ProtocolIR) -> list[dict[str
         for ep in ir.commands:
             if ep.cmd != cmd:
                 continue
-            for field in ep.request_fields:
-                observed_key = field.serialized_name or field.name
-                if observed_key not in body and field.name in body:
+            for req_field in ep.request_fields:
+                observed_key = req_field.serialized_name or req_field.name
+                if observed_key not in body and req_field.name in body:
                     corrections.append(
                         {
                             "cmd": cmd,
-                            "field": field.name,
+                            "field": req_field.name,
                             "old_serialized": observed_key,
-                            "new_serialized": field.name,
+                            "new_serialized": req_field.name,
                         }
                     )
 
@@ -305,7 +305,7 @@ def _apply_patches(ir: ProtocolIR, report: ReconciliationReport) -> ProtocolIR |
             for t in ir.signing_traces
         ]
         if report.signing and report.signing.corrected_trace:
-            boosted = [report.signing.corrected_trace] + boosted[1:]
+            boosted = [report.signing.corrected_trace, *boosted[1:]]
         updates["signing_traces"] = boosted
         changed = True
 

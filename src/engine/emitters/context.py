@@ -69,7 +69,8 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     domain = _slugify(domain)
     class_pfx = _class_prefix(domain)
     sdk_pkg = f"{domain}_sdk"
-    # Strip version/build suffixes from APK filename: "Build Your Own R2-D2_1.1.31_release_APKPure" → "Build Your Own R2-D2"
+    # Strip version/build suffixes from APK filename:
+    #   "Build Your Own R2-D2_1.1.31_release_APKPure" → "Build Your Own R2-D2"
     clean_name = re.sub(r"[_\s]+\d[\d.]+.*$", "", ir.app_name).replace("_", " ").strip()
     if not clean_name:
         clean_name = ir.app_name

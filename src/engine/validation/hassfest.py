@@ -17,6 +17,7 @@ import shutil
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -81,12 +82,10 @@ async def validate(integration_dir: Path) -> HassfestResult:
     _check_spdx(integration_dir, findings)
     _check_platinum(integration_dir, findings)
 
-    structural_ok = not any(f.severity == "error" for f in findings)
-
-    # Attempt real hassfest if structural pass looks clean enough
+    # Attempt real hassfest on top of the structural checks
     real_result = await _try_real_hassfest(integration_dir)
     if real_result is not None:
-        rc, output, tier = real_result
+        rc, output, _tier = real_result
         # Detect when the image doesn't ship script.hassfest and skip gracefully
         _hassfest_unavailable = (
             "No module named 'script'" in output or "No module named 'script.hassfest'" in output
@@ -155,8 +154,6 @@ def _check_platforms(d: Path, findings: list[Finding]) -> None:
     mf = d / "manifest.json"
     if not mf.exists():
         return
-    data = json.loads(mf.read_text())
-    domain = data.get("domain", "")
 
     platform_files = {
         "sensor",
@@ -233,12 +230,15 @@ def _check_platinum(d: Path, findings: list[Finding]) -> None:
 # ── real hassfest (best-effort) ───────────────────────────────────────────────
 
 
+def _load_ha_target() -> dict[str, Any]:
+    with open(_HA_TARGET, "rb") as fh:
+        return tomllib.load(fh)
+
+
 async def _try_real_hassfest(int_path: Path) -> tuple[int, str, str] | None:
     """Try HA Core clone, then Docker. Returns (rc, output, tier) or None."""
     if _HA_CORE_DIR.exists():
         _LOGGER.info("Running hassfest via HA Core clone at %s", _HA_CORE_DIR)
-        with open(_HA_TARGET, "rb") as fh:
-            cfg = tomllib.load(fh)
         python = shutil.which("python3") or "python3"
         rc, out = await _run(
             [
@@ -255,8 +255,7 @@ async def _try_real_hassfest(int_path: Path) -> tuple[int, str, str] | None:
         return rc, out, "hassfest_local"
 
     if shutil.which("docker"):
-        with open(_HA_TARGET, "rb") as fh:
-            cfg = tomllib.load(fh)
+        cfg = await asyncio.to_thread(_load_ha_target)
         tag = cfg["docker"]["ha_image_tag"]
         _LOGGER.info("Running hassfest via Docker image %s", tag)
         rc, out = await _run(
@@ -271,7 +270,7 @@ async def _try_real_hassfest(int_path: Path) -> tuple[int, str, str] | None:
                 "-m",
                 "script.hassfest",
                 "--integration-path",
-                "/tmp/integration",
+                "/tmp/integration",  # noqa: S108 — path inside the container
                 "--action",
                 "validate",
             ]

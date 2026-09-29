@@ -73,12 +73,8 @@ def _resolve_image(cfg: dict[str, Any]) -> str:
     return fallback
 
 
-async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
-    """Run the container import test. Returns result (skipped if no Docker)."""
-    if not shutil.which("docker"):
-        _LOGGER.info("Docker not found — V-3 container test skipped")
-        return ContainerTestResult(ran=False, passed=True, output="skipped")
-
+def _prepare(sdk_output_dir: Path) -> tuple[str, Path | None, Path]:
+    """Blocking setup for run(): resolve image, SDK package dir and mount path."""
     with open(_HA_TARGET, "rb") as fh:
         cfg = tomllib.load(fh)
     image = _resolve_image(cfg)
@@ -88,6 +84,16 @@ async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
         (d for d in sdk_output_dir.iterdir() if d.is_dir() and not d.name.startswith("custom")),
         None,
     )
+    return image, sdk_pkg_dir, sdk_output_dir.resolve()
+
+
+async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
+    """Run the container import test. Returns result (skipped if no Docker)."""
+    if not shutil.which("docker"):
+        _LOGGER.info("Docker not found — V-3 container test skipped")
+        return ContainerTestResult(ran=False, passed=True, output="skipped")
+
+    image, sdk_pkg_dir, out_mount = await asyncio.to_thread(_prepare, sdk_output_dir)
 
     script = _IMPORT_SCRIPT.format(domain=domain)
 
@@ -100,7 +106,7 @@ async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
         "run",
         "--rm",
         "-v",
-        f"{sdk_output_dir.resolve()}:/out:ro",
+        f"{out_mount}:/out:ro",
         image,
         "sh",
         "-c",

@@ -108,8 +108,6 @@ def check_spdx(domain_dir: Path) -> list[str]:
 def check_entity_names(domain_dir: Path) -> list[str]:
     """translations/en.json should have entity section when platforms are present."""
     errors: list[str] = []
-    manifest = json.loads((domain_dir / "manifest.json").read_text())
-    platforms = manifest.get("dependencies", [])  # not right — check platforms via presence
     # Check via which platform files exist
     platform_files = {
         "sensor": "sensor.py",

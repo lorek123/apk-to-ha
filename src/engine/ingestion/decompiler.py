@@ -18,8 +18,7 @@ async def decompile(apk_path: Path, out_dir: Path) -> Path:
 
     Idempotent: skips decompilation if out_dir already contains sources/.
     """
-    sources = out_dir / "sources"
-    if sources.exists() and any(sources.rglob("*.java")):
+    if await asyncio.to_thread(_has_java_sources, out_dir):
         _LOGGER.debug("Skipping decompilation, %s already populated", out_dir)
         return out_dir
 
@@ -27,7 +26,7 @@ async def decompile(apk_path: Path, out_dir: Path) -> Path:
     if not jadx:
         raise FileNotFoundError("jadx not found on PATH — run scripts/setup.sh first")
 
-    out_dir.mkdir(parents=True, exist_ok=True)
+    await asyncio.to_thread(out_dir.mkdir, parents=True, exist_ok=True)
     cmd = [
         jadx,
         "--deobf",
@@ -46,14 +45,11 @@ async def decompile(apk_path: Path, out_dir: Path) -> Path:
         _, stderr = await asyncio.wait_for(proc.communicate(), timeout=JADX_TIMEOUT)
     except TimeoutError:
         proc.kill()
-        raise RuntimeError(f"jadx timed out after {JADX_TIMEOUT}s on {apk_path.name}")
+        raise RuntimeError(f"jadx timed out after {JADX_TIMEOUT}s on {apk_path.name}") from None
 
-    # JADX exit codes: 0=clean, 1=partial errors, 2=bad args, 3+=severe but may still produce output.
-    # Trust the output directory rather than the exit code.
-    java_files = (
-        list((out_dir / "sources").rglob("*.java")) if (out_dir / "sources").exists() else []
-    )
-    if not java_files:
+    # JADX exit codes: 0=clean, 1=partial errors, 2=bad args, 3+=severe but may
+    # still produce output. Trust the output directory rather than the exit code.
+    if not await asyncio.to_thread(_has_java_sources, out_dir):
         raise RuntimeError(
             f"jadx produced no Java files (rc={proc.returncode}): {stderr.decode()[:500]}"
         )
@@ -63,3 +59,8 @@ async def decompile(apk_path: Path, out_dir: Path) -> Path:
         _LOGGER.debug("jadx reported %d errors (normal for release APKs)", len(error_lines))
 
     return out_dir
+
+
+def _has_java_sources(out_dir: Path) -> bool:
+    sources = out_dir / "sources"
+    return sources.exists() and any(sources.rglob("*.java"))

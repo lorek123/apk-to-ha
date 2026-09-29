@@ -53,7 +53,7 @@ def main() -> None:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         print(f"  fetch {apk_id}: {apk_url}")
         try:
-            urllib.request.urlretrieve(apk_url, out_path)
+            urllib.request.urlretrieve(apk_url, out_path)  # noqa: S310 — URLs from sources.yaml
             size_mb = out_path.stat().st_size / 1_048_576
             print(f"        → {out_path.relative_to(_ROOT)} ({size_mb:.1f} MB)")
             downloaded += 1

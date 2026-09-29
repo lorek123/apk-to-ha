@@ -146,7 +146,6 @@ def _fix_hassfest(finding: Finding, ctx: dict[str, Any], d: Path) -> str | None:
 
         if "invalid JSON" in msg:
             # Can't auto-fix corrupted JSON — needs template rerender
-            tmpl = "__init__.py.j2"  # not applicable, but at least rerender manifest
             _rerender_manifest(d, ctx)
             return "manifest: re-rendered manifest.json from template"
 

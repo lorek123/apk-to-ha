@@ -644,7 +644,7 @@ http_method, host, body, secret_key, literal, unknown)
 2. The order in which components are concatenated (0-based)
 3. A Python f-string format_string if the concatenation pattern is clear, \
    e.g. "{timestamp}\\n{path}\\n{body}"
-4. Your confidence in the result (0.0–1.0)
+4. Your confidence in the result (0.0-1.0)
 """
 
 

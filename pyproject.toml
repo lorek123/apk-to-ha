@@ -32,6 +32,7 @@ dependencies = [
     "frida>=17.0",
     "openapi-spec-validator>=0.7",
     "esprima>=4.0",
+    "defusedxml>=0.7",
 ]
 
 [project.optional-dependencies]
@@ -77,10 +78,14 @@ select = [
 ]
 ignore = [
     "S101",  # Use of `assert` — fine in tests
+    "S603",  # subprocess with list args: we shell out to fixed tools (jadx, ruff, docker, adb)
+    "S607",  # ...resolved from PATH on purpose so the dev/CI toolchain is used
+    "S701",  # Jinja templates emit Python/JSON source, not HTML — autoescape would corrupt it
+    "UP042", # (str, Enum) → StrEnum changes str()/format() output of IR enums
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "S603"]
+"tests/*" = ["S101", "S108"]
 
 # ────────────────────────────────────────────────────────────────
 # Mypy — strict typing
@@ -151,5 +156,6 @@ source = ["src"]
 
 [dependency-groups]
 dev = [
+    "types-defusedxml>=0.7.0.20260504",
     "types-pyyaml>=6.0.12.20260518",
 ]

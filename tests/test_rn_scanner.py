@@ -195,7 +195,7 @@ def test_rn_scanner_http_commands(tmp_path: Path) -> None:
 
 
 def test_rn_scanner_no_bundle_returns_defaults(tmp_path: Path) -> None:
-    t, disc, auth, state, cmds, evts = RNScanner(tmp_path).scan("com.example")
+    t, _disc, _auth, _state, cmds, _evts = RNScanner(tmp_path).scan("com.example")
     assert t.type == TransportType.HTTP_REST
     assert cmds == []
 

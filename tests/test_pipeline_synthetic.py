@@ -50,14 +50,14 @@ class TestGoveeHTTPRest:
         assert auth.type == AuthType.API_KEY
 
     def test_retrofit_endpoints_extracted(self, scanner_result: Any) -> None:
-        *_, commands, events = scanner_result
+        *_, commands, _events = scanner_result
         cmd_names = [c.cmd for c in commands]
         assert any("govee/v1/dev/devList" in c for c in cmd_names)
         assert any("govee/v1/dev/control" in c for c in cmd_names)
         assert any("govee/v1/dev/devState" in c for c in cmd_names)
 
     def test_state_fields_from_serialized_name(self, scanner_result: Any) -> None:
-        *_, state, commands, events = scanner_result
+        *_, state, _commands, _events = scanner_result
         field_names = {f.serialized_name for f in state.fields}
         # DeviceState.java has @SerializedName annotations
         assert "online" in field_names
@@ -341,7 +341,7 @@ def test_govee_emitter_output_passes_ruff(tmp_path: Path) -> None:
     ir = classify(ir)
     ctx = build(ir)
 
-    sdk_dir = sdk_emitter.emit(ctx, tmp_path)
+    sdk_emitter.emit(ctx, tmp_path)
     hacs_dir = hacs_emitter.emit(ctx, tmp_path)
 
     ruff_result = asyncio.run(ruff_check.check(hacs_dir))

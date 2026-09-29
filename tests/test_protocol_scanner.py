@@ -89,7 +89,7 @@ def test_constant_based_commands_resolved(tmp_path: Path) -> None:
         },
     )
     scanner = ProtocolScanner(src)
-    transport, discovery, auth, state, commands, events = scanner.scan("com.test")
+    _transport, _discovery, _auth, _state, commands, _events = scanner.scan("com.test")
 
     cmd_names = {c.cmd for c in commands}
     assert "mute" in cmd_names
@@ -157,7 +157,7 @@ def test_no_response_cmds_become_events(tmp_path: Path) -> None:
         },
     )
     scanner = ProtocolScanner(src)
-    _, _, _, _, commands, events = scanner.scan("com.test")
+    _, _, _, _, _commands, events = scanner.scan("com.test")
 
     event_cmds = {e.cmd for e in events}
     assert "gin" in event_cmds

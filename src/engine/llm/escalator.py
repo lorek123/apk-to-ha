@@ -13,7 +13,7 @@ import hashlib
 import logging
 import os
 import time
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
@@ -34,8 +34,6 @@ _TEMPERATURE = 0.1
 _MAX_RETRIES = 2
 _RETRY_BASE_DELAY = 2.0
 
-T = TypeVar("T", bound=BaseModel)
-
 
 def _sha8(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()[:8]
@@ -46,7 +44,7 @@ def _estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
     return (input_tokens * in_per_m + output_tokens * out_per_m) / 1_000_000
 
 
-async def call(
+async def call[T: BaseModel](
     system: str,
     user: str,
     schema_model: type[T],

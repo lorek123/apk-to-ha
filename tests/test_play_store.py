@@ -34,7 +34,10 @@ def test_clean_returns_empty_for_none() -> None:
 
 _MOCK_SCRAPER_RESPONSE = {
     "title": "Govee Home",
-    "description": "Govee Home makes it easy to set up and manage your Govee smart devices.\n\nControl lights, thermometers, and more.",
+    "description": (
+        "Govee Home makes it easy to set up and manage your Govee smart devices."
+        "\n\nControl lights, thermometers, and more."
+    ),
     "summary": "Control your Govee devices with ease.",
     "genre": "House & Home",
     "developer": "Govee International Co. Ltd",

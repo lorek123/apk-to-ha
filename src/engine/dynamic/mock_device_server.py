@@ -72,7 +72,7 @@ class MockDeviceServer:
 
         self._runner = web.AppRunner(app)
         await self._runner.setup()
-        site = web.TCPSite(self._runner, "0.0.0.0", self.ws_port)
+        site = web.TCPSite(self._runner, "0.0.0.0", self.ws_port)  # noqa: S104 — reached from redroid
         await site.start()
         _LOGGER.info("mock: WebSocket server listening on :%d", self.ws_port)
 
@@ -106,7 +106,7 @@ class MockDeviceServer:
         assert self.udp_port is not None
         transport, _ = await loop.create_datagram_endpoint(
             _UdpProtocol,
-            local_addr=("0.0.0.0", self.udp_port),
+            local_addr=("0.0.0.0", self.udp_port),  # noqa: S104 — reached from redroid
         )
         self._udp_transport = transport
         _LOGGER.info("mock: UDP server listening on :%d", self.udp_port)

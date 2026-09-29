@@ -10,7 +10,8 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from xml.etree import ElementTree
+
+from defusedxml import ElementTree
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,6 +53,8 @@ def scan(apk_out_dir: Path) -> dict[str, str]:
         return {}
 
     root = tree.getroot()
+    if root is None:
+        return {}
     result: dict[str, str] = {}
 
     for elem in root.findall("string"):
