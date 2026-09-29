@@ -16,9 +16,11 @@ import aiohttp
 
 from .duplicate_check import checker as dup_checker
 from .dynamic import oracle as dynamic_oracle
+from .dynamic.ir_reconciler import ReconciliationReport
 from .emitters import context as emitter_context
 from .emitters import hacs_emitter, sdk_emitter
 from .extraction import entity_classifier
+from .extraction.app_sources import is_third_party
 from .extraction.ble_scanner import BLEScanner
 from .extraction.crypto_scanner import scan as crypto_scan
 from .extraction.java_code_graph import JavaCodeGraph
@@ -49,8 +51,19 @@ _CACHE_DIR = Path(__file__).parents[2] / ".cache" / "jadx"
 _OUTPUT_DIR = Path(__file__).parents[2] / "sdk_output"
 
 
-async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) -> ProtocolIR:
-    """Run the full extraction pipeline on one APK. Returns the populated IR."""
+async def analyze(
+    apk_path: Path,
+    apk_id: str | None = None,
+    emit: bool = True,
+    dynamic: bool = True,
+    update_snapshots: bool = False,
+) -> ProtocolIR:
+    """Run the full extraction pipeline on one APK. Returns the populated IR.
+
+    The snapshot goes to runs/{run_id}/snapshot/ unless *update_snapshots* is set,
+    in which case the committed fixtures/snapshots/{apk_id}/ is refreshed.
+    *dynamic* False skips the P2-7 oracle.
+    """
     run_id = str(uuid.uuid4())[:8]
     apk_id = apk_id or apk_path.stem.lower().replace(" ", "_")
     log_entries: list[dict[str, Any]] = []
@@ -214,12 +227,15 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
     )
 
     # ── P2-4: crypto API scan ─────────────────────────────────────────────────
-    crypto_usages = crypto_scan(out_dir)
+    all_crypto = crypto_scan(out_dir)
+    # Library crypto (image-cache keys, WebSocket handshakes) is not device protocol.
+    crypto_usages = [u for u in all_crypto if not is_third_party(u.call_site)]
     log(
         "P2",
         "crypto",
         "INFO",
-        f"Crypto usages: {len(crypto_usages)}",
+        f"Crypto usages: {len(crypto_usages)} first-party "
+        f"({len(all_crypto) - len(crypto_usages)} in third-party libraries ignored)",
         algorithms=[u.algorithm for u in crypto_usages if u.confidence >= 0.7],
     )
     ir = ir.model_copy(update={"crypto": crypto_usages})
@@ -267,7 +283,11 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
     ir = ir.model_copy(update={"signing_traces": traces})
 
     # ── P2-7: dynamic oracle (redroid + Frida) ────────────────────────────────
-    oracle_report = await dynamic_oracle.run(apk_path, ir)
+    if dynamic:
+        oracle_report = await dynamic_oracle.run(apk_path, ir)
+    else:
+        log("P2", "oracle", "WARNING", "Oracle disabled (--no-dynamic): IR is static-only")
+        oracle_report = ReconciliationReport()
     if oracle_report.patched_ir is not None:
         ir = oracle_report.patched_ir
         log(
@@ -302,8 +322,14 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
     log("P3", "entity_hints", "INFO", f"Entity hints: {_count_hints(ir)}")
 
     # ── F-2a: save snapshot ────────────────────────────────────────────────────
-    snap_dir = snapshot_harness.write(apk_id, ir, out_dir)
+    snap_target = (
+        snapshot_harness.committed_dir(apk_id)
+        if update_snapshots
+        else _RUNS_DIR / run_id / "snapshot"
+    )
+    snap_dir = await asyncio.to_thread(snapshot_harness.write, apk_id, ir, out_dir, snap_target)
     log("F2a", "snapshot", "INFO", f"Snapshot saved to {snap_dir}")
+    ir = ir.model_copy(update={"extra": {**ir.extra, "_snapshot_dir": str(snap_dir)}})
 
     # ── P4/P5: emit SDK + HACS integration ────────────────────────────────────
     if emit:

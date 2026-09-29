@@ -17,7 +17,7 @@ import logging
 import time
 from pathlib import Path
 
-from ..ir.models import ProtocolIR
+from ..ir.models import DiscoveryType, ProtocolIR
 from .adb_client import connect, ensure_frida_server, install_apk, launch_app, start_frida_server
 from .frida_runner import FridaUnavailableError, capture
 from .ir_reconciler import ReconciliationReport, reconcile
@@ -31,13 +31,31 @@ _ORACLE_CONFIDENCE_THRESHOLD = 0.9
 _CAPTURE_SECONDS = 30
 
 
+def unresolved_ir_fields(ir: ProtocolIR) -> list[str]:
+    """What the oracle could resolve (SPEC P2-7), as human-readable reasons.
+
+    Limited to gaps a live capture actually fills: unverified signing, low-confidence
+    commands/events, response schemas of commands that await a reply, and
+    discovery details.
+    """
+    gaps: list[str] = []
+    for t in ir.signing_traces:
+        if t.confidence < _ORACLE_CONFIDENCE_THRESHOLD or t.unresolved:
+            gaps.append(f"signing trace {t.source_method} (confidence {t.confidence:.2f})")
+    for ep in ir.commands + ir.events:
+        if ep.confidence < _ORACLE_CONFIDENCE_THRESHOLD:
+            gaps.append(f"{ep.cmd}: confidence {ep.confidence:.2f}")
+    for ep in ir.commands:
+        if ep.awaits_response and not ep.response_fields:
+            gaps.append(f"{ep.cmd}: response schema unknown")
+    if ir.discovery.type != DiscoveryType.NONE and ir.discovery.port is None:
+        gaps.append(f"discovery ({ir.discovery.type.value}): port unknown")
+    return gaps
+
+
 def _should_skip(ir: ProtocolIR) -> bool:
-    """Return True if the static analysis is already high-confidence enough."""
-    if not ir.signing_traces:
-        return False
-    all_high = all(t.confidence >= _ORACLE_CONFIDENCE_THRESHOLD for t in ir.signing_traces)
-    no_unresolved = all(not t.unresolved for t in ir.signing_traces)
-    return all_high and no_unresolved
+    """SPEC P2-7: skip when static confidence >= 0.9 on all traces AND zero unresolved IR fields."""
+    return not unresolved_ir_fields(ir)
 
 
 async def run(
@@ -52,11 +70,11 @@ async def run(
     If *force* is False and static confidence is already ≥ 0.9, returns an
     empty report (confidence_boost=0) without launching the container.
     """
-    if not force and _should_skip(ir):
-        _LOGGER.info(
-            "oracle: skipped — static confidence already ≥ %.1f", _ORACLE_CONFIDENCE_THRESHOLD
-        )
+    gaps = unresolved_ir_fields(ir)
+    if not force and not gaps:
+        _LOGGER.info("oracle: skipped — static IR has nothing left for a live capture to resolve")
         return ReconciliationReport()
+    _LOGGER.info("oracle: running to resolve %d gap(s): %s", len(gaps), "; ".join(gaps[:5]))
 
     pkg = package_name or ir.package_name
     t0 = time.time()

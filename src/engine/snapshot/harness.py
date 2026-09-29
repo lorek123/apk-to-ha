@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: MIT
 """F-2a — Snapshot harness.
 
-Writes a committable snapshot bundle to fixtures/snapshots/{apk_id}/:
+Writes a snapshot bundle. The pipeline writes it into the run directory
+(runs/{run_id}/snapshot/) and only refreshes the committed copy in
+fixtures/snapshots/{apk_id}/ when asked (``--update-snapshots``):
   ir.json           — full ProtocolIR
   manifest.xml      — AndroidManifest.xml excerpt (no binary)
   classes.txt       — list of app-package class names
@@ -26,9 +28,14 @@ _LOGGER = logging.getLogger(__name__)
 _SNAPSHOTS_DIR = Path(__file__).parents[3] / "fixtures" / "snapshots"
 
 
-def write(apk_id: str, ir: ProtocolIR, apk_out_dir: Path) -> Path:
-    """Write snapshot bundle, return the snapshot directory path."""
-    snap_dir = _SNAPSHOTS_DIR / apk_id
+def committed_dir(apk_id: str) -> Path:
+    """The committed snapshot location for *apk_id* (fixtures/snapshots/{apk_id})."""
+    return _SNAPSHOTS_DIR / apk_id
+
+
+def write(apk_id: str, ir: ProtocolIR, apk_out_dir: Path, snap_dir: Path | None = None) -> Path:
+    """Write snapshot bundle to *snap_dir* (default: the committed location)."""
+    snap_dir = snap_dir or committed_dir(apk_id)
     snap_dir.mkdir(parents=True, exist_ok=True)
 
     # ir.json

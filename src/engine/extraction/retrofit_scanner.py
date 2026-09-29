@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..ir.models import Direction, Endpoint, FieldDef, FieldKind, TransportType
+from .app_sources import app_source_files
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,27 +86,7 @@ class RetrofitScanner:
 
     def scan(self, app_package: str) -> tuple[list[RetrofitEndpoint], list[InterceptorInfo]]:
         """Walk source files and return (retrofit_endpoints, interceptors)."""
-        pkg_path = self._sources / app_package.replace(".", "/")
-        if pkg_path.exists():
-            java_files = list(pkg_path.rglob("*.java"))
-        else:
-            java_files = [
-                f
-                for f in self._sources.rglob("*.java")
-                if not any(
-                    lib in str(f)
-                    for lib in (
-                        "androidx/",
-                        "android/support/",
-                        "com/google/",
-                        "kotlin/",
-                        "okhttp3/",
-                        "retrofit2/",
-                        "okio/",
-                        "com/squareup/",
-                    )
-                )
-            ]
+        java_files = app_source_files(self._sources, app_package)
 
         endpoints: list[RetrofitEndpoint] = []
         interceptors: list[InterceptorInfo] = []

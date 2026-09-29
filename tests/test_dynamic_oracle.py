@@ -311,6 +311,39 @@ def test_oracle_no_skip_when_unresolved() -> None:
     assert not _should_skip(ir)
 
 
+def test_oracle_skip_without_traces_when_ir_is_complete() -> None:
+    from engine.dynamic.oracle import _should_skip
+
+    assert _should_skip(_make_ir(signing_traces=[]))
+
+
+def test_oracle_runs_without_traces_for_unknown_response_schema() -> None:
+    from engine.dynamic.oracle import _should_skip, unresolved_ir_fields
+
+    ir = _make_ir(
+        signing_traces=[],
+        commands=[
+            Endpoint(
+                cmd="getWifiList",
+                transport=TransportType.WEBSOCKET,
+                direction=Direction.TO_DEVICE,
+                awaits_response=True,
+            )
+        ],
+    )
+
+    assert unresolved_ir_fields(ir) == ["getWifiList: response schema unknown"]
+    assert not _should_skip(ir)
+
+
+def test_oracle_runs_when_discovery_port_unknown() -> None:
+    from engine.dynamic.oracle import unresolved_ir_fields
+
+    ir = _make_ir(signing_traces=[], discovery=DiscoveryMechanism(type=DiscoveryType.UDP_BROADCAST))
+
+    assert unresolved_ir_fields(ir) == ["discovery (udp_broadcast): port unknown"]
+
+
 # ── mock_device_server ────────────────────────────────────────────────────────
 
 

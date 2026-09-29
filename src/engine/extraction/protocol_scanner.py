@@ -30,6 +30,7 @@ from ..ir.models import (
     TransportContract,
     TransportType,
 )
+from .app_sources import app_source_files
 from .discovery_scanner import scan as discovery_scan
 from .payload_resolver import PayloadResolver
 from .retrofit_scanner import RetrofitScanner
@@ -98,27 +99,7 @@ class ProtocolScanner:
     ]:
         """Return (transport, discovery, auth, state, commands, events)."""
         self._app_package = app_package
-        pkg_path = self._sources / app_package.replace(".", "/")
-        if pkg_path.exists():
-            self._app_sources = list(pkg_path.rglob("*.java"))
-        else:
-            self._app_sources = [
-                f
-                for f in self._sources.rglob("*.java")
-                if not any(
-                    lib in str(f)
-                    for lib in (
-                        "androidx/",
-                        "android/support/",
-                        "com/google/",
-                        "kotlin/",
-                        "okhttp3/",
-                        "retrofit2/",
-                        "okio/",
-                        "com/squareup/",
-                    )
-                )
-            ]
+        self._app_sources = app_source_files(self._sources, app_package)
 
         _LOGGER.info("Scanning %d source files for package %s", len(self._app_sources), app_package)
 
