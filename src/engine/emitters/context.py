@@ -46,7 +46,8 @@ def _slugify(text: str) -> str:
 
 # Maintenance/debug commands: config category, disabled by default.
 _MAINTENANCE_CMD = re.compile(
-    r"^d[-_]|reset|reboot|restart|debug|factory|calibrat|firmware|update", re.IGNORECASE
+    r"^d[-_]|reset|reboot|restart|shutdown|poweroff|debug|factory|calibrat|firmware|update",
+    re.IGNORECASE,
 )
 _RESTART_CMD = re.compile(r"reset|reboot|restart", re.IGNORECASE)
 
@@ -91,7 +92,8 @@ def _auth_result_field(ir: ProtocolIR) -> str | None:
     return None
 
 
-# Commands that fetch data rather than act (getWifiList, paired_list, fetchStatus).
+# Commands that fetch data rather than act (getWifiList, paired_list, fetchStatus,
+# and any HTTP GET).
 _QUERY_CMD = re.compile(r"^(?:get|list|fetch|query|read)|list$|status$", re.IGNORECASE)
 
 
@@ -102,11 +104,31 @@ def _is_query(ep: Endpoint) -> bool:
         for f in ep.response_fields
         if not _RESULT_FIELD_RE.match(_norm(f.serialized_name or f.name))
     ]
+    if ep.cmd.startswith("GET "):
+        return True
     return bool(data) or bool(_QUERY_CMD.search(_norm(ep.cmd)))
 
 
+# HTTP endpoints are named "VERB /path/{param}".
+_HTTP_CMD = re.compile(r"^([A-Z]+) (/\S*)$")
+_PATH_PARAM = re.compile(r"\{(\w+)\}")
+
+
+def _http_key(path: str) -> str:
+    """Entity/SDK key from a path's fixed segments: /goto/radec → goto_radec."""
+    fixed = [s for s in path.split("/") if s and not _PATH_PARAM.fullmatch(s)]
+    return _slugify("_".join(fixed)) or "root"
+
+
 def _required_params(ep: Endpoint) -> list[FieldDef]:
-    return [f for f in ep.request_fields if f.required and f.name not in _TRANSPORT_FIELDS]
+    """Body fields plus path placeholders (/home/{axis} needs an axis too)."""
+    params = [f for f in ep.request_fields if f.required and f.name not in _TRANSPORT_FIELDS]
+    http = _HTTP_CMD.match(ep.cmd)
+    if http:
+        params += [
+            FieldDef(name=p, kind=FieldKind.STRING) for p in _PATH_PARAM.findall(http.group(2))
+        ]
+    return params
 
 
 def _unmapped(cmd: str, platform: str, params: list[FieldDef]) -> dict[str, str]:
@@ -181,12 +203,16 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         if ep.cmd in _SKIP_CMDS:
             continue
         params = _required_params(ep)
+        http = _HTTP_CMD.match(ep.cmd)
+        key = _http_key(http.group(2)) if http else _slugify(ep.cmd)
         base = {
             "cmd": ep.cmd,
-            "name": _human(ep.cmd),
-            "key": _slugify(ep.cmd),
-            "tkey": _slugify(ep.cmd),
-            "state_attr": state_attrs.get(_norm(ep.cmd)),
+            "name": _human(key),
+            "key": key,
+            "tkey": key,
+            "state_attr": state_attrs.get(_norm(key)),
+            "http_method": http.group(1) if http else None,
+            "path": http.group(2) if http else None,
         }
         if ep.entity_hint == EntityHint.SWITCH:
             if [(f.name, f.kind) for f in params] != [("enable", FieldKind.BOOLEAN)]:
@@ -203,7 +229,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
             if len(params) != 1 or len(numeric) != 1:
                 unmapped.append(_unmapped(ep.cmd, "number", params))
                 continue
-            numbers.append({**base, "param": numeric[0].name})
+            numbers.append({**base, "param": numeric[0].name, "param_kind": numeric[0].kind.value})
         elif ep.entity_hint == EntityHint.BUTTON:
             if params:
                 unmapped.append(_unmapped(ep.cmd, "button", params))
@@ -337,6 +363,10 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "udp_broadcast_cmd": ir.discovery.broadcast_cmd,
         # discovery.py broadcasts CMD_DISCOVERY on UDP_PORT: needs both.
         "has_udp_discovery": bool(ir.discovery.port and ir.discovery.broadcast_cmd),
+        "transport": ir.transport.type.value,
+        # Poll-based HTTP devices: the GET that returns state ("GET /status").
+        "poll_method": ir.state.poll_endpoint.split(" ", 1)[0] if ir.state.poll_endpoint else None,
+        "poll_path": ir.state.poll_endpoint.split(" ", 1)[1] if ir.state.poll_endpoint else None,
         "auth_cmd": ir.auth.handshake_cmd or "grantAccess",
         "auth_result_field": _auth_result_field(ir),
         "state_push_cmd": ir.state.push_cmd or "gin",

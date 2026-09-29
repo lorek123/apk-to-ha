@@ -42,12 +42,16 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
         "test_select": _test_select(ctx),
         "test_press": next((b for b in ctx.get("buttons", []) if not b["maintenance"]), None),
         "test_maintenance": [b for b in ctx.get("buttons", []) if b["maintenance"]],
+        "test_number": ctx["numbers"][0] if ctx.get("numbers") else None,
     }
     tests_dir = out_root / "tests"
     tests_dir.mkdir(parents=True, exist_ok=True)
     _render(env, tests_ctx, out_root, "pytest.ini.j2", "pytest.ini")
-    for name in ("__init__.py", "conftest.py", "test_integration.py"):
-        _render(env, tests_ctx, tests_dir, f"{name}.j2", name)
+    # WebSocket push devices and polled HTTP devices get different mocks and tests.
+    suffix = "_http" if ctx.get("transport") == "http_rest" else ""
+    _render(env, tests_ctx, tests_dir, "__init__.py.j2", "__init__.py")
+    for name in ("conftest", "test_integration"):
+        _render(env, tests_ctx, tests_dir, f"{name}{suffix}.py.j2", f"{name}.py")
     # Test-only helpers are imported unconditionally; drop the ones this device doesn't use.
     _fix_imports(tests_dir, select="I001,F401")
     return tests_dir
@@ -130,7 +134,10 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     _render(env, ctx, domain_dir, "__init__.py.j2", "__init__.py")
     _render(env, ctx, domain_dir, "const.py.j2", "const.py")
     _render(env, ctx, domain_dir, "config_flow.py.j2", "config_flow.py")
-    _render(env, ctx, domain_dir, "coordinator.py.j2", "coordinator.py")
+    coordinator = (
+        "coordinator_http.py.j2" if ctx.get("transport") == "http_rest" else "coordinator.py.j2"
+    )
+    _render(env, ctx, domain_dir, coordinator, "coordinator.py")
     if ctx.get("has_ble"):
         _render(env, ctx, domain_dir, "ble_coordinator.py.j2", "ble_coordinator.py")
     _render(env, ctx, domain_dir, "entity_base.py.j2", "entity_base.py")
