@@ -211,7 +211,8 @@ async def analyze(
     ir = ProtocolIR(
         apk_path=str(apk_path),
         package_name=manifest.package_name,
-        app_name=apk_path.stem,
+        # What the user sees on the device, then the store listing, then the file name.
+        app_name=manifest.app_label or (ps_info.title if ps_info else "") or apk_path.stem,
         version_name=manifest.version_name,
         framework=framework,
         transport=transport,
