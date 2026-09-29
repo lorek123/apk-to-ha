@@ -27,65 +27,152 @@ apks:
     auth: handshake_grant_access
     notes: "Primary M1 reference. Pure WebSocket, JSON commands, gin push state. No HTTP endpoints."
 
-  - id: native_retrofit_b
-    description: "Second Retrofit example for redundancy (TBD)"
+  # ── F-Droid corpus ──────────────────────────────────────────────────────
+  # Free-software apps from f-droid.org (URLs pinned to a version code).
+  # `group` ties clients of the same API together: their IRs should agree.
+
+  # Jellyfin clients: one API, four codebases/frameworks. HA Core ships a
+  # `jellyfin` integration, so P-2.5 should stop generation for all of them.
+  - id: jellyfin_mobile
+    description: "Jellyfin official Android app — native shell around the web client"
     framework: native
     branch: M1
+    package: org.jellyfin.mobile
+    license: GPL-2.0-or-later
+    source: "https://f-droid.org/packages/org.jellyfin.mobile/"
+    apk_url: "https://f-droid.org/repo/org.jellyfin.mobile_2070399.apk"
+    version_code: 2070399
+    group: jellyfin
+    expected_verdict: skip
+    expected_existing: "core/jellyfin"
+
+  - id: jellyfin_androidtv
+    description: "Jellyfin for Android TV — native Kotlin on the Jellyfin SDK"
+    framework: native
+    branch: M1
+    package: org.jellyfin.androidtv
+    license: GPL-2.0-or-later
+    source: "https://f-droid.org/packages/org.jellyfin.androidtv/"
+    apk_url: "https://f-droid.org/repo/org.jellyfin.androidtv_191099.apk"
+    version_code: 191099
+    group: jellyfin
+    expected_verdict: skip
+    expected_existing: "core/jellyfin"
+
+  - id: findroid
+    description: "Findroid — third-party native Jellyfin client"
+    framework: native
+    branch: M1
+    package: dev.jdtech.jellyfin
+    license: GPL-3.0-only
+    source: "https://f-droid.org/packages/dev.jdtech.jellyfin/"
+    apk_url: "https://f-droid.org/repo/dev.jdtech.jellyfin_33.apk"
+    version_code: 33
+    group: jellyfin
+    expected_verdict: skip
+    expected_existing: "core/jellyfin"
+
+  - id: finamp
+    description: "Finamp — Flutter Jellyfin music client"
+    framework: flutter
+    branch: M3
+    package: com.unicornsonlsd.finamp
+    license: MPL-2.0
+    source: "https://f-droid.org/packages/com.unicornsonlsd.finamp/"
+    apk_url: "https://f-droid.org/repo/com.unicornsonlsd.finamp_52.apk"
+    version_code: 52
+    group: jellyfin
+    expected_verdict: skip
+    expected_existing: "core/jellyfin"
+
+  # Local Shelly controllers: one device API, two apps. HA Core has `shelly`.
+  - id: hestia
+    description: "Hestia — local Shelly control, no cloud"
+    framework: native
+    branch: M1
+    package: kapoue.hestia
+    license: GPL-3.0-or-later
+    source: "https://f-droid.org/packages/kapoue.hestia/"
+    apk_url: "https://f-droid.org/repo/kapoue.hestia_50.apk"
+    version_code: 50
+    group: shelly
+    expected_verdict: skip
+    expected_existing: "core/shelly"
+
+  - id: pearlnode
+    description: "Pearlnode — local Shelly control"
+    framework: native
+    branch: M1
+    package: com.pearlnode
+    license: MIT
+    source: "https://f-droid.org/packages/com.pearlnode/"
+    apk_url: "https://f-droid.org/repo/com.pearlnode_1.apk"
+    version_code: 1
+    group: shelly
+    expected_verdict: skip
+    expected_existing: "core/shelly"
+
+  # Multi-vendor local HTTP (Hue, Shelly, Tasmota, ESPEasy, SimpleHome API).
+  - id: domi_home
+    description: "Home App — local HTTP control of Hue/Shelly/Tasmota/ESPEasy/SimpleHome devices"
+    framework: native
+    branch: M1
+    package: io.github.domi04151309.home
+    license: GPL-3.0-only
+    source: "https://f-droid.org/packages/io.github.domi04151309.home/"
+    apk_url: "https://f-droid.org/repo/io.github.domi04151309.home_1131.apk"
+    version_code: 1131
+    transport: http_rest
+
+  # BLE device controller.
+  - id: bluegate
+    description: "BlueGate — BLE gate controller"
+    framework: native
+    branch: M3
+    package: org.cleverfox.bluegate
+    license: MIT
+    source: "https://f-droid.org/packages/org.cleverfox.bluegate/"
+    apk_url: "https://f-droid.org/repo/org.cleverfox.bluegate_20260105.apk"
+    version_code: 20260105
+    transport: ble
+
+  # React Native, device-adjacent (Wake-on-LAN UDP). HA Core has `wake_on_lan`.
+  - id: awakeonlan
+    description: "AwakeOnLANMobile — React Native Wake-on-LAN sender"
+    framework: react_native
+    branch: M3
+    package: com.awakeonlanmobile
+    license: GPL-3.0-or-later
+    source: "https://f-droid.org/packages/com.awakeonlanmobile/"
+    apk_url: "https://f-droid.org/repo/com.awakeonlanmobile_10000204.apk"
+    version_code: 10000204
+    expected_verdict: skip
+    expected_existing: "core/wake_on_lan"
+
+  # Home Assistant's own companion app: must never generate a duplicate.
+  - id: ha_companion
+    description: "Home Assistant companion (minimal/F-Droid flavour)"
+    framework: native
+    branch: M1
+    package: io.homeassistant.companion.android.minimal
     license: Apache-2.0
-    source: "TBD"
-    apk_url: "https://example.invalid/replace.me.apk"
-    expected_verdict: proceed
+    source: "https://f-droid.org/packages/io.homeassistant.companion.android.minimal/"
+    apk_url: "https://f-droid.org/repo/io.homeassistant.companion.android.minimal_22884.apk"
+    version_code: 22884
+    expected_verdict: skip
+    expected_existing: "core/mobile_app"
 
-  # Native OkHttp without Retrofit
-  - id: native_okhttp
-    description: "Hand-rolled OkHttp client, no Retrofit annotations"
-    framework: native
-    branch: M1
-    license: TBD
-    source: "TBD"
-    apk_url: "https://example.invalid/replace.me.apk"
-    expected_verdict: proceed
-
-  # Tuya clone — must trigger early-exit (P1-2)
+  # Tuya clone — must trigger early-exit (P1-2). No Tuya app is on F-Droid;
+  # supply one manually (proprietary) to fixtures/_cache/.
   - id: tuya_clone
     description: "SmartLife / Tuya-clone app — pipeline should bail to tinytuya"
     framework: native
     branch: M1
-    license: TBD
-    source: "TBD"
+    license: proprietary
+    source: "TBD — not available on F-Droid"
     apk_url: "https://example.invalid/replace.me.apk"
     expected_verdict: skip
     expected_reason: "tuya_detected_use_tinytuya"
-
-  # Flutter — M3
-  - id: flutter_app
-    description: "Flutter AOT app for blutter/reFlutter path testing"
-    framework: flutter
-    branch: M3
-    license: TBD
-    source: "TBD"
-    apk_url: "https://example.invalid/replace.me.apk"
-    expected_verdict: proceed
-
-  # React Native — M3
-  - id: react_native_app
-    description: "RN app with index.android.bundle to extract"
-    framework: react_native
-    branch: M3
-    license: TBD
-    source: "TBD"
-    apk_url: "https://example.invalid/replace.me.apk"
-    expected_verdict: proceed
-
-  # BLE-only — M3
-  - id: ble_only
-    description: "Device app with BluetoothGatt characteristic R/W, no HTTP"
-    framework: native
-    branch: M3
-    license: TBD
-    source: "TBD"
-    apk_url: "https://example.invalid/replace.me.apk"
-    expected_verdict: proceed
 
 # Verification fixtures — apps with KNOWN existing HA integrations.
 # These should ALL trigger P-2.5's "skip" verdict.
