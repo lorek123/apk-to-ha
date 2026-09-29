@@ -32,7 +32,7 @@ from ..ir.models import (
 )
 from .app_sources import app_source_files
 from .discovery_scanner import scan as discovery_scan
-from .payload_resolver import PayloadResolver
+from .payload_resolver import PayloadResolver, serialized_fields
 from .retrofit_scanner import RetrofitScanner
 
 _LOGGER = logging.getLogger(__name__)
@@ -67,9 +67,11 @@ _VIDEO_CLASS_KEYWORDS = frozenset({"video", "camera", "stream"})
 _VIDEO_PORT_RE = re.compile(
     r"\b(?:WEBSOCKET_PORT|VIDEO_PORT|STREAM_PORT|CAMERA_PORT)\s*=\s*(\d{4,5})\b"
 )
+# Wire names of the message envelope shared by every response, not device state.
+_ENVELOPE_WIRE_NAMES = frozenset({"cmd", "seq", "resultCode", "result_code"})
+
 _BITMAP_RE = re.compile(r"\bBitmapFactory\b|\bdecodeByteArray\b")
 _ROTATE_RE = re.compile(r"postRotate\s*\(\s*(-?\d+(?:\.\d+)?)f?\s*[,)]")
-_SERIALIZED_RE = re.compile(r'@SerializedName\("([^"]+)"\)\s*(?:private\s+)?(\w+)\s+(\w+);')
 
 
 class ProtocolScanner:
@@ -250,8 +252,11 @@ class ProtocolScanner:
             if f'"{gin_value}"' in src:
                 push_cmd = gin_value
             if any(kw in f.name for kw in ("Robot", "State", "Status")):
-                for m in _SERIALIZED_RE.finditer(src):
-                    json_name, java_type, field_name = m.group(1), m.group(2), m.group(3)
+                for json_name, java_type, field_name, _ in serialized_fields(
+                    src, self._str_constants
+                ):
+                    if json_name in _ENVELOPE_WIRE_NAMES:
+                        continue  # message framing (RobotBaseResponse etc.), not state
                     if not any(fd.serialized_name == json_name for fd in fields):
                         fields.append(
                             FieldDef(
@@ -308,7 +313,7 @@ class ProtocolScanner:
                     endpoints_by_cmd[ep.cmd] = ep
 
         # P2-2: enrich @Body / response types via PayloadResolver
-        resolver = PayloadResolver(self._apk_out_dir)
+        resolver = PayloadResolver(self._apk_out_dir, self._str_constants)
         for key, ep in endpoints_by_cmd.items():
             enriched_req = list(ep.request_fields)
             enriched_resp = list(ep.response_fields)

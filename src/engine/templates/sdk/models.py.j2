@@ -13,20 +13,20 @@ def _opt_bool(value: object) -> bool | None:
 @dataclass
 class RobotState:
     """Parsed state push ({{ state_push_cmd }} event)."""
-{% for s in sensors %}
+{% for s in model_sensors %}
     {{ s.attr }}: int | float | str | None = None
 {% endfor %}
-{% for bs in binary_sensors %}
+{% for bs in model_binary_sensors %}
     {{ bs.attr }}: bool | None = None
 {% endfor %}
 
     @classmethod
     def from_dict(cls, data: dict) -> "RobotState":
         return cls(
-{% for s in sensors %}
+{% for s in model_sensors %}
             {{ s.attr }}=data.get("{{ s.key }}"),
 {% endfor %}
-{% for bs in binary_sensors %}
+{% for bs in model_binary_sensors %}
             {{ bs.attr }}=_opt_bool(data.get("{{ bs.key }}")),
 {% endfor %}
         )

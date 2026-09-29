@@ -143,9 +143,13 @@ async def test_switch_sends_enable(hass: HomeAssistant, mock_device: MockDevice)
         "switch", "turn_on", {ATTR_ENTITY_ID: entity_id}, blocking=True
     )
     await _wait_for(lambda: _sent(mock_device, cmd="{{ test_switch.cmd }}", enable=True))
-{% if test_switch.state_attr %}
+{% if test_switch.state_key %}
     # State-backed: the entity follows the device, not the last command.
     assert not hass.states.get(entity_id).attributes.get(ATTR_ASSUMED_STATE)
+    await mock_device.push(**{"{{ test_switch.state_key }}": True})
+    await _wait_for(lambda: hass.states.get(entity_id).state == "on")
+    await mock_device.push(**{"{{ test_switch.state_key }}": False})
+    await _wait_for(lambda: hass.states.get(entity_id).state == "off")
 {% else %}
     # No state field for this switch in the protocol: HA must know it's optimistic.
     state = hass.states.get(entity_id)
