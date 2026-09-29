@@ -91,6 +91,20 @@ async def test_user_flow_cannot_connect(hass: HomeAssistant, unused_tcp_port: in
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "cannot_connect"}
 
+{% if auth_result_field %}
+
+
+async def test_user_flow_rejected_pairing(hass: HomeAssistant, mock_device: MockDevice) -> None:
+    mock_device.auth_result = 1
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: HOST, CONF_PORT: mock_device.port}
+    )
+
+    # A refusal is reported as such, promptly, not as an unreachable device.
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "invalid_auth"}
+{% endif %}
 
 async def test_setup_retries_when_unreachable(hass: HomeAssistant, unused_tcp_port: int) -> None:
     entry = await _setup_entry(hass, unused_tcp_port)

@@ -11,6 +11,8 @@ from aiohttp import WSMsgType, web
 
 AUTH_CMD = "{{ auth_cmd }}"
 STATE_CMD = "{{ state_push_cmd }}"
+# Status field of the {{ auth_cmd }} reply, when the protocol has one.
+AUTH_RESULT_FIELD: str | None = {{ ('"' ~ auth_result_field ~ '"') if auth_result_field else "None" }}
 INITIAL_STATE: dict[str, Any] = json.loads({{ test_initial_state | tojson | tojson }})
 
 
@@ -30,6 +32,7 @@ class MockDevice:
     def __init__(self) -> None:
         self.state: dict[str, Any] = dict(INITIAL_STATE)
         self.received: list[dict[str, Any]] = []
+        self.auth_result = 0  # non-zero: refuse pairing (needs AUTH_RESULT_FIELD)
         self.port = 0
         self._clients: set[web.WebSocketResponse] = set()
         self._runner: web.AppRunner | None = None
@@ -70,6 +73,11 @@ class MockDevice:
                 data = json.loads(msg.data)
                 self.received.append(data)
                 if data.get("cmd") == AUTH_CMD:
+                    if AUTH_RESULT_FIELD is not None:
+                        reply = {"cmd": AUTH_CMD, AUTH_RESULT_FIELD: self.auth_result}
+                        await ws.send_str(json.dumps(reply))
+                        if self.auth_result:
+                            continue
                     await ws.send_str(json.dumps({"cmd": STATE_CMD, **self.state}))
         finally:
             self._clients.discard(ws)

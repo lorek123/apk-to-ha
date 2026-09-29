@@ -19,6 +19,7 @@
     },
     "error": {
       "cannot_connect": "Failed to connect — check the IP address and that the device is powered on",
+      "invalid_auth": "The device refused to pair with Home Assistant",
       "unknown": "Unexpected error"{% if device_errors %},
 {% for e in device_errors %}
       {{ e.key | tojson }}: {{ e.msg | tojson }}{% if not loop.last %},{% endif %}

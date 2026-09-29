@@ -27,6 +27,10 @@ class {{ class_prefix }}ConnectionError(Exception):
     """Raised when the device cannot be reached or never sends its state."""
 
 
+class {{ class_prefix }}AuthError({{ class_prefix }}ConnectionError):
+    """Raised when the device answers {{ auth_cmd }} but rejects the pairing."""
+
+
 class {{ class_prefix }}Client:
     """Manages the WebSocket connection to a {{ name }} robot."""
 
@@ -46,6 +50,7 @@ class {{ class_prefix }}Client:
         self._disconnect_callbacks: list[Callable[[], None]] = []
         self._listen_task: asyncio.Task[None] | None = None
         self._first_state = asyncio.Event()
+        self._auth_rejected: object = None
         self._closing = False
 
     @property
@@ -81,6 +86,7 @@ class {{ class_prefix }}Client:
             return self._state
         self._closing = False
         self._first_state.clear()
+        self._auth_rejected = None
         if self._own_session and self._session is None:
             self._session = aiohttp.ClientSession()
         assert self._session is not None
@@ -99,6 +105,11 @@ class {{ class_prefix }}Client:
             raise {{ class_prefix }}ConnectionError(
                 f"Cannot connect to {self._host}:{self._port}: {exc!r}"
             ) from exc
+        if self._auth_rejected is not None:
+            await self.disconnect()
+            raise {{ class_prefix }}AuthError(
+                f"{self._host} rejected {CMD_AUTH} ({{ auth_result_field or 'result' }}={self._auth_rejected!r})"
+            )
         return self._state
 
     async def disconnect(self) -> None:
@@ -168,6 +179,13 @@ class {{ class_prefix }}Client:
         except json.JSONDecodeError:
             return
         cmd = data.get("cmd")
+{% if auth_result_field %}
+        if cmd == CMD_AUTH and data.get("{{ auth_result_field }}", 0) != 0:
+            # Pairing refused: wake connect() instead of letting it time out.
+            self._auth_rejected = data.get("{{ auth_result_field }}")
+            self._first_state.set()
+            return
+{% endif %}
         if cmd == CMD_STATE_PUSH:
             self._state = RobotState.from_dict(data)
             self._first_state.set()

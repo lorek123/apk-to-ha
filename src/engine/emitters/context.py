@@ -75,6 +75,22 @@ def _match_class[T](key: str, table: dict[str, T]) -> T | None:
     return next((v for sub, v in table.items() if sub in k), None)
 
 
+_RESULT_FIELD_RE = re.compile(r"^(?:resultcode|result|code|errorcode|status)$")
+
+
+def _auth_result_field(ir: ProtocolIR) -> str | None:
+    """Wire name of the integer status in the handshake reply (e.g. resultCode), if known.
+
+    Lets the SDK tell a rejected pairing apart from an unreachable device.
+    """
+    auth = next((c for c in ir.commands if c.cmd == ir.auth.handshake_cmd), None)
+    for f in auth.response_fields if auth else []:
+        name = f.serialized_name or f.name
+        if f.kind == FieldKind.INTEGER and _RESULT_FIELD_RE.match(_norm(name)):
+            return name
+    return None
+
+
 def _required_params(ep: Endpoint) -> list[FieldDef]:
     return [f for f in ep.request_fields if f.required and f.name not in _TRANSPORT_FIELDS]
 
@@ -303,6 +319,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "udp_port": ir.discovery.port,
         "udp_broadcast_cmd": ir.discovery.broadcast_cmd,
         "auth_cmd": ir.auth.handshake_cmd or "grantAccess",
+        "auth_result_field": _auth_result_field(ir),
         "state_push_cmd": ir.state.push_cmd or "gin",
         # entities
         "switches": switches,
