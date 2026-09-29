@@ -59,6 +59,8 @@ def _base_ctx() -> dict[str, Any]:
         "numbers": [],
         "sensors": [],
         "binary_sensors": [],
+        "model_sensors": [],
+        "model_binary_sensors": [],
         "mode_actions": {},
         "platforms": [],
     }

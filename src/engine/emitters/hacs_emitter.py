@@ -38,7 +38,7 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
         **ctx,
         "test_probe": probe,
         "test_initial_state": {probe["key"]: probe["initial_value"]},
-        "test_switch": ctx["switches"][0] if ctx.get("switches") else None,
+        "test_switch": _test_switch(ctx),
         "test_select": _test_select(ctx),
         "test_press": next((b for b in ctx.get("buttons", []) if not b["maintenance"]), None),
         "test_maintenance": [b for b in ctx.get("buttons", []) if b["maintenance"]],
@@ -53,12 +53,26 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
     return tests_dir
 
 
+def _test_switch(ctx: dict[str, Any]) -> dict[str, Any] | None:
+    """Prefer a state-backed switch (with the wire key the device pushes), else any."""
+    switches = ctx.get("switches", [])
+    state_keys = {
+        s["attr"]: s["key"]
+        for s in ctx.get("model_sensors", []) + ctx.get("model_binary_sensors", [])
+    }
+    for sw in switches:
+        if sw["state_attr"] in state_keys:
+            return {**sw, "state_key": state_keys[sw["state_attr"]]}
+    return {**switches[0], "state_key": None} if switches else None
+
+
 def _test_select(ctx: dict[str, Any]) -> dict[str, Any] | None:
     """A state-backed mode select plus the pushed key/value that selects its 2nd option."""
     mode_actions: dict[int, str] = ctx.get("mode_actions") or {}
     for sel in ctx.get("selects", []):
         state_key = next(
-            (s["key"] for s in ctx.get("sensors", []) if s["attr"] == sel["state_attr"]), None
+            (s["key"] for s in ctx.get("model_sensors", []) if s["attr"] == sel["state_attr"]),
+            None,
         )
         if state_key and len(mode_actions) >= 2:
             (_, first), (value, name) = sorted(mode_actions.items())[:2]

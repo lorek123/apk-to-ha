@@ -8,6 +8,8 @@ from @SerializedName (Gson) and @Json(name=...) (Moshi) annotations.
 Handles:
   - @SerializedName("wire_name") → FieldDef with serialized_name set
   - @Json(name = "wire_name")    → same
+  - Constant references (@SerializedName(Api.MUTE)) resolved via the app's
+    static final String constants
   - Primitive Java types → FieldKind mapping
   - Collections (List<T>, ArrayList<T>) → FieldKind.ARRAY
   - Nested classes (resolved shallowly — 1 level deep)
@@ -17,6 +19,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Mapping
 from pathlib import Path
 
 from ..ir.models import FieldDef, FieldKind, PayloadSchema
@@ -25,23 +28,26 @@ _LOGGER = logging.getLogger(__name__)
 
 # ── patterns ──────────────────────────────────────────────────────────────────
 
-# @SerializedName("wire_name") followed by optional other annotations, then the field
-_SERIALIZED_NAME_RE = re.compile(
-    r'@SerializedName\s*\(\s*"([^"]+)"\s*\)'
+# Annotation argument: a string literal ("wire") or a constant reference
+# (RobotApi.MUTE / MUTE), optionally as value=/name=. Group "lit" or "const".
+_NAME_ARG = r'(?:"(?P<lit>[^"]+)"|(?P<const>[A-Za-z_][\w.]*))'
+# After the annotation: other annotations, modifiers, then "<type> <field>;"
+_FIELD_TAIL = (
     r"(?:\s*@[\w.]+(?:\([^)]*\))?\s*)*"  # other annotations
     r"\s*(?:public|private|protected)?\s*"
-    r"(?:static\s+)?(?:final\s+)?"
-    r"([\w.<>, ]+?)\s+(\w+)\s*[;=]",
+    r"(?:static\s+)?(?:final\s+)?(?:transient\s+)?(?:volatile\s+)?"
+    r"(?P<type>[\w.<>, ]+?)\s+(?P<field>\w+)\s*[;=]"
+)
+
+# @SerializedName("wire") / @SerializedName(Api.WIRE) / @SerializedName(value = "wire", ...)
+_SERIALIZED_NAME_RE = re.compile(
+    r"@SerializedName\s*\(\s*(?:value\s*=\s*)?" + _NAME_ARG + r"\s*(?:,[^)]*)?\)" + _FIELD_TAIL,
     re.DOTALL,
 )
 
-# @Json(name = "wire_name") — Moshi
+# @Json(name = "wire") — Moshi
 _JSON_NAME_RE = re.compile(
-    r'@Json\s*\(\s*name\s*=\s*"([^"]+)"\s*\)'
-    r"(?:\s*@[\w.]+(?:\([^)]*\))?\s*)*"
-    r"\s*(?:public|private|protected)?\s*"
-    r"(?:static\s+)?(?:final\s+)?"
-    r"([\w.<>, ]+?)\s+(\w+)\s*[;=]",
+    r"@Json\s*\(\s*name\s*=\s*" + _NAME_ARG + r"\s*\)" + _FIELD_TAIL,
     re.DOTALL,
 )
 
@@ -55,11 +61,34 @@ _NULLABLE_RE = re.compile(r"@(?:Nullable|Null)\b")
 # ── resolver ──────────────────────────────────────────────────────────────────
 
 
+def serialized_fields(
+    src: str, constants: Mapping[str, str] | None = None
+) -> list[tuple[str, str, str, int]]:
+    """(wire_name, java_type, java_field, offset) for each Gson/Moshi-annotated field.
+
+    Constant references are resolved through *constants* (simple name → string
+    value, e.g. {"MUTE": "mute"}); unresolvable ones are skipped, never guessed.
+    """
+    out: list[tuple[str, str, str, int]] = []
+    for pat in (_SERIALIZED_NAME_RE, _JSON_NAME_RE):
+        for m in pat.finditer(src):
+            wire = m.group("lit")
+            if wire is None:
+                const = m.group("const")
+                wire = (constants or {}).get(const.rsplit(".", 1)[-1])
+                if wire is None:
+                    _LOGGER.debug("unresolved serialized-name constant %s", const)
+                    continue
+            out.append((wire, m.group("type").strip(), m.group("field"), m.start()))
+    return out
+
+
 class PayloadResolver:
     """Resolves a Java type name to its wire-name FieldDef list."""
 
-    def __init__(self, apk_out_dir: Path) -> None:
+    def __init__(self, apk_out_dir: Path, constants: Mapping[str, str] | None = None) -> None:
         self._sources = apk_out_dir / "sources"
+        self._constants = constants or {}
         self._cache: dict[str, list[FieldDef]] = {}
 
     def resolve(self, type_name: str) -> PayloadSchema:
@@ -99,26 +128,21 @@ class PayloadResolver:
         fields: list[FieldDef] = []
         seen: set[str] = set()
 
-        for pat in (_SERIALIZED_NAME_RE, _JSON_NAME_RE):
-            for m in pat.finditer(src):
-                wire_name = m.group(1)
-                java_type = m.group(2).strip()
-                java_field = m.group(3)
-                if wire_name in seen:
-                    continue
-                seen.add(wire_name)
+        for wire_name, java_type, java_field, offset in serialized_fields(src, self._constants):
+            if wire_name in seen:
+                continue
+            seen.add(wire_name)
 
-                nullable = bool(_NULLABLE_RE.search(src[max(0, m.start() - 50) : m.start()]))
-                kind = _kind(java_type)
-                fields.append(
-                    FieldDef(
-                        name=java_field,
-                        serialized_name=wire_name,
-                        kind=kind,
-                        required=not nullable,
-                        nullable=nullable,
-                    )
+            nullable = bool(_NULLABLE_RE.search(src[max(0, offset - 50) : offset]))
+            fields.append(
+                FieldDef(
+                    name=java_field,
+                    serialized_name=wire_name,
+                    kind=_kind(java_type),
+                    required=not nullable,
+                    nullable=nullable,
                 )
+            )
 
         if fields:
             _LOGGER.info(

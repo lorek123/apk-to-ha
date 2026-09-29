@@ -187,6 +187,13 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
                 }
             )
 
+    # Every state field stays in the SDK's state model, but a field already shown
+    # by a control (mute switch, mode select) doesn't also get its own sensor.
+    model_sensors, model_binary_sensors = sensors, binary_sensors
+    consumed = {c["state_attr"] for c in switches + selects + numbers if c["state_attr"]}
+    sensors = [s for s in sensors if s["attr"] not in consumed]
+    binary_sensors = [s for s in binary_sensors if s["attr"] not in consumed]
+
     # ── P5-7 discovery blocks for manifest.json + config_flow ────────────────
     zeroconf_types: list[str] = []
     dhcp_hostnames: list[str] = []
@@ -304,6 +311,8 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "numbers": numbers,
         "sensors": sensors,
         "binary_sensors": binary_sensors,
+        "model_sensors": model_sensors,
+        "model_binary_sensors": model_binary_sensors,
         "unmapped_commands": unmapped,
         "mode_actions": mode_actions,
         # platforms present
