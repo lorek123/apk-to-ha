@@ -30,6 +30,7 @@ from ..ir.models import (
     TransportContract,
     TransportType,
 )
+from . import confidence
 from .app_sources import app_source_files
 from .discovery_scanner import scan as discovery_scan
 from .payload_resolver import PayloadResolver, serialized_fields
@@ -80,6 +81,10 @@ _METHOD_CALL_RE = re.compile(r"\.(\w+)\s*\(")
 # How far back from a decode site to look for the request call it belongs to.
 _RESPONSE_LOOKBACK = 2000
 
+# End of this command's request: the method's return, a closing brace at member
+# depth, or the next put("cmd", ...) (another command built in the same method).
+_METHOD_END_RE = re.compile(r"\breturn\b|\n    \}|\.put\(\s*\"cmd\"")
+
 # Wire names of the message envelope shared by every response, not device state.
 _ENVELOPE_WIRE_NAMES = frozenset({"cmd", "seq", "resultCode", "result_code"})
 
@@ -127,8 +132,34 @@ class ProtocolScanner:
         commands, events = self._extract_endpoints()
         self._extract_mode_actions()
         self._detect_streaming()
+        state, commands = self._attach_mode_enum(state, commands)
 
         return transport, discovery, auth, state, commands, events
+
+    def _attach_mode_enum(
+        self, state: StateSchema, commands: list[Endpoint]
+    ) -> tuple[StateSchema, list[Endpoint]]:
+        """Put the mode→action values on the "mode" fields they describe.
+
+        _extract_mode_actions() learns them from put("mode", N) calls, so they
+        belong to request fields and state fields whose wire name is "mode".
+        """
+        modes: dict[int, str] = self.extra.get("mode_actions", {})
+        if not modes:
+            return state, commands
+        values: list[str | int] = sorted(modes)
+
+        def tag(f: FieldDef) -> FieldDef:
+            if (f.serialized_name or f.name) == "mode" and f.enum_values is None:
+                return f.model_copy(update={"enum_values": values})
+            return f
+
+        state = state.model_copy(update={"fields": [tag(f) for f in state.fields]})
+        commands = [
+            c.model_copy(update={"request_fields": [tag(f) for f in c.request_fields]})
+            for c in commands
+        ]
+        return state, commands
 
     # ── pre-passes ────────────────────────────────────────────────────────────
 
@@ -366,6 +397,9 @@ class ProtocolScanner:
                         direction=Direction.TO_DEVICE,
                         awaits_response=True,
                         source_class=class_name,
+                        confidence=confidence.score(
+                            confidence.NAME_ANNOTATION, confidence.FIELDS_NONE
+                        ),
                     )
 
         # P2-1: merge richer RetrofitScanner results (set by _detect_transport)
@@ -428,7 +462,7 @@ class ProtocolScanner:
                         transport=TransportType.WEBSOCKET,
                         direction=Direction.FROM_DEVICE,
                         awaits_response=False,
-                        source_class="RobotApi",
+                        confidence=confidence.score(confidence.NAME_LISTED, confidence.FIELDS_NONE),
                     )
                 )
 
@@ -458,6 +492,10 @@ class ProtocolScanner:
             awaits_response=awaits,
             request_fields=fields,
             source_class=class_name,
+            confidence=confidence.score(
+                confidence.NAME_CMD_PUT,
+                confidence.FIELDS_NEARBY if fields else confidence.FIELDS_NONE,
+            ),
         )
 
     def _extract_mode_actions(self) -> None:
@@ -513,7 +551,7 @@ class ProtocolScanner:
 
 
 def _extract_fields_near_cmd(src: str, cmd: str, const_name: str | None) -> list[FieldDef]:
-    """Return the other put() fields in the ~600-char block after the cmd put()."""
+    """Return the other put() fields after the cmd put(), up to the end of that method."""
     fields: list[FieldDef] = []
     # Prefer searching by constant name if available (more precise in source)
     search_terms: list[str] = []
@@ -526,6 +564,11 @@ def _extract_fields_near_cmd(src: str, cmd: str, const_name: str | None) -> list
         idx = src.find(term)
         if idx != -1:
             block = src[idx : idx + 600]
+            # Stay inside the method that sends this cmd: the next method's put()
+            # calls belong to a different command.
+            end = _METHOD_END_RE.search(block, len(term))
+            if end:
+                block = block[: end.start()]
             seen: set[str] = set()
             for m in _FIELD_RE.finditer(block):
                 fname = m.group(1)

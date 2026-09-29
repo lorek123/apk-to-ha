@@ -151,3 +151,21 @@ def test_device_classes_and_translation_keys() -> None:
     assert ctx["binary_sensors"][0]["device_class"] == "battery_charging"
     assert ctx["binary_sensors"][0]["tkey"] == "ischarging"
     assert "ischarging" in ctx["entity_sections"]["binary_sensor"]
+
+
+def test_queries_are_not_buttons() -> None:
+    reply = [
+        FieldDef(name="clients", kind=FieldKind.ARRAY),
+        FieldDef(name="resultCode", kind=FieldKind.INTEGER),
+    ]
+    status_only = [FieldDef(name="resultCode", kind=FieldKind.INTEGER)]
+    commands = [
+        _cmd("paired_list", EntityHint.BUTTON).model_copy(update={"response_fields": reply}),
+        _cmd("getWifiList", EntityHint.BUTTON),
+        _cmd("wave", EntityHint.BUTTON).model_copy(update={"response_fields": status_only}),
+    ]
+
+    ctx = _ctx(commands, [])
+
+    assert [b["cmd"] for b in ctx["buttons"]] == ["wave"]  # status-only reply: still an action
+    assert {u["cmd"] for u in ctx["unmapped_commands"]} == {"paired_list", "getWifiList"}

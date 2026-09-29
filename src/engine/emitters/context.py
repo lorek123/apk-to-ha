@@ -91,6 +91,20 @@ def _auth_result_field(ir: ProtocolIR) -> str | None:
     return None
 
 
+# Commands that fetch data rather than act (getWifiList, paired_list, fetchStatus).
+_QUERY_CMD = re.compile(r"^(?:get|list|fetch|query|read)|list$|status$", re.IGNORECASE)
+
+
+def _is_query(ep: Endpoint) -> bool:
+    """A reply carrying data beyond a status code, or a query-like name."""
+    data = [
+        f
+        for f in ep.response_fields
+        if not _RESULT_FIELD_RE.match(_norm(f.serialized_name or f.name))
+    ]
+    return bool(data) or bool(_QUERY_CMD.search(_norm(ep.cmd)))
+
+
 def _required_params(ep: Endpoint) -> list[FieldDef]:
     return [f for f in ep.request_fields if f.required and f.name not in _TRANSPORT_FIELDS]
 
@@ -193,6 +207,9 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         elif ep.entity_hint == EntityHint.BUTTON:
             if params:
                 unmapped.append(_unmapped(ep.cmd, "button", params))
+                continue
+            if _is_query(ep):
+                unmapped.append({"cmd": ep.cmd, "reason": "query: a button can't show its reply"})
                 continue
             maintenance = bool(_MAINTENANCE_CMD.search(ep.cmd))
             buttons.append(

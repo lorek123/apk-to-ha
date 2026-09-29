@@ -15,6 +15,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..extraction import confidence
 from ..extraction.signing_emitter import build as build_signing_ctx
 from ..ir.models import (
     Direction,
@@ -46,6 +47,7 @@ class ReconciliationReport:
     signing: SigningVerification | None = None
     # IR patches
     new_commands: list[str] = field(default_factory=list)
+    confirmed_commands: list[str] = field(default_factory=list)  # static + seen live
     removed_commands: list[str] = field(default_factory=list)
     field_corrections: list[dict[str, Any]] = field(default_factory=list)  # {cmd, old, new}
     discovery_port_correction: int | None = None
@@ -88,6 +90,7 @@ def reconcile(
     for cmd in observed_cmds - ir_cmds:
         _LOGGER.info("reconciler: new command observed: %r", cmd)
         report.new_commands.append(cmd)
+    report.confirmed_commands = sorted(observed_cmds & ir_cmds)
 
     # Don't remove IR commands just because they weren't observed in this run —
     # some commands are rarely triggered. Only flag as suspicious.
@@ -309,6 +312,19 @@ def _apply_patches(ir: ProtocolIR, report: ReconciliationReport) -> ProtocolIR |
         updates["signing_traces"] = boosted
         changed = True
 
+    # Commands seen live are confirmed: raise their static (evidence-based) confidence.
+    if report.confirmed_commands:
+        seen = set(report.confirmed_commands)
+
+        def confirm(ep: Endpoint) -> Endpoint:
+            if ep.cmd in seen and ep.confidence < confidence.OBSERVED:
+                return ep.model_copy(update={"confidence": confidence.OBSERVED})
+            return ep
+
+        updates["commands"] = [confirm(e) for e in ir.commands]
+        updates["events"] = [confirm(e) for e in ir.events]
+        changed = True
+
     # Add new commands
     if report.new_commands:
         new_eps = [
@@ -321,7 +337,7 @@ def _apply_patches(ir: ProtocolIR, report: ReconciliationReport) -> ProtocolIR |
             )
             for cmd in report.new_commands
         ]
-        updates["commands"] = ir.commands + new_eps
+        updates["commands"] = updates.get("commands", ir.commands) + new_eps
         changed = True
 
     # Discovery port
