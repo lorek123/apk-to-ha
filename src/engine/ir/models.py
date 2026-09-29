@@ -125,6 +125,7 @@ class StateSchema(BaseModel):
     """Schema of the device's reported state (from gin / polling response)."""
 
     push_cmd: str | None = None  # e.g. "gin" for push-based
+    poll_endpoint: str | None = None  # e.g. "GET /status" for poll-based HTTP devices
     fields: list[FieldDef] = Field(default_factory=list)
 
 

@@ -149,6 +149,29 @@ apks:
     expected_verdict: skip
     expected_existing: "core/wake_on_lan"
 
+  # Single-vendor local HTTP, no HA Core integration: targets for HTTP generation.
+  - id: radio_telescope
+    description: "Smart Radio Telescope — controls an Az/El mount over local Wi-Fi"
+    framework: native
+    branch: M1
+    package: eu.radio_science_institute.smart_radio_telescope
+    license: GPL-3.0-or-later
+    source: "https://f-droid.org/packages/eu.radio_science_institute.smart_radio_telescope/"
+    apk_url: "https://f-droid.org/repo/eu.radio_science_institute.smart_radio_telescope_1.apk"
+    version_code: 1
+    expected_verdict: proceed
+
+  - id: nova_unraid
+    description: "NOVA — client for Unraid NAS servers (local HTTP API)"
+    framework: native
+    branch: M1
+    package: io.github.nofuturekid.nova
+    license: GPL-3.0-only
+    source: "https://f-droid.org/packages/io.github.nofuturekid.nova/"
+    apk_url: "https://f-droid.org/repo/io.github.nofuturekid.nova_117.apk"
+    version_code: 117
+    expected_verdict: proceed
+
   # Home Assistant's own companion app: must never generate a duplicate.
   - id: ha_companion
     description: "Home Assistant companion (minimal/F-Droid flavour)"
