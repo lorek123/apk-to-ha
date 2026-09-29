@@ -27,6 +27,12 @@ def main() -> None:
         "--id", dest="apk_id", default=None, help="Override fixture ID (default: apk stem)"
     )
     p.add_argument("--verbose", "-v", action="store_true")
+    p.add_argument(
+        "--no-dynamic",
+        dest="dynamic",
+        action="store_false",
+        help="Skip the P2-7 dynamic oracle (redroid + Frida); static analysis only",
+    )
 
     args = parser.parse_args()
 
@@ -39,7 +45,7 @@ def main() -> None:
             sys.exit(1)
 
         try:
-            ir = asyncio.run(analyze(args.apk, apk_id=args.apk_id))
+            ir = asyncio.run(analyze(args.apk, apk_id=args.apk_id, dynamic=args.dynamic))
         except TuyaDetectedError as exc:
             print(f"\n⚠  Tuya SDK detected in {exc}.")
             print("   This device is already supported via tinytuya / HA Core 'tuya' integration.")
