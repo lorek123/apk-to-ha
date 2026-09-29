@@ -34,6 +34,9 @@ class AuthType(str, Enum):
     HANDSHAKE = "handshake"  # custom JSON handshake (e.g. grantAccess)
     API_KEY = "api_key"
     OAUTH2 = "oauth2"
+    # Device sends a nonce; the client proves itself by signing it with a key the
+    # device knows (e.g. SHA256withECDSA over BLE). Needs key enrolment.
+    CHALLENGE_RESPONSE = "challenge_response"
     NONE = "none"
 
 

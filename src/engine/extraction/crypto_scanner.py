@@ -26,7 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Patterns for getInstance("...") calls — capture the algorithm string
 _GETINSTANCE = re.compile(
-    r"(?:Mac|MessageDigest|Cipher|KeyGenerator|KeyAgreement)"
+    r"(?:Mac|MessageDigest|Cipher|KeyGenerator|KeyAgreement|Signature|KeyPairGenerator)"
     r'\.getInstance\(\s*"([^"]+)"',
 )
 # SecretKeySpec(key, "AES") — capture the algorithm

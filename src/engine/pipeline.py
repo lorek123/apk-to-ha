@@ -35,7 +35,7 @@ from .extraction.strings_scanner import flutter_ui_strings
 from .extraction.strings_scanner import scan as strings_scan
 from .ingestion import classifier, decompiler, manifest_parser
 from .ingestion import play_store as play_store_fetcher
-from .ir.models import Framework, ProtocolIR
+from .ir.models import AuthType, Framework, ProtocolIR
 from .snapshot import harness as snapshot_harness
 from .validation import (
     budget,
@@ -137,13 +137,17 @@ async def analyze(
 
         # ── P2-8: BLE endpoint augmentation ──────────────────────────────────
         ble = BLEScanner(out_dir)
-        ble_transport, _, _, _, ble_commands, ble_events = ble.scan(manifest.package_name)
+        ble_transport, _, ble_auth, _, ble_commands, ble_events = ble.scan(manifest.package_name)
         if ble_commands or ble_events:
+            # BLE is the transport when the socket/HTTP scan found nothing of its own
+            # (its transport is then only a default guess).
+            if not (commands or events):
+                transport = ble_transport
+            if auth.type == AuthType.NONE:
+                auth = ble_auth
             commands = commands + ble_commands
             events = events + ble_events
             extra_ctx = {**extra_ctx, **ble.extra}
-            if not (transport.type.value != "ble") or not commands:
-                transport = ble_transport
             log(
                 "P2",
                 "ble_scan",
@@ -349,12 +353,23 @@ async def analyze(
 
     # ── P4/P5: emit SDK + HACS integration ────────────────────────────────────
     extracted = bool(ir.commands or ir.events or ir.state.fields)
+    # Auth the templates can't perform yet: the device would reject every command.
+    unsupported_auth = ir.auth.type == AuthType.CHALLENGE_RESPONSE
     if emit and not extracted:
         # An integration with no commands, events or state is not a partial result,
         # it's broken output (and fails V-3 at import). Say so instead.
         log("P5", "emit", "ERROR", "Nothing extracted (no commands/events/state) — not emitting")
         ir = ir.model_copy(update={"extra": {**ir.extra, "_status": "nothing-extracted"}})
-    if emit and extracted:
+    elif emit and unsupported_auth:
+        log(
+            "P5",
+            "emit",
+            "ERROR",
+            f"Auth '{ir.auth.type.value}' is not supported by the templates yet "
+            f"({ir.auth.description}) — not emitting",
+        )
+        ir = ir.model_copy(update={"extra": {**ir.extra, "_status": "unsupported-auth"}})
+    if emit and extracted and not unsupported_auth:
         ctx = emitter_context.build(ir)
         for cmd in ctx["unmapped_commands"]:
             log("P5", "entities", "WARNING", f"no entity for {cmd['cmd']}: {cmd['reason']}")
