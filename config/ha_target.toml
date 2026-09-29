@@ -20,6 +20,8 @@ generated_minimum_required = "2026.9.0"
 # Image tag for V-3's HA container test.
 ha_image = "homeassistant/home-assistant"
 ha_image_tag = "2026.9.4"
+# V-2 runs the official hassfest image at ha_image_tag.
+hassfest_image = "ghcr.io/home-assistant/hassfest"
 
 [anchors]
 # Pulled from HA Core at this commit/tag for fixtures/anchors/.

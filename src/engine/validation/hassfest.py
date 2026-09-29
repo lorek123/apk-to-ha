@@ -3,7 +3,8 @@
 
 Two tiers:
   1. Fast structural check (always runs, no HA Core needed).
-  2. Real hassfest via HA Core clone or Docker (when available).
+  2. Real hassfest via the official ghcr.io/home-assistant/hassfest image at the
+     pinned HA tag (when Docker is available).
 
 Returns a HassfestResult with a list of findings.
 """
@@ -13,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import shutil
 import tomllib
 from dataclasses import dataclass, field
@@ -21,8 +23,8 @@ from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
-_HA_CORE_DIR = Path(__file__).parents[3] / ".cache" / "ha-core"
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
+_HASSFEST_IMAGE = "ghcr.io/home-assistant/hassfest"
 
 _REQUIRED_MANIFEST_KEYS = {
     "domain",
@@ -30,7 +32,6 @@ _REQUIRED_MANIFEST_KEYS = {
     "codeowners",
     "config_flow",
     "documentation",
-    "homeassistant",
     "iot_class",
     "quality_scale",
     "requirements",
@@ -60,7 +61,7 @@ class Finding:
 @dataclass
 class HassfestResult:
     passed: bool
-    tier: str  # "structural" | "hassfest_local" | "hassfest_docker" | "skipped"
+    tier: str  # "structural" (hassfest couldn't run) | "hassfest_docker"
     findings: list[Finding] = field(default_factory=list)
 
     @property
@@ -82,24 +83,13 @@ async def validate(integration_dir: Path) -> HassfestResult:
     _check_spdx(integration_dir, findings)
     _check_platinum(integration_dir, findings)
 
-    # Attempt real hassfest on top of the structural checks
-    real_result = await _try_real_hassfest(integration_dir)
-    if real_result is not None:
-        rc, output, tier = real_result
-        # Detect when the image doesn't ship script.hassfest and skip gracefully
-        _hassfest_unavailable = (
-            "No module named 'script'" in output or "No module named 'script.hassfest'" in output
-        )
-        if rc and not _hassfest_unavailable:
-            for line in output.splitlines():
-                if any(kw in line.upper() for kw in ("ERROR", "INVALID", "FAILED")):
-                    findings.append(Finding("error", "hassfest", line.strip()))
-        elif _hassfest_unavailable:
-            _LOGGER.info("hassfest script not present in Docker image — structural checks only")
-        _LOGGER.debug("hassfest raw output (rc=%d):\n%s", rc, output[:2000])
-        tier_name = "structural" if _hassfest_unavailable else tier
-    else:
+    # Real hassfest (official image) on top of the structural checks
+    real = await _run_real_hassfest(integration_dir)
+    if real is None:
         tier_name = "structural"
+    else:
+        tier_name = "hassfest_docker"
+        findings.extend(real)
 
     passed = not any(f.severity == "error" for f in findings)
     return HassfestResult(passed=passed, tier=tier_name, findings=findings)
@@ -229,7 +219,11 @@ def _check_platinum(d: Path, findings: list[Finding]) -> None:
             findings.append(Finding("warning", "platinum", f"{py.name}: entity missing {req}"))
 
 
-# ── real hassfest (best-effort) ───────────────────────────────────────────────
+# ── real hassfest (official image) ─────────────────────────────────────────────
+
+# `* [ERROR] [MANIFEST] Invalid manifest: ...` — one line per hassfest finding
+_HASSFEST_LINE = re.compile(r"^\* \[(ERROR|WARNING)\] \[([A-Z_]+)\] (.+)$")
+_HASSFEST_TIMEOUT = 300
 
 
 def _load_ha_target() -> dict[str, Any]:
@@ -237,58 +231,67 @@ def _load_ha_target() -> dict[str, Any]:
         return tomllib.load(fh)
 
 
-async def _try_real_hassfest(int_path: Path) -> tuple[int, str, str] | None:
-    """Try HA Core clone, then Docker. Returns (rc, output, tier) or None."""
-    if _HA_CORE_DIR.exists():
-        _LOGGER.info("Running hassfest via HA Core clone at %s", _HA_CORE_DIR)
-        python = shutil.which("python3") or "python3"
-        rc, out = await _run(
-            [
-                python,
-                "-m",
-                "script.hassfest",
-                "--integration-path",
-                str(int_path),
-                "--action",
-                "validate",
-            ],
-            cwd=_HA_CORE_DIR,
-        )
-        return rc, out, "hassfest_local"
-
-    if shutil.which("docker"):
-        cfg = await asyncio.to_thread(_load_ha_target)
-        tag = cfg["docker"]["ha_image_tag"]
-        _LOGGER.info("Running hassfest via Docker image %s", tag)
-        rc, out = await _run(
-            [
-                "docker",
-                "run",
-                "--rm",
-                "-v",
-                f"{int_path}:/tmp/integration:ro",
-                f"homeassistant/home-assistant:{tag}",
-                "python3",
-                "-m",
-                "script.hassfest",
-                "--integration-path",
-                "/tmp/integration",  # noqa: S108 — path inside the container
-                "--action",
-                "validate",
-            ]
-        )
-        return rc, out, "hassfest_docker"
-
-    _LOGGER.info("Neither HA Core clone nor Docker found — structural check only")
-    return None
+def parse_hassfest_output(output: str) -> list[Finding] | None:
+    """Findings from hassfest's report, or None if the output isn't a hassfest report."""
+    if "Integrations:" not in output:
+        return None
+    findings: list[Finding] = []
+    for line in output.splitlines():
+        m = _HASSFEST_LINE.match(line.strip())
+        if m:
+            severity, plugin, message = m.groups()
+            findings.append(Finding(severity.lower(), f"hassfest:{plugin.lower()}", message))
+    return findings
 
 
-async def _run(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
+async def _run_real_hassfest(int_path: Path) -> list[Finding] | None:
+    """Run ghcr.io/home-assistant/hassfest at the pinned HA tag.
+
+    Returns its findings, or None when it could not run (no Docker, image pull or
+    tool failure) — the caller then reports tier "structural", never a real pass.
+    """
+    if not shutil.which("docker"):
+        _LOGGER.info("Docker not found — hassfest skipped, structural checks only")
+        return None
+    cfg = await asyncio.to_thread(_load_ha_target)
+    docker_cfg = cfg["docker"]
+    image = f"{docker_cfg.get('hassfest_image', _HASSFEST_IMAGE)}:{docker_cfg['ha_image_tag']}"
+    mount = await asyncio.to_thread(int_path.resolve)
+    cmd = [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "-v",
+        f"{mount}:/github/workspace/custom_components/{int_path.name}:ro",
+        image,
+    ]
+    _LOGGER.info("Running hassfest (%s) on %s", image, int_path.name)
+    try:
+        rc, output = await asyncio.wait_for(_run(cmd), timeout=_HASSFEST_TIMEOUT)
+    except TimeoutError:
+        _LOGGER.warning("hassfest timed out after %ds — structural checks only", _HASSFEST_TIMEOUT)
+        return None
+    findings = parse_hassfest_output(output)
+    if findings is None:
+        _LOGGER.warning("hassfest did not run (rc=%d): %s", rc, output.strip()[-500:])
+        return None
+    if rc and not any(f.severity == "error" for f in findings):
+        findings.append(Finding("error", "hassfest", f"hassfest failed (rc={rc})"))
+    return findings
+
+
+async def _run(cmd: list[str]) -> tuple[int, str]:
     proc = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
-        cwd=cwd,
     )
-    stdout, _ = await proc.communicate()
-    return proc.returncode or 0, stdout.decode()
+    try:
+        stdout, _ = await proc.communicate()
+    except asyncio.CancelledError:
+        proc.kill()
+        await proc.wait()
+        raise
+    return proc.returncode or 0, stdout.decode(errors="replace")

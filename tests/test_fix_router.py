@@ -218,3 +218,22 @@ def test_context_iot_class_http_rest() -> None:
     assert _infer_iot_class(TransportType.WEBSOCKET) == "local_push"
     assert _infer_iot_class(TransportType.BLE) == "local_push"
     assert _infer_iot_class(TransportType.UDP) == "local_push"
+
+
+def test_sorts_manifest_keys_for_hassfest(tmp_path: Path) -> None:
+    d = _make_integration(tmp_path)
+    manifest = json.loads((d / "manifest.json").read_text())
+    (d / "manifest.json").write_text(json.dumps({**manifest, "dhcp": [{"hostname": "x*"}]}))
+    finding = Finding(
+        "error",
+        "hassfest:manifest",
+        "Manifest keys are not sorted correctly: domain, name, then alphabetical order",
+    )
+
+    first = route_and_apply([], [finding], _base_ctx(), d)
+    second = route_and_apply([], [finding], _base_ctx(), d)
+
+    keys = list(json.loads((d / "manifest.json").read_text()))
+    assert keys[:2] == ["domain", "name"]
+    assert keys[2:] == sorted(keys[2:])
+    assert (first.applied, second.applied) == (1, 0)  # idempotent: no fake progress
