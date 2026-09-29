@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from engine.duplicate_check.checker import _fetch_ble_uuid_index, check
+from engine.duplicate_check.checker import _fetch_ble_uuid_index, _ha_ref, check
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -54,8 +54,12 @@ def _mock_components_session(
     session = MagicMock()
 
     def _get(url: str, **kwargs: object) -> MagicMock:
-        if "api.github.com" in url and "contents/homeassistant/components" in url:
-            return _resp(200, [{"name": c, "type": "dir"} for c in components])
+        # Component list: contents/homeassistant → components tree sha → git tree
+        if "api.github.com" in url and url.endswith("contents/homeassistant"):
+            return _resp(200, [{"name": "components", "sha": "tree123", "type": "dir"}])
+        if "api.github.com" in url and url.endswith("git/trees/tree123"):
+            tree = [{"path": c, "type": "tree"} for c in components]
+            return _resp(200, {"tree": tree, "truncated": False})
 
         for name, data in manifest_map.items():
             if f"/components/{name}/manifest.json" in url:
@@ -132,7 +136,7 @@ async def test_ble_uuid_index_skips_non_bluetooth_manifests(tmp_path: Path) -> N
 @pytest.mark.asyncio
 async def test_ble_uuid_index_uses_cache(tmp_path: Path) -> None:
     cached = {"0000abcd-0000-1000-8000-00805f9b34fb": {"location": "core", "name": "cached"}}
-    cache_file = tmp_path / "ha_core_ble_uuids.json"
+    cache_file = tmp_path / f"ha_core_ble_uuids-{_ha_ref()}.json"
     cache_file.write_text(json.dumps(cached))
     session = MagicMock()  # should NOT be called
     with patch("engine.duplicate_check.checker._CACHE_DIR", tmp_path):
@@ -232,7 +236,7 @@ async def test_ble_uuid_index_written_to_cache(tmp_path: Path) -> None:
     )
     with patch("engine.duplicate_check.checker._CACHE_DIR", tmp_path):
         await _fetch_ble_uuid_index(session, ["mydev"])
-    cache_file = tmp_path / "ha_core_ble_uuids.json"
+    cache_file = tmp_path / f"ha_core_ble_uuids-{_ha_ref()}.json"
     assert cache_file.exists()
     cached = json.loads(cache_file.read_text())
     assert "0000aaaa-0000-1000-8000-00805f9b34fb" in cached

@@ -29,6 +29,8 @@ from .extraction.rn_scanner import RNScanner
 from .extraction.signing_tracer import LLM_THRESHOLD
 from .extraction.signing_tracer import escalate as signing_escalate
 from .extraction.signing_tracer import trace as signing_trace
+from .extraction.strings_scanner import all_values as all_string_values
+from .extraction.strings_scanner import flutter_ui_strings
 from .extraction.strings_scanner import scan as strings_scan
 from .ingestion import classifier, decompiler, manifest_parser
 from .ingestion import play_store as play_store_fetcher
@@ -166,6 +168,8 @@ async def analyze(
                 manifest.package_name,
                 session,
                 ble_service_uuids=_ble_uuids or None,
+                app_label=manifest.app_label,
+                app_strings=await asyncio.to_thread(_brand_strings, out_dir, framework),
             ),
             play_store_fetcher.fetch(manifest.package_name),
         )
@@ -565,6 +569,14 @@ async def analyze(
 
     log("pipeline", "done", "INFO", "Pipeline complete", run_id=run_id, output_hash=output_hash)
     return ir
+
+
+def _brand_strings(out_dir: Path, framework: Framework) -> list[str]:
+    """User-facing text for P-2.5's brand signal: strings.xml, plus libapp.so for Flutter."""
+    strings = all_string_values(out_dir)
+    if framework == Framework.FLUTTER:
+        strings += flutter_ui_strings(out_dir)
+    return strings
 
 
 RunStatus = Literal["pass", "fail", "needs-human-review", "incomplete"]
