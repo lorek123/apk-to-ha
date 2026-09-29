@@ -31,6 +31,19 @@ jobs:
       - name: Mypy
         run: uv run mypy
 
+      - name: phcc pin matches HA pin
+        # V-3's sandbox installs this phcc release; it must pin exactly ha_core_version.
+        run: |
+          uv run python - <<'PY'
+          import tomllib
+          from scripts.bump_ha_version import find_phcc_version
+          cfg = tomllib.load(open("config/ha_target.toml", "rb"))
+          ha, pinned = cfg["target"]["ha_core_version"], cfg["sandbox"]["phcc_version"]
+          expected = find_phcc_version(ha)
+          assert pinned == expected, f"phcc_version {pinned} != {expected} (pins HA {ha})"
+          print(f"phcc {pinned} pins HA {ha}")
+          PY
+
   test:
     runs-on: ubuntu-24.04
     steps:
