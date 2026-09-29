@@ -335,6 +335,8 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "ws_port": ir.transport.port or 8887,
         "udp_port": ir.discovery.port,
         "udp_broadcast_cmd": ir.discovery.broadcast_cmd,
+        # discovery.py broadcasts CMD_DISCOVERY on UDP_PORT: needs both.
+        "has_udp_discovery": bool(ir.discovery.port and ir.discovery.broadcast_cmd),
         "auth_cmd": ir.auth.handshake_cmd or "grantAccess",
         "auth_result_field": _auth_result_field(ir),
         "state_push_cmd": ir.state.push_cmd or "gin",

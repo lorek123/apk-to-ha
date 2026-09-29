@@ -13,7 +13,7 @@ from .pipeline import DuplicateFoundError, TuyaDetectedError, analyze
 
 # Run statuses that make the CLI exit non-zero ("incomplete" = a validator was skipped).
 _FAILING_STATUSES = frozenset(
-    {"fail", "needs-human-review", "nothing-extracted", "unsupported-auth"}
+    {"fail", "needs-human-review", "nothing-extracted", "unsupported-auth", "unsupported-transport"}
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")

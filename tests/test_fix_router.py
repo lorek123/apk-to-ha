@@ -53,6 +53,7 @@ def _base_ctx() -> dict[str, Any]:
         "udp_broadcast_cmd": None,
         "auth_cmd": "grantAccess",
         "auth_result_field": None,
+        "has_udp_discovery": False,
         "state_push_cmd": "gin",
         "switches": [],
         "buttons": [],

@@ -35,6 +35,7 @@ from .app_sources import app_source_files
 from .discovery_scanner import scan as discovery_scan
 from .payload_resolver import PayloadResolver, serialized_fields
 from .retrofit_scanner import RetrofitScanner
+from .volley_scanner import scan as volley_scan
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -401,6 +402,10 @@ class ProtocolScanner:
                             confidence.NAME_ANNOTATION, confidence.FIELDS_NONE
                         ),
                     )
+
+        # P2-1b: Volley requests (first-party call sites)
+        for ep in volley_scan(self._apk_out_dir, self._app_package):
+            endpoints_by_cmd.setdefault(ep.cmd, ep)
 
         # P2-1: merge richer RetrofitScanner results (set by _detect_transport)
         for ep in self._retrofit_endpoints:

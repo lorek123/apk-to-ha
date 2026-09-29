@@ -15,6 +15,7 @@ from ..ir.models import Endpoint
 NAME_ANNOTATION = 0.95  # Retrofit @GET("/path") etc.: declarative, compiler-checked
 NAME_CMD_PUT = 0.9  # put("cmd", "x") or put("cmd", CONST) with the constant resolved
 NAME_LISTED = 0.8  # only named in a command-list constant; no send/receive site found
+NAME_REQUEST_CALL = 0.85  # HTTP request built at a call site; path assembled from pieces
 
 # Evidence for the request fields
 FIELDS_TYPED = 1.0  # declared by the method signature / a typed body class
