@@ -22,12 +22,10 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
+        uses: astral-sh/setup-uv@v10
 
       - name: Set up Python
         run: uv python install 3.14
@@ -78,7 +76,7 @@ jobs:
 
       - name: Open bump PR
         if: steps.decide.outputs.needs_update == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: "chore/ha-bump-${{ steps.latest.outputs.tag }}"

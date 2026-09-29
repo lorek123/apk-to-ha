@@ -11,53 +11,47 @@ jobs:
   lint-and-typecheck:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
+        uses: astral-sh/setup-uv@v10
 
       - name: Setup Python
         run: uv python install 3.14
 
       - name: Install dependencies
-        run: uv sync --dev || echo "uv sync skipped (foundation tier — pyproject.toml is partial)"
+        run: uv sync --dev --locked
 
       - name: Ruff format check
-        run: uv run ruff format --check . || true
-        continue-on-error: true
+        run: uv run ruff format --check .
 
       - name: Ruff lint
-        run: uv run ruff check . || true
-        continue-on-error: true
+        run: uv run ruff check .
 
       - name: Mypy
-        run: uv run mypy . || true
-        continue-on-error: true
+        run: uv run mypy
 
   test:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v10
 
       - name: Setup Python
         run: uv python install 3.14
 
       - name: Install dependencies
-        run: uv sync --dev || echo "skipped during foundation tier"
+        run: uv sync --dev --locked
 
       - name: Run tests
-        run: uv run pytest -ra || echo "no tests yet"
-        continue-on-error: true
+        run: uv run pytest -ra
 
   verify-spdx-headers:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check SPDX headers
         run: |
           set -e
@@ -81,8 +75,8 @@ jobs:
   shellcheck:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: ShellCheck
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@2.0.0
         with:
           scandir: ./scripts
