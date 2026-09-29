@@ -94,14 +94,18 @@ def test_sensors_and_binary_sensors(r2d2_ctx: Any) -> None:
     assert "arm" in bin_keys
 
 
-def test_numbers_present(r2d2_ctx: Any) -> None:
-    keys = {n["cmd"] for n in r2d2_ctx["numbers"]}
-    assert "play_sound" in keys
-    assert "head-shift" in keys
+def test_commands_with_unsuppliable_params_are_unmapped(r2d2_ctx: Any) -> None:
+    # play_sound needs interrupt + sound_id, head-shift needs angle + interrupt:
+    # a single number entity can't send either correctly.
+    unmapped = {u["cmd"]: u["reason"] for u in r2d2_ctx["unmapped_commands"]}
+    assert "play_sound" in unmapped and "sound_id" in unmapped["play_sound"]
+    assert "head-shift" in unmapped
+    assert "move-head" in unmapped  # a button can't supply "angle"
+    assert not r2d2_ctx["numbers"]
 
 
-def test_platforms_include_number(r2d2_ctx: Any) -> None:
-    assert "number" in r2d2_ctx["platforms"]
+def test_platforms_follow_mapped_entities(r2d2_ctx: Any) -> None:
+    assert "number" not in r2d2_ctx["platforms"]
     assert "binary_sensor" in r2d2_ctx["platforms"]
 
 

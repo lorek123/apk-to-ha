@@ -7,7 +7,14 @@ from collections.abc import Callable
 from datetime import timedelta
 
 from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
-from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE
+from homeassistant.const import (
+    ATTR_ASSUMED_STATE,
+    ATTR_ENTITY_ID,
+    CONF_HOST,
+    CONF_PORT,
+    STATE_UNAVAILABLE,
+    EntityCategory,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import entity_registry as er
@@ -44,12 +51,18 @@ async def _setup_entry(hass: HomeAssistant, port: int) -> MockConfigEntry:
     return entry
 
 
-def _probe_entity_id(hass: HomeAssistant, entry: MockConfigEntry) -> str:
-    entity_id = er.async_get(hass).async_get_entity_id(
-        PROBE_PLATFORM, DOMAIN, f"{entry.entry_id}_{PROBE_KEY}"
-    )
-    assert entity_id is not None, f"no {PROBE_PLATFORM} entity for {PROBE_KEY}"
+def _entity_id(hass: HomeAssistant, entry: MockConfigEntry, platform: str, key: str) -> str:
+    entity_id = er.async_get(hass).async_get_entity_id(platform, DOMAIN, f"{entry.entry_id}_{key}")
+    assert entity_id is not None, f"no {platform} entity for {key}"
     return entity_id
+
+
+def _probe_entity_id(hass: HomeAssistant, entry: MockConfigEntry) -> str:
+    return _entity_id(hass, entry, PROBE_PLATFORM, PROBE_KEY)
+
+
+def _sent(device: MockDevice, **expected: object) -> bool:
+    return any(all(m.get(k) == v for k, v in expected.items()) for m in device.received)
 
 
 async def test_user_flow_creates_entry(hass: HomeAssistant, mock_device: MockDevice) -> None:
@@ -119,3 +132,66 @@ async def test_unload_disconnects(hass: HomeAssistant, mock_device: MockDevice) 
 
     assert entry.state is ConfigEntryState.NOT_LOADED
     await _wait_for(lambda: mock_device.connected_clients == 0)
+{% if test_switch %}
+
+
+async def test_switch_sends_enable(hass: HomeAssistant, mock_device: MockDevice) -> None:
+    entry = await _setup_entry(hass, mock_device.port)
+    entity_id = _entity_id(hass, entry, "switch", "{{ test_switch.key }}")
+
+    await hass.services.async_call(
+        "switch", "turn_on", {ATTR_ENTITY_ID: entity_id}, blocking=True
+    )
+    await _wait_for(lambda: _sent(mock_device, cmd="{{ test_switch.cmd }}", enable=True))
+{% if test_switch.state_attr %}
+    # State-backed: the entity follows the device, not the last command.
+    assert not hass.states.get(entity_id).attributes.get(ATTR_ASSUMED_STATE)
+{% else %}
+    # No state field for this switch in the protocol: HA must know it's optimistic.
+    state = hass.states.get(entity_id)
+    assert state.attributes.get(ATTR_ASSUMED_STATE) is True
+    assert state.state == "on"
+{% endif %}
+{% endif %}
+{% if test_select %}
+
+
+async def test_select_follows_pushed_mode(hass: HomeAssistant, mock_device: MockDevice) -> None:
+    entry = await _setup_entry(hass, mock_device.port)
+    entity_id = _entity_id(hass, entry, "select", "{{ test_select.key }}")
+
+    await mock_device.push(**{"{{ test_select.state_key }}": {{ test_select.push_value }}})
+    await _wait_for(lambda: hass.states.get(entity_id).state == "{{ test_select.push_option }}")
+
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {ATTR_ENTITY_ID: entity_id, "option": "{{ test_select.pick_option }}"},
+        blocking=True,
+    )
+    await _wait_for(lambda: _sent(mock_device, cmd="{{ test_select.cmd }}"))
+{% endif %}
+{% if test_press %}
+
+
+async def test_button_sends_command(hass: HomeAssistant, mock_device: MockDevice) -> None:
+    entry = await _setup_entry(hass, mock_device.port)
+    entity_id = _entity_id(hass, entry, "button", "{{ test_press.key }}")
+
+    await hass.services.async_call("button", "press", {ATTR_ENTITY_ID: entity_id}, blocking=True)
+    await _wait_for(lambda: _sent(mock_device, cmd="{{ test_press.cmd }}"))
+{% endif %}
+{% if test_maintenance %}
+
+
+async def test_maintenance_buttons_hidden_by_default(
+    hass: HomeAssistant, mock_device: MockDevice
+) -> None:
+    entry = await _setup_entry(hass, mock_device.port)
+    registry = er.async_get(hass)
+    for key in {{ test_maintenance | map(attribute="key") | list | tojson }}:
+        entity = registry.async_get(_entity_id(hass, entry, "button", key))
+        assert entity is not None
+        assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION, key
+        assert entity.entity_category is EntityCategory.CONFIG, key
+{% endif %}

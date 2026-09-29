@@ -2,6 +2,7 @@
 """Switch platform for {{ name }}."""
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
@@ -27,7 +28,13 @@ async def async_setup_entry(
     coordinator: {{ class_prefix }}Coordinator = entry.runtime_data.coordinator
     entities.extend([
 {% for sw in switches %}
-        {{ class_prefix }}Switch(coordinator, "{{ sw.key }}", "{{ sw.name }}", "{{ sw.cmd }}"),
+        {{ class_prefix }}Switch(
+            coordinator,
+            "{{ sw.key }}",
+            "{{ sw.tkey }}",
+            coordinator.client.set_{{ sw.key }},
+            {{ '"' ~ sw.state_attr ~ '"' if sw.state_attr else "None" }},
+        ),
 {% endfor %}
     ])
 {% endif %}
@@ -35,7 +42,7 @@ async def async_setup_entry(
     ble_coordinator: {{ class_prefix }}BleCoordinator = entry.runtime_data.ble_coordinator
     entities.extend([
 {% for sw in ble_switches %}
-        {{ class_prefix }}BleSwitch(ble_coordinator, "{{ sw.key }}", "{{ sw.name }}", "{{ sw.uuid }}"),
+        {{ class_prefix }}BleSwitch(ble_coordinator, "{{ sw.key }}", "{{ sw.tkey }}", "{{ sw.uuid }}"),
 {% endfor %}
     ])
 {% endif %}
@@ -44,31 +51,45 @@ async def async_setup_entry(
 
 {% if switches %}
 class {{ class_prefix }}Switch({{ class_prefix }}Entity, SwitchEntity):
+    """Reads its state from the device push when the protocol reports it.
+
+    Without a matching state field the switch is optimistic and says so via
+    assumed_state, so HA shows both on/off controls instead of a false toggle.
+    """
+
     def __init__(
         self,
         coordinator: {{ class_prefix }}Coordinator,
         key: str,
-        name: str,
-        cmd: str,
+        translation_key: str,
+        set_state: Callable[[bool], Awaitable[None]],
+        state_attr: str | None,
     ) -> None:
         super().__init__(coordinator, key)
-        self._attr_name = name
-        self._cmd = cmd
-        self._is_on: bool | None = None
+        self._attr_translation_key = translation_key
+        self._set_state = set_state
+        self._state_attr = state_attr
+        self._attr_assumed_state = state_attr is None
+        self._optimistic: bool | None = None
 
     @property
     def is_on(self) -> bool | None:
-        return self._is_on
+        if self._state_attr is None:
+            return self._optimistic
+        value = getattr(self.coordinator.data, self._state_attr, None)
+        return None if value is None else bool(value)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self.coordinator.client.send_command(self._cmd, enable=True)
-        self._is_on = True
-        self.async_write_ha_state()
+        await self._async_set(True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self.coordinator.client.send_command(self._cmd, enable=False)
-        self._is_on = False
-        self.async_write_ha_state()
+        await self._async_set(False)
+
+    async def _async_set(self, enable: bool) -> None:
+        await self._set_state(enable)
+        if self._state_attr is None:
+            self._optimistic = enable
+            self.async_write_ha_state()
 {% endif %}
 {% if has_ble and ble_switches %}
 
@@ -84,11 +105,12 @@ class {{ class_prefix }}BleSwitch({{ class_prefix }}BleEntity, SwitchEntity):
         self,
         coordinator: {{ class_prefix }}BleCoordinator,
         key: str,
-        name: str,
+        translation_key: str,
         uuid: str,
     ) -> None:
         super().__init__(coordinator, key)
-        self._attr_name = name
+        self._attr_translation_key = translation_key
+        self._attr_assumed_state = True  # write-only characteristic: state is optimistic
         self._uuid = uuid
         self._is_on: bool | None = None
 
