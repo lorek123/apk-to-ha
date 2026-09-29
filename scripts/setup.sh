@@ -10,7 +10,8 @@
 
 set -euo pipefail
 
-readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly REPO_ROOT
 readonly REQUIRED_PYTHON="3.14"
 readonly REQUIRED_JAVA="21"
 readonly REQUIRED_NODE="22"
@@ -70,13 +71,13 @@ run_checks() {
   local failed=0
   log "Checking required tools..."
 
-  check_python    && ok "Python $REQUIRED_PYTHON"        || { err "Python $REQUIRED_PYTHON missing";        ((failed++)); }
-  check_java      && ok "Java $REQUIRED_JAVA+"           || { err "Java $REQUIRED_JAVA+ missing";           ((failed++)); }
-  check_node      && ok "Node $REQUIRED_NODE+"           || { err "Node $REQUIRED_NODE+ missing";           ((failed++)); }
-  check_docker    && ok "Docker (running)"               || { err "Docker missing or not running";          ((failed++)); }
-  check_uv        && ok "uv"                             || { warn "uv missing (will install)"; }
-  check_jadx      && ok "JADX"                           || { warn "JADX missing (will install)"; }
-  check_gh        && ok "gh CLI"                         || { warn "gh CLI missing (recommended for publishing)"; }
+  if check_python; then ok "Python $REQUIRED_PYTHON"; else err "Python $REQUIRED_PYTHON missing"; failed=$((failed + 1)); fi
+  if check_java;   then ok "Java $REQUIRED_JAVA+";      else err "Java $REQUIRED_JAVA+ missing";      failed=$((failed + 1)); fi
+  if check_node;   then ok "Node $REQUIRED_NODE+";      else err "Node $REQUIRED_NODE+ missing";      failed=$((failed + 1)); fi
+  if check_docker; then ok "Docker (running)";          else err "Docker missing or not running";     failed=$((failed + 1)); fi
+  if check_uv;     then ok "uv";                        else warn "uv missing (will install)"; fi
+  if check_jadx;   then ok "JADX";                      else warn "JADX missing (will install)"; fi
+  if check_gh;     then ok "gh CLI";                    else warn "gh CLI missing (recommended for publishing)"; fi
 
   return $failed
 }

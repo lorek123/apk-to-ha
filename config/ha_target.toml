@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Single source of truth for Home Assistant version targeting.
 # All emitters consult this. V-3 pulls the matching Docker image.
 # Anchor integrations are snapshotted from this release tag.
