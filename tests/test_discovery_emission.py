@@ -75,15 +75,18 @@ def test_zeroconf_types_empty_when_no_service_type() -> None:
     assert ctx["zeroconf_types"] == []
 
 
-def test_has_dhcp_from_udp_broadcast() -> None:
+def test_no_invented_dhcp_for_udp_broadcast() -> None:
+    # No hostname pattern in the IR → no DHCP matcher (never invent one).
     ctx = _ctx(DiscoveryMechanism(type=DiscoveryType.UDP_BROADCAST, port=6445))
-    assert ctx["has_dhcp"] is True
+    assert ctx["has_dhcp"] is False
+    assert ctx["dhcp_hostnames"] == []
 
 
-def test_dhcp_hostnames_from_udp_broadcast() -> None:
-    ctx = _ctx(DiscoveryMechanism(type=DiscoveryType.UDP_BROADCAST, port=6445))
-    assert len(ctx["dhcp_hostnames"]) == 1
-    assert ctx["dhcp_hostnames"][0].endswith("*")
+def test_dhcp_from_udp_broadcast_with_hostname_pattern() -> None:
+    ctx = _ctx(
+        DiscoveryMechanism(type=DiscoveryType.UDP_BROADCAST, port=6445, hostname_pattern="robot-*")
+    )
+    assert ctx["dhcp_hostnames"] == ["robot-*"]
 
 
 def test_has_dhcp_from_hostname_pattern() -> None:
@@ -138,11 +141,12 @@ def test_manifest_dhcp_block(tmp_path: Path) -> None:
         DiscoveryMechanism(
             type=DiscoveryType.UDP_BROADCAST,
             port=6445,
+            hostname_pattern="mydevice*",
         ),
     )
     assert "dhcp" in manifest
     assert len(manifest["dhcp"]) > 0
-    assert manifest["dhcp"][0]["hostname"].endswith("*")
+    assert manifest["dhcp"] == [{"hostname": "mydevice*"}]
 
 
 def test_manifest_no_dhcp_when_none(tmp_path: Path) -> None:
@@ -191,7 +195,7 @@ def test_config_flow_imports_zeroconf(tmp_path: Path) -> None:
             service_type="_device._tcp.local.",
         ),
     )
-    assert "from homeassistant.components import zeroconf" in content
+    assert "import ZeroconfServiceInfo" in content
 
 
 def test_config_flow_zeroconf_confirm_step(tmp_path: Path) -> None:
@@ -202,13 +206,13 @@ def test_config_flow_zeroconf_confirm_step(tmp_path: Path) -> None:
             service_type="_device._tcp.local.",
         ),
     )
-    assert "async_step_zeroconf_confirm" in content
+    assert "async_step_discovery_confirm" in content
 
 
 def test_config_flow_no_zeroconf_when_none(tmp_path: Path) -> None:
     content = _render_config_flow(tmp_path, DiscoveryMechanism(type=DiscoveryType.NONE))
     assert "async_step_zeroconf" not in content
-    assert "from homeassistant.components import zeroconf" not in content
+    assert "ZeroconfServiceInfo" not in content
 
 
 def test_config_flow_dhcp_step(tmp_path: Path) -> None:
@@ -217,6 +221,7 @@ def test_config_flow_dhcp_step(tmp_path: Path) -> None:
         DiscoveryMechanism(
             type=DiscoveryType.UDP_BROADCAST,
             port=6445,
+            hostname_pattern="mydevice*",
         ),
     )
     assert "async_step_dhcp" in content
@@ -228,9 +233,10 @@ def test_config_flow_imports_dhcp(tmp_path: Path) -> None:
         DiscoveryMechanism(
             type=DiscoveryType.UDP_BROADCAST,
             port=6445,
+            hostname_pattern="mydevice*",
         ),
     )
-    assert "from homeassistant.components import dhcp" in content
+    assert "import DhcpServiceInfo" in content
 
 
 def test_config_flow_no_dhcp_when_none(tmp_path: Path) -> None:

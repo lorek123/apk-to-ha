@@ -5,18 +5,18 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import aiohttp
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
-from homeassistant.helpers import aiohttp_client
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import aiohttp_client, instance_id
 {% if has_zeroconf %}
-from homeassistant.components import zeroconf
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 {% endif %}
 {% if has_dhcp %}
-from homeassistant.components import dhcp
+from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 {% endif %}
-from {{ sdk_package }} import {{ class_prefix }}Client
+from {{ sdk_package }} import {{ class_prefix }}Client, {{ class_prefix }}ConnectionError
 
 from .const import DEFAULT_PORT, DOMAIN
 
@@ -30,17 +30,17 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
-async def _validate_input(hass, data: dict[str, Any]) -> dict[str, Any]:
-    """Connect and send {{ auth_cmd }} to verify the device is reachable."""
-    session = aiohttp_client.async_get_clientsession(hass)
+async def _validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
+    """Pair with {{ auth_cmd }} and wait for a state push to verify the device."""
     client = {{ class_prefix }}Client(
         host=data[CONF_HOST],
         port=data.get(CONF_PORT, DEFAULT_PORT),
-        session=session,
+        session=aiohttp_client.async_get_clientsession(hass),
     )
     try:
-        await client.connect()
-    except (aiohttp.ClientError, OSError) as exc:
+        # Same identity the coordinator uses, so the device sees one paired client.
+        await client.connect(device_uuid=await instance_id.async_get(hass))
+    except {{ class_prefix }}ConnectionError as exc:
         raise CannotConnect from exc
     finally:
         await client.disconnect()
@@ -53,7 +53,11 @@ class CannotConnect(Exception):
 
 
 class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for {{ name }}."""
+    """Handle a config flow for {{ name }}.
+
+    Every path uses the device host as unique_id so manual and discovered
+    entries for the same device are recognised as one.
+    """
 
     VERSION = 1
 {% if has_zeroconf or has_dhcp %}
@@ -61,7 +65,7 @@ class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialise."""
         self._discovered_host: str | None = None
-        self._discovered_port: int | None = None
+        self._discovered_port: int = DEFAULT_PORT
 {% endif %}
 
     async def async_step_user(
@@ -69,6 +73,8 @@ class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
+            await self.async_set_unique_id(user_input[CONF_HOST])
+            self._abort_if_unique_id_configured()
             try:
                 info = await _validate_input(self.hass, user_input)
             except CannotConnect:
@@ -77,10 +83,6 @@ class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
             else:
-                await self.async_set_unique_id(
-                    f"{user_input[CONF_HOST]}:{user_input.get(CONF_PORT, DEFAULT_PORT)}"
-                )
-                self._abort_if_unique_id_configured()
                 return self.async_create_entry(title=info["title"], data=user_input)
 
         return self.async_show_form(
@@ -91,50 +93,47 @@ class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
 {% if has_zeroconf %}
 
     async def async_step_zeroconf(
-        self, discovery_info: zeroconf.ZeroconfServiceInfo
+        self, discovery_info: ZeroconfServiceInfo
     ) -> ConfigFlowResult:
         """Handle zeroconf discovery."""
-        host = discovery_info.host
-        port = discovery_info.port or DEFAULT_PORT
-
-        await self.async_set_unique_id(f"{host}:{port}")
-        self._abort_if_unique_id_configured()
-
-        self._discovered_host = host
-        self._discovered_port = port
-        self.context["title_placeholders"] = {"host": host}
-        return await self.async_step_zeroconf_confirm()
-
-    async def async_step_zeroconf_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Confirm zeroconf-discovered device."""
-        if user_input is not None:
-            return self.async_create_entry(
-                title=self.context["title_placeholders"]["host"],
-                data={
-                    CONF_HOST: self._discovered_host,
-                    CONF_PORT: self._discovered_port or DEFAULT_PORT,
-                },
-            )
-        return self.async_show_form(
-            step_id="zeroconf_confirm",
-            description_placeholders=self.context["title_placeholders"],
-        )
+        return await self._async_discovered(discovery_info.host, discovery_info.port)
 {% endif %}
 {% if has_dhcp %}
 
-    async def async_step_dhcp(
-        self, discovery_info: dhcp.DhcpServiceInfo
-    ) -> ConfigFlowResult:
+    async def async_step_dhcp(self, discovery_info: DhcpServiceInfo) -> ConfigFlowResult:
         """Handle DHCP discovery."""
-        host = discovery_info.ip
+        return await self._async_discovered(discovery_info.ip, None)
+{% endif %}
+{% if has_zeroconf or has_dhcp %}
 
+    async def _async_discovered(self, host: str, port: int | None) -> ConfigFlowResult:
         await self.async_set_unique_id(host)
-        self._abort_if_unique_id_configured()
-
+        self._abort_if_unique_id_configured(updates={CONF_HOST: host})
         self._discovered_host = host
-        self._discovered_port = DEFAULT_PORT
+        self._discovered_port = port or DEFAULT_PORT
         self.context["title_placeholders"] = {"host": host}
-        return await self.async_step_user()
+        return await self.async_step_discovery_confirm()
+
+    async def async_step_discovery_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm a discovered device, verifying it responds before creating the entry."""
+        assert self._discovered_host is not None
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            data = {CONF_HOST: self._discovered_host, CONF_PORT: self._discovered_port}
+            try:
+                info = await _validate_input(self.hass, data)
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except Exception:
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
+            else:
+                return self.async_create_entry(title=info["title"], data=data)
+        return self.async_show_form(
+            step_id="discovery_confirm",
+            description_placeholders={"host": self._discovered_host},
+            errors=errors,
+        )
 {% endif %}

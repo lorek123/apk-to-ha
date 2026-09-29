@@ -2,6 +2,7 @@
 .DEFAULT_GOAL := help
 
 HA_TAG := $(shell python3 -c "import tomllib; cfg=tomllib.load(open('config/ha_target.toml','rb')); print(cfg['docker']['ha_image_tag'])")
+PHCC_VERSION := $(shell python3 -c "import tomllib; cfg=tomllib.load(open('config/ha_target.toml','rb')); print(cfg['sandbox']['phcc_version'])")
 SANDBOX_IMAGE := hacs-engine-sandbox
 SANDBOX_TAG   := latest
 
@@ -16,13 +17,15 @@ help:          ## Show this help
 sandbox:       ## Build the F-5 sandbox Docker image and run health tests
 	docker build \
 	  --build-arg HA_TAG=$(HA_TAG) \
+	  --build-arg PHCC_VERSION=$(PHCC_VERSION) \
 	  -t $(SANDBOX_IMAGE):$(SANDBOX_TAG) \
 	  docker/sandbox/
-	docker run --rm $(SANDBOX_IMAGE):$(SANDBOX_TAG)
+	docker run --rm --entrypoint python3 $(SANDBOX_IMAGE):$(SANDBOX_TAG) -m pytest /sandbox/tests/ -v
 
 sandbox-build: ## Build the sandbox image only (no test run)
 	docker build \
 	  --build-arg HA_TAG=$(HA_TAG) \
+	  --build-arg PHCC_VERSION=$(PHCC_VERSION) \
 	  -t $(SANDBOX_IMAGE):$(SANDBOX_TAG) \
 	  docker/sandbox/
 

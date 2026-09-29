@@ -25,3 +25,17 @@ def test_ruff_on_path() -> None:
 def test_mypy_on_path() -> None:
     r = subprocess.run(["mypy", "--version"], capture_output=True, text=True)
     assert r.returncode == 0, f"mypy not on PATH: {r.stderr}"
+
+
+def test_phcc_matches_ha_version() -> None:
+    """The HA test harness must pin exactly the HA version in this image."""
+    from importlib.metadata import requires
+
+    import homeassistant.const
+
+    pins = [
+        r
+        for r in requires("pytest-homeassistant-custom-component") or []
+        if r.startswith("homeassistant")
+    ]
+    assert pins == [f"homeassistant=={homeassistant.const.__version__}"], pins

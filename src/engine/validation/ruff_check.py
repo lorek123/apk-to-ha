@@ -38,6 +38,7 @@ class RuffResult:
     error_count: int
     warning_count: int
     findings: list[RuffFinding] = field(default_factory=list)
+    tool_error: str = ""  # non-empty when ruff itself failed (rc=2 / unparseable output)
 
 
 async def check(path: Path) -> RuffResult:
@@ -55,12 +56,20 @@ async def check(path: Path) -> RuffResult:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout, _ = await proc.communicate()
+    stdout, stderr = await proc.communicate()
 
+    # Ruff rc=0 means no issues; rc=1 means findings; rc=2 means tool error
+    if proc.returncode not in (0, 1):
+        msg = stderr.decode().strip()[:500] or f"ruff exited with rc={proc.returncode}"
+        _LOGGER.error("ruff failed on %s: %s", path, msg)
+        return RuffResult(passed=False, error_count=0, warning_count=0, tool_error=msg)
     try:
         raw = json.loads(stdout.decode()) if stdout.strip() else []
-    except json.JSONDecodeError:
-        raw = []
+    except json.JSONDecodeError as exc:
+        _LOGGER.error("ruff output on %s is not JSON: %s", path, exc)
+        return RuffResult(
+            passed=False, error_count=0, warning_count=0, tool_error=f"unparseable output: {exc}"
+        )
 
     findings = [
         RuffFinding(
@@ -73,7 +82,6 @@ async def check(path: Path) -> RuffResult:
         for e in raw
     ]
 
-    # Ruff rc=0 means no issues; rc=1 means findings; rc=2 means tool error
     errors = [f for f in findings if not f.code.startswith("W")]
     warnings = [f for f in findings if f.code.startswith("W")]
 

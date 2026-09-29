@@ -3,23 +3,32 @@
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import instance_id
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from {{ sdk_package }} import {{ class_prefix }}Client, RobotState
+from {{ sdk_package }} import {{ class_prefix }}Client, {{ class_prefix }}ConnectionError, RobotState
 
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+# While disconnected, the coordinator retries the connection at this interval.
+RECONNECT_INTERVAL = timedelta(seconds=30)
+
 
 class {{ class_prefix }}Coordinator(DataUpdateCoordinator[RobotState]):
-    """Manages the WebSocket connection and state for {{ name }}.
+    """Owns the push connection to {{ name }}.
 
-    Push-only: update_interval is None. State is updated via {{ state_push_cmd }} events.
+    Connected: update_interval is None and state arrives via {{ state_push_cmd }} pushes.
+    Disconnected: entities go unavailable and the coordinator's own scheduled
+    refresh retries the connection every RECONNECT_INTERVAL until it succeeds.
     """
+
+    config_entry: ConfigEntry
 
     def __init__(
         self,
@@ -27,27 +36,51 @@ class {{ class_prefix }}Coordinator(DataUpdateCoordinator[RobotState]):
         entry: ConfigEntry,
         client: {{ class_prefix }}Client,
     ) -> None:
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=None)
+        super().__init__(
+            hass, _LOGGER, config_entry=entry, name=DOMAIN, update_interval=None
+        )
         self.client = client
-        self.config_entry = entry
+        # Register before connecting so the first push is never missed.
+        client.on_state_update(self._handle_push)
+        client.on_disconnect(self._handle_disconnect)
 
     async def _async_setup(self) -> None:
-        """Connect and register the state-push callback."""
+        """Connect once during the first refresh; fail setup if the device is unreachable."""
         try:
-            await self.client.connect(
-                device_uuid=str(self.config_entry.entry_id),
-                device_name="Home Assistant",
-            )
-        except Exception as exc:
-            raise ConfigEntryNotReady(f"Cannot connect to robot: {exc}") from exc
-        self.client.on_state_update(self._handle_push)
+            await self._async_connect()
+        except {{ class_prefix }}ConnectionError as exc:
+            raise ConfigEntryNotReady(str(exc)) from exc
 
+    async def _async_connect(self) -> RobotState:
+        # One stable pairing identity per Home Assistant installation.
+        return await self.client.connect(
+            device_uuid=await instance_id.async_get(self.hass),
+            device_name="Home Assistant",
+        )
+
+    async def _async_update_data(self) -> RobotState:
+        """Return the pushed state, reconnecting first if the connection dropped."""
+        if not self.client.connected:
+            try:
+                state = await self._async_connect()
+            except {{ class_prefix }}ConnectionError as exc:
+                raise UpdateFailed(str(exc)) from exc
+            _LOGGER.info("Reconnected to %s", self.client.host)
+            self.update_interval = None
+            return state
+        return self.client.state
+
+    @callback
     def _handle_push(self, state: RobotState) -> None:
         """Called by the SDK when a {{ state_push_cmd }} message arrives."""
         self.async_set_updated_data(state)
 
-    async def _async_update_data(self) -> RobotState:
-        """Return current state; real updates come via push."""
-        if self.data is None:
-            raise UpdateFailed("Waiting for first state push from device")
-        return self.data
+    @callback
+    def _handle_disconnect(self) -> None:
+        """Mark entities unavailable and let the scheduled refresh reconnect."""
+        _LOGGER.warning("Lost connection to %s; retrying every %s", self.client.host, RECONNECT_INTERVAL)
+        self.update_interval = RECONNECT_INTERVAL
+        self.async_set_update_error(ConnectionError(f"Lost connection to {self.client.host}"))
+        self.config_entry.async_create_background_task(
+            self.hass, self.async_request_refresh(), f"{DOMAIN}_reconnect"
+        )

@@ -6,16 +6,21 @@
 #
 # Build:  make sandbox
 # Run:    docker run --rm hacs-engine-sandbox pytest /sandbox/tests/ -v
+# V-3:    container_test.py uses this image only when its phcc label matches the pin.
 
 ARG HA_TAG=2026.5.2
 FROM homeassistant/home-assistant:${HA_TAG}
 
-# Install dev tooling into the same Python that HA uses
-RUN pip install --no-cache-dir \
-    ruff==0.11.13 \
-    mypy==1.16.0 \
-    pytest==8.4.0 \
-    pytest-asyncio==1.0.0
+# pytest-homeassistant-custom-component pinned to the exact HA version of this image
+# (config/ha_target.toml [sandbox].phcc_version). It brings pytest, pytest-asyncio and
+# HA's test fixtures; V-3 runs the generated runtime tests with it.
+ARG PHCC_VERSION
+RUN test -n "${PHCC_VERSION}" \
+    && pip install --no-cache-dir \
+        "pytest-homeassistant-custom-component==${PHCC_VERSION}" \
+        ruff \
+        mypy
+LABEL org.hacs-engine.phcc-version="${PHCC_VERSION}"
 
 # Copy the sandbox health tests into the image
 COPY tests/ /sandbox/tests/

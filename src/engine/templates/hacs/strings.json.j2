@@ -10,7 +10,12 @@
           "host": "IP address or hostname",
           "port": "Port (default {{ ws_port }})"
         }
-      }
+      }{% if has_zeroconf or has_dhcp %},
+      "discovery_confirm": {
+        "title": "Discovered {{ name }}",
+        "description": "Set up the {{ name }} found at {host}?"
+      }{% endif %}
+
     },
     "error": {
       "cannot_connect": "Failed to connect — check the IP address and that the device is powered on",
