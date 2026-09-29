@@ -143,6 +143,7 @@ def _make_ir(**overrides: Any) -> ProtocolIR:
                 transport=TransportType.WEBSOCKET,
                 direction=Direction.TO_DEVICE,
                 entity_hint=EntityHint.SWITCH,
+                request_fields=[FieldDef(name="enable", kind=FieldKind.BOOLEAN)],
             ),
         ],
         events=[],

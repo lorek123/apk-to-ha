@@ -131,9 +131,14 @@ class {{ class_prefix }}Client:
             raise ValueError(f"Unknown mode: {action_name!r}")
         await self.send_command("mode", mode=mode)
 {% endif %}
+{% for num in numbers %}
+
+    async def set_{{ num.key }}(self, value: int) -> None:
+        await self.send_command("{{ num.cmd }}", {{ num.param }}=value)
+{% endfor %}
 {% for btn in buttons %}
 
-    async def {{ btn.key | replace('-', '_') }}(self) -> None:
+    async def press_{{ btn.key }}(self) -> None:
         await self.send_command("{{ btn.cmd }}")
 {% endfor %}
 

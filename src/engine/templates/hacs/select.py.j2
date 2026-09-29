@@ -6,18 +6,10 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from {{ sdk_package }}.const import ACTION_TO_MODE
+from {{ sdk_package }} import MODE_ACTIONS
 
 from .coordinator import {{ class_prefix }}Coordinator
 from .entity_base import {{ class_prefix }}Entity
-
-{% for sel in selects %}
-_{{ sel.key | upper }}_OPTIONS = [
-{% for opt in sel.options %}
-    "{{ opt }}",
-{% endfor %}
-]
-{% endfor %}
 
 
 async def async_setup_entry(
@@ -28,32 +20,44 @@ async def async_setup_entry(
     coordinator: {{ class_prefix }}Coordinator = entry.runtime_data.coordinator
     async_add_entities([
 {% for sel in selects %}
-        {{ class_prefix }}SelectEntity(
-            coordinator, "{{ sel.key }}", "{{ sel.name }}", "{{ sel.cmd }}", _{{ sel.key | upper }}_OPTIONS
+        {{ class_prefix }}ModeSelect(
+            coordinator,
+            "{{ sel.key }}",
+            "{{ sel.tkey }}",
+            {{ '"' ~ sel.state_attr ~ '"' if sel.state_attr else "None" }},
         ),
 {% endfor %}
     ])
 
 
-class {{ class_prefix }}SelectEntity({{ class_prefix }}Entity, SelectEntity):
+class {{ class_prefix }}ModeSelect({{ class_prefix }}Entity, SelectEntity):
+    """Mode select; reflects the pushed mode when the device reports it."""
+
     def __init__(
         self,
         coordinator: {{ class_prefix }}Coordinator,
         key: str,
-        name: str,
-        cmd: str,
-        options: list[str],
+        translation_key: str,
+        state_attr: str | None,
     ) -> None:
         super().__init__(coordinator, key)
-        self._attr_name = name
-        self._cmd = cmd
-        self._attr_options = options
-        self._attr_current_option: str | None = None
+        self._attr_translation_key = translation_key
+        self._attr_options = list(MODE_ACTIONS.values())
+        self._state_attr = state_attr
+        self._optimistic: str | None = None
+
+    @property
+    def current_option(self) -> str | None:
+        if self._state_attr is None:
+            return self._optimistic
+        value = getattr(self.coordinator.data, self._state_attr, None)
+        try:
+            return MODE_ACTIONS.get(int(value)) if value is not None else None
+        except (TypeError, ValueError):
+            return None
 
     async def async_select_option(self, option: str) -> None:
-        mode = ACTION_TO_MODE.get(option)
-        if mode is None:
-            return
-        await self.coordinator.client.send_command(self._cmd, mode=mode)
-        self._attr_current_option = option
-        self.async_write_ha_state()
+        await self.coordinator.client.set_mode(option)
+        if self._state_attr is None:
+            self._optimistic = option
+            self.async_write_ha_state()

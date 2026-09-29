@@ -12,7 +12,10 @@ from ..extraction.signing_emitter import build as build_signing_ctx
 from ..ir.models import (
     Direction,
     DiscoveryType,
+    Endpoint,
     EntityHint,
+    FieldDef,
+    FieldKind,
     ProtocolIR,
     StreamingContract,
     TransportType,
@@ -29,9 +32,6 @@ _SKIP_CMDS = {
     "user_control",
 }
 
-# Commands that have an `enable` field but aren't semantic toggles
-_NOT_SWITCH = {"connectWifi", "move"}
-
 
 def _to_snake(camel: str) -> str:
     """'batteryLevel' → 'battery_level', preserves existing underscores."""
@@ -42,6 +42,46 @@ def _to_snake(camel: str) -> str:
 def _slugify(text: str) -> str:
     """Package/domain slug: lowercase letters and digits only, underscores for separators."""
     return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+
+
+# Maintenance/debug commands: config category, disabled by default.
+_MAINTENANCE_CMD = re.compile(
+    r"^d[-_]|reset|reboot|restart|debug|factory|calibrat|firmware|update", re.IGNORECASE
+)
+_RESTART_CMD = re.compile(r"reset|reboot|restart", re.IGNORECASE)
+
+# Request fields the transport fills in itself, never an entity.
+_TRANSPORT_FIELDS = frozenset({"cmd", "seq"})
+
+# State key substring → (device_class, unit, state_class). Only safe, unit-free
+# inferences: a "battery" level is a percentage by HA convention.
+_SENSOR_CLASSES: dict[str, tuple[str, str | None, str | None]] = {
+    "battery": ("battery", "%", "measurement"),
+}
+_BINARY_SENSOR_CLASSES: dict[str, str] = {
+    "charging": "battery_charging",
+    "connected": "connectivity",
+    "online": "connectivity",
+}
+
+
+def _norm(name: str) -> str:
+    """'face_detection', 'faceDetection', 'face-detection' → 'facedetection'."""
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def _match_class[T](key: str, table: dict[str, T]) -> T | None:
+    k = _norm(key)
+    return next((v for sub, v in table.items() if sub in k), None)
+
+
+def _required_params(ep: Endpoint) -> list[FieldDef]:
+    return [f for f in ep.request_fields if f.required and f.name not in _TRANSPORT_FIELDS]
+
+
+def _unmapped(cmd: str, platform: str, params: list[FieldDef]) -> dict[str, str]:
+    needs = ", ".join(f"{f.name}:{f.kind.value}" for f in params) or "nothing"
+    return {"cmd": cmd, "reason": f"{platform} can't supply required params ({needs})"}
 
 
 def _class_prefix(domain: str) -> str:
@@ -76,67 +116,76 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         clean_name = ir.app_name
     mode_actions: dict[int, str] = {int(k): v for k, v in ir.extra.get("mode_actions", {}).items()}
 
-    # ── categorise commands ───────────────────────────────────────────────────
-    switches, buttons, selects, numbers = [], [], [], []
-    for ep in ir.commands:
-        if ep.cmd in _SKIP_CMDS:
-            continue
-        if ep.entity_hint == EntityHint.SWITCH and ep.cmd not in _NOT_SWITCH:
-            switches.append(
-                {
-                    "cmd": ep.cmd,
-                    "name": _human(ep.cmd),
-                    "key": _slugify(ep.cmd),
-                }
-            )
-        elif ep.entity_hint == EntityHint.SELECT:
-            options = [v for v in mode_actions.values()] if mode_actions else []
-            selects.append(
-                {
-                    "cmd": ep.cmd,
-                    "name": _human(ep.cmd),
-                    "key": _slugify(ep.cmd),
-                    "options": options,
-                }
-            )
-        elif ep.entity_hint == EntityHint.NUMBER:
-            # Emit first integer field as the number value
-            int_fields = [f for f in ep.request_fields if f.name not in ("cmd", "seq")]
-            selects_field = next((f for f in int_fields), None)
-            numbers.append(
-                {
-                    "cmd": ep.cmd,
-                    "name": _human(ep.cmd),
-                    "key": _slugify(ep.cmd),
-                    "param": selects_field.name if selects_field else "value",
-                }
-            )
-        elif ep.entity_hint == EntityHint.BUTTON:
-            # Skip config-only commands
-            if ep.cmd in ("change_name", "paired_list", "unpair", "getWifiList"):
-                continue
-            buttons.append(
-                {
-                    "cmd": ep.cmd,
-                    "name": _human(ep.cmd),
-                    "key": _slugify(ep.cmd.replace("-", "_")),
-                }
-            )
-
-    # ── state fields → sensors ────────────────────────────────────────────────
+    # ── state fields → sensors (first: commands match against them) ──────────
     sensors, binary_sensors = [], []
     for f in ir.state.fields:
         if f.entity_hint is None:
             continue  # metadata field — not a HA entity
-        spec = {
-            "key": f.serialized_name or f.name,
-            "name": _human(f.serialized_name or f.name),
+        key = f.serialized_name or f.name
+        spec: dict[str, Any] = {
+            "key": key,
+            "tkey": _slugify(key),
+            "name": _human(key),
             "attr": f.name,
         }
         if f.entity_hint == EntityHint.BINARY_SENSOR:
+            spec["device_class"] = _match_class(key, _BINARY_SENSOR_CLASSES)
             binary_sensors.append(spec)
         else:
+            sensor_class = _match_class(key, _SENSOR_CLASSES)
+            spec.update(
+                device_class=sensor_class[0] if sensor_class else None,
+                unit=sensor_class[1] if sensor_class else None,
+                state_class=sensor_class[2] if sensor_class else None,
+            )
             sensors.append(spec)
+    state_attrs = {_norm(s["key"]): s["attr"] for s in sensors + binary_sensors}
+    state_attrs |= {_norm(s["attr"]): s["attr"] for s in sensors + binary_sensors}
+
+    # ── categorise commands ───────────────────────────────────────────────────
+    # A command becomes an entity only if the entity can supply every required
+    # parameter; otherwise sending it would be malformed. Those are reported.
+    switches, buttons, selects, numbers = [], [], [], []
+    unmapped: list[dict[str, str]] = []
+    for ep in ir.commands:
+        if ep.cmd in _SKIP_CMDS:
+            continue
+        params = _required_params(ep)
+        base = {
+            "cmd": ep.cmd,
+            "name": _human(ep.cmd),
+            "key": _slugify(ep.cmd),
+            "tkey": _slugify(ep.cmd),
+            "state_attr": state_attrs.get(_norm(ep.cmd)),
+        }
+        if ep.entity_hint == EntityHint.SWITCH:
+            if [(f.name, f.kind) for f in params] != [("enable", FieldKind.BOOLEAN)]:
+                unmapped.append(_unmapped(ep.cmd, "switch", params))
+                continue
+            switches.append(base)
+        elif ep.entity_hint == EntityHint.SELECT:
+            if not mode_actions:
+                unmapped.append({"cmd": ep.cmd, "reason": "select without known options"})
+                continue
+            selects.append({**base, "options": list(mode_actions.values())})
+        elif ep.entity_hint == EntityHint.NUMBER:
+            numeric = [f for f in params if f.kind in (FieldKind.INTEGER, FieldKind.NUMBER)]
+            if len(params) != 1 or len(numeric) != 1:
+                unmapped.append(_unmapped(ep.cmd, "number", params))
+                continue
+            numbers.append({**base, "param": numeric[0].name})
+        elif ep.entity_hint == EntityHint.BUTTON:
+            if params:
+                unmapped.append(_unmapped(ep.cmd, "button", params))
+                continue
+            maintenance = bool(_MAINTENANCE_CMD.search(ep.cmd))
+            buttons.append(
+                {
+                    **base,
+                    "maintenance": maintenance,
+                    "device_class": "restart" if _RESTART_CMD.search(ep.cmd) else None,
+                }
+            )
 
     # ── P5-7 discovery blocks for manifest.json + config_flow ────────────────
     zeroconf_types: list[str] = []
@@ -180,12 +229,14 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
 
     # Derived entity lists for BLE platform emission
     ble_sensors: list[dict[str, Any]] = [
-        {**ch, "name": _human(ch["cmd"])}
+        {**ch, "name": _human(ch["cmd"]), "tkey": _slugify(ch["key"])}
         for ch in ble_chars
         if "notify" in ch["access"] or "read" in ch["access"]
     ]
     ble_switches: list[dict[str, Any]] = [
-        {**ch, "name": _human(ch["cmd"])} for ch in ble_chars if "write" in ch["access"]
+        {**ch, "name": _human(ch["cmd"]), "tkey": _slugify(ch["key"])}
+        for ch in ble_chars
+        if "write" in ch["access"]
     ]
 
     # ── P5-6 Android string resources → HA translation strings ───────────────
@@ -201,19 +252,19 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     all_switches = switches + (ble_switches or [])
     entity_sections: dict[str, dict[str, Any]] = {}
     if all_sensors:
-        entity_sections["sensor"] = {str(s["key"]): {"name": s["name"]} for s in all_sensors}
+        entity_sections["sensor"] = {str(s["tkey"]): {"name": s["name"]} for s in all_sensors}
     if binary_sensors:
         entity_sections["binary_sensor"] = {
-            str(s["key"]): {"name": s["name"]} for s in binary_sensors
+            str(s["tkey"]): {"name": s["name"]} for s in binary_sensors
         }
     if all_switches:
-        entity_sections["switch"] = {str(s["key"]): {"name": s["name"]} for s in all_switches}
+        entity_sections["switch"] = {str(s["tkey"]): {"name": s["name"]} for s in all_switches}
     if buttons:
-        entity_sections["button"] = {str(s["key"]): {"name": s["name"]} for s in buttons}
+        entity_sections["button"] = {str(s["tkey"]): {"name": s["name"]} for s in buttons}
     if selects:
-        entity_sections["select"] = {str(s["key"]): {"name": s["name"]} for s in selects}
+        entity_sections["select"] = {str(s["tkey"]): {"name": s["name"]} for s in selects}
     if numbers:
-        entity_sections["number"] = {str(s["key"]): {"name": s["name"]} for s in numbers}
+        entity_sections["number"] = {str(s["tkey"]): {"name": s["name"]} for s in numbers}
 
     # ── Camera / video stream ─────────────────────────────────────────────────
     streaming: StreamingContract | None = ir.streaming
@@ -253,6 +304,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "numbers": numbers,
         "sensors": sensors,
         "binary_sensors": binary_sensors,
+        "unmapped_commands": unmapped,
         "mode_actions": mode_actions,
         # platforms present
         "platforms": _platforms(

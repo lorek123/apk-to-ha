@@ -334,6 +334,8 @@ async def analyze(
     # ── P4/P5: emit SDK + HACS integration ────────────────────────────────────
     if emit:
         ctx = emitter_context.build(ir)
+        for cmd in ctx["unmapped_commands"]:
+            log("P5", "entities", "WARNING", f"no entity for {cmd['cmd']}: {cmd['reason']}")
         run_out = _OUTPUT_DIR / apk_id
         sdk_dir = sdk_emitter.emit(ctx, run_out)
         hacs_dir = hacs_emitter.emit(ctx, run_out)

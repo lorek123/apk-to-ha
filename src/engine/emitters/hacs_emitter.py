@@ -38,14 +38,38 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
         **ctx,
         "test_probe": probe,
         "test_initial_state": {probe["key"]: probe["initial_value"]},
+        "test_switch": ctx["switches"][0] if ctx.get("switches") else None,
+        "test_select": _test_select(ctx),
+        "test_press": next((b for b in ctx.get("buttons", []) if not b["maintenance"]), None),
+        "test_maintenance": [b for b in ctx.get("buttons", []) if b["maintenance"]],
     }
     tests_dir = out_root / "tests"
     tests_dir.mkdir(parents=True, exist_ok=True)
     _render(env, tests_ctx, out_root, "pytest.ini.j2", "pytest.ini")
     for name in ("__init__.py", "conftest.py", "test_integration.py"):
         _render(env, tests_ctx, tests_dir, f"{name}.j2", name)
-    _fix_imports(tests_dir)
+    # Test-only helpers are imported unconditionally; drop the ones this device doesn't use.
+    _fix_imports(tests_dir, select="I001,F401")
     return tests_dir
+
+
+def _test_select(ctx: dict[str, Any]) -> dict[str, Any] | None:
+    """A state-backed mode select plus the pushed key/value that selects its 2nd option."""
+    mode_actions: dict[int, str] = ctx.get("mode_actions") or {}
+    for sel in ctx.get("selects", []):
+        state_key = next(
+            (s["key"] for s in ctx.get("sensors", []) if s["attr"] == sel["state_attr"]), None
+        )
+        if state_key and len(mode_actions) >= 2:
+            (_, first), (value, name) = sorted(mode_actions.items())[:2]
+            return {
+                **sel,
+                "state_key": state_key,
+                "push_value": value,
+                "push_option": name,
+                "pick_option": first,
+            }
+    return None
 
 
 def _test_probe(ctx: dict[str, Any]) -> dict[str, Any] | None:
@@ -139,11 +163,11 @@ def sort_manifest(path: Path) -> bool:
     return True
 
 
-def _fix_imports(directory: Path) -> None:
-    """Run ruff --fix to sort imports in emitted Python files."""
+def _fix_imports(directory: Path, select: str = "I001") -> None:
+    """Run ruff --fix to sort (and optionally prune) imports in emitted Python files."""
     try:
         subprocess.run(
-            ["ruff", "check", "--select", "I001", "--fix", str(directory)],
+            ["ruff", "check", "--select", select, "--fix", str(directory)],
             capture_output=True,
             check=False,
         )

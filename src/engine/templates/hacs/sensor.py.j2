@@ -2,7 +2,7 @@
 """Sensor platform for {{ name }}."""
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -26,7 +26,13 @@ async def async_setup_entry(
     entities.extend([
 {% for s in sensors %}
         {{ class_prefix }}Sensor(
-            coordinator, "{{ s.key }}", "{{ s.name }}", "{{ s.attr }}"
+            coordinator,
+            "{{ s.key }}",
+            "{{ s.tkey }}",
+            "{{ s.attr }}",
+            device_class={{ "SensorDeviceClass." ~ (s.device_class | upper) if s.device_class else "None" }},
+            unit={{ '"' ~ s.unit ~ '"' if s.unit else "None" }},
+            state_class={{ "SensorStateClass." ~ (s.state_class | upper) if s.state_class else "None" }},
         ),
 {% endfor %}
     ])
@@ -36,7 +42,7 @@ async def async_setup_entry(
     entities.extend([
 {% for s in ble_sensors %}
         {{ class_prefix }}BleSensor(
-            ble_coordinator, "{{ s.key }}", "{{ s.name }}", "{{ s.uuid }}"
+            ble_coordinator, "{{ s.key }}", "{{ s.tkey }}", "{{ s.uuid }}"
         ),
 {% endfor %}
     ])
@@ -50,11 +56,18 @@ class {{ class_prefix }}Sensor({{ class_prefix }}Entity, SensorEntity):
         self,
         coordinator: {{ class_prefix }}Coordinator,
         key: str,
-        name: str,
+        translation_key: str,
         attr: str,
+        *,
+        device_class: SensorDeviceClass | None,
+        unit: str | None,
+        state_class: SensorStateClass | None,
     ) -> None:
         super().__init__(coordinator, key)
-        self._attr_name = name
+        self._attr_translation_key = translation_key
+        self._attr_device_class = device_class
+        self._attr_native_unit_of_measurement = unit
+        self._attr_state_class = state_class
         self._attr = attr
 
     @property
@@ -73,11 +86,11 @@ class {{ class_prefix }}BleSensor({{ class_prefix }}BleEntity, SensorEntity):
         self,
         coordinator: {{ class_prefix }}BleCoordinator,
         key: str,
-        name: str,
+        translation_key: str,
         uuid: str,
     ) -> None:
         super().__init__(coordinator, key)
-        self._attr_name = name
+        self._attr_translation_key = translation_key
         self._uuid = uuid
 
     @property
