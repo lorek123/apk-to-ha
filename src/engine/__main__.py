@@ -33,6 +33,11 @@ def main() -> None:
         action="store_false",
         help="Skip the P2-7 dynamic oracle (redroid + Frida); static analysis only",
     )
+    p.add_argument(
+        "--update-snapshots",
+        action="store_true",
+        help="Refresh the committed fixtures/snapshots/<id>/ (default: runs/<run_id>/snapshot/)",
+    )
 
     args = parser.parse_args()
 
@@ -45,7 +50,14 @@ def main() -> None:
             sys.exit(1)
 
         try:
-            ir = asyncio.run(analyze(args.apk, apk_id=args.apk_id, dynamic=args.dynamic))
+            ir = asyncio.run(
+                analyze(
+                    args.apk,
+                    apk_id=args.apk_id,
+                    dynamic=args.dynamic,
+                    update_snapshots=args.update_snapshots,
+                )
+            )
         except TuyaDetectedError as exc:
             print(f"\n⚠  Tuya SDK detected in {exc}.")
             print("   This device is already supported via tinytuya / HA Core 'tuya' integration.")
@@ -75,8 +87,7 @@ def main() -> None:
                 f"  ⚠  Duplicate: {ir.duplicate_check.location}/{ir.duplicate_check.name}"
                 f" ({ir.duplicate_check.coverage_estimate} coverage)"
             )
-        apk_id = args.apk_id or args.apk.stem.lower()
-        print(f"\n  Snapshot:   fixtures/snapshots/{apk_id}/")
+        print(f"\n  Snapshot:   {ir.extra.get('_snapshot_dir')}")
         if "_sdk_dir" in ir.extra:
             print(f"  SDK:        {ir.extra['_sdk_dir']}")
             print(f"  HACS:       {ir.extra['_hacs_dir']}")

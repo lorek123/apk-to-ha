@@ -52,9 +52,18 @@ _OUTPUT_DIR = Path(__file__).parents[2] / "sdk_output"
 
 
 async def analyze(
-    apk_path: Path, apk_id: str | None = None, emit: bool = True, dynamic: bool = True
+    apk_path: Path,
+    apk_id: str | None = None,
+    emit: bool = True,
+    dynamic: bool = True,
+    update_snapshots: bool = False,
 ) -> ProtocolIR:
-    """Run the full extraction pipeline on one APK. Returns the populated IR."""
+    """Run the full extraction pipeline on one APK. Returns the populated IR.
+
+    The snapshot goes to runs/{run_id}/snapshot/ unless *update_snapshots* is set,
+    in which case the committed fixtures/snapshots/{apk_id}/ is refreshed.
+    *dynamic* False skips the P2-7 oracle.
+    """
     run_id = str(uuid.uuid4())[:8]
     apk_id = apk_id or apk_path.stem.lower().replace(" ", "_")
     log_entries: list[dict[str, Any]] = []
@@ -313,8 +322,14 @@ async def analyze(
     log("P3", "entity_hints", "INFO", f"Entity hints: {_count_hints(ir)}")
 
     # ── F-2a: save snapshot ────────────────────────────────────────────────────
-    snap_dir = snapshot_harness.write(apk_id, ir, out_dir)
+    snap_target = (
+        snapshot_harness.committed_dir(apk_id)
+        if update_snapshots
+        else _RUNS_DIR / run_id / "snapshot"
+    )
+    snap_dir = await asyncio.to_thread(snapshot_harness.write, apk_id, ir, out_dir, snap_target)
     log("F2a", "snapshot", "INFO", f"Snapshot saved to {snap_dir}")
+    ir = ir.model_copy(update={"extra": {**ir.extra, "_snapshot_dir": str(snap_dir)}})
 
     # ── P4/P5: emit SDK + HACS integration ────────────────────────────────────
     if emit:
