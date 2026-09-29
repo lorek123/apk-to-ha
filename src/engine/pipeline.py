@@ -138,7 +138,8 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
 
     if dup_result.found and dup_result.coverage_estimate == "full":
         log("P2.5", "dup_check", "WARNING",
-            f"Full coverage found at {dup_result.location}/{dup_result.name} — skipping generation")
+            f"Full coverage found at {dup_result.location}/{dup_result.name} — stopping")
+        raise DuplicateFoundError(manifest.package_name, dup_result.name, dup_result.location)
 
     # ── P5-6: Android string resources ───────────────────────────────────────
     android_strings = strings_scan(out_dir)
@@ -373,6 +374,18 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
 
 class TuyaDetectedError(Exception):
     """Raised when the APK contains the Tuya SDK — use tinytuya instead."""
+
+
+class DuplicateFoundError(Exception):
+    """Raised when an existing integration with full coverage is found."""
+
+    def __init__(
+        self, package_name: str, integration_name: str | None, location: str | None
+    ) -> None:
+        super().__init__(f"{package_name} already covered by {location}/{integration_name}")
+        self.package_name = package_name
+        self.integration_name = integration_name
+        self.location = location
 
 
 def _count_hints(ir: ProtocolIR) -> str:
