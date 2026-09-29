@@ -12,7 +12,9 @@ from __future__ import annotations
 import json
 import tomllib
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+import pytest
 
 if TYPE_CHECKING:
     from engine.ir.models import ProtocolIR
@@ -201,3 +203,45 @@ def test_bump_script_strips_leading_v(tmp_path: Path) -> None:
     with open(target_copy, "rb") as f:
         cfg = tomllib.load(f)
     assert cfg["target"]["ha_core_version"] == "2099.1.0"
+
+
+def test_bump_script_updates_phcc_pin(tmp_path: Path) -> None:
+    import shutil
+
+    from scripts.bump_ha_version import bump
+
+    target_copy = tmp_path / "ha_target.toml"
+    shutil.copy(_HA_TARGET, target_copy)
+
+    bump("2099.1.0", target=target_copy, phcc_version="9.9.999")
+
+    with open(target_copy, "rb") as f:
+        cfg = tomllib.load(f)
+    assert cfg["sandbox"]["phcc_version"] == "9.9.999"
+    assert cfg["anchors"]["ref"] == "2099.1.0"
+
+
+def test_find_phcc_version_matches_exact_ha_pin(monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts import bump_ha_version
+
+    index = {
+        "releases": {
+            "0.1.1": [{"upload_time": "2099-01-02"}],
+            "0.1.2": [{"upload_time": "2099-01-03"}],
+            "0.1.0": [{"upload_time": "2099-01-01"}],
+        }
+    }
+    pins = {"0.1.0": "2099.1.0", "0.1.1": "2099.1.1", "0.1.2": "2099.2.0b0"}
+
+    def fake_json(url: str) -> dict[str, Any]:
+        tail = url.removeprefix(bump_ha_version._PHCC_PYPI + "/")
+        if tail == "json":
+            return index
+        version = tail.removesuffix("/json")
+        return {"info": {"requires_dist": [f"homeassistant=={pins[version]}", "pytest"]}}
+
+    monkeypatch.setattr(bump_ha_version, "_pypi_json", fake_json)
+
+    assert bump_ha_version.find_phcc_version("2099.1.1") == "0.1.1"
+    with pytest.raises(LookupError):
+        bump_ha_version.find_phcc_version("2099.3.0")

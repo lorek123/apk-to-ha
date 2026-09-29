@@ -32,3 +32,6 @@ ref = "2026.5.2"
 # Falls back to docker.ha_image:docker.ha_image_tag when not present.
 image = "hacs-engine-sandbox"
 tag = "latest"
+# pytest-homeassistant-custom-component release that pins ha_core_version exactly.
+# V-3 runs generated runtime tests with it; bump_ha_version.py keeps it in lockstep.
+phcc_version = "0.13.331"
