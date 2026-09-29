@@ -311,8 +311,15 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         run_out = _OUTPUT_DIR / apk_id
         sdk_dir = sdk_emitter.emit(ctx, run_out)
         hacs_dir = hacs_emitter.emit(ctx, run_out)
+        tests_dir = hacs_emitter.emit_tests(ctx, run_out)
         log("P4", "sdk_emit", "INFO", f"SDK emitted to {sdk_dir}")
         log("P5", "hacs_emit", "INFO", f"HACS integration emitted to {hacs_dir}")
+        log(
+            "P5",
+            "tests_emit",
+            "INFO" if tests_dir else "WARNING",
+            f"runtime tests emitted to {tests_dir}" if tests_dir else "no runtime tests emitted",
+        )
         ir = ir.model_copy(
             update={"extra": {**ir.extra, "_sdk_dir": str(sdk_dir), "_hacs_dir": str(hacs_dir)}}
         )
@@ -442,24 +449,29 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
                 "V4", "quality", r.rule.severity.upper(), f"[{r.rule.id}] {r.rule.name}: {r.detail}"
             )
 
-        # ── V-3: HA container import test ─────────────────────────────────────
+        # ── V-3: HA container test (runtime in sandbox, else import-only) ─────
         v3 = await container_test.run(ctx["domain"], run_out)
         if v3.ran:
             log(
                 "V3",
                 "container",
                 "INFO" if v3.passed else "WARNING",
-                f"container import: {'PASS' if v3.passed else 'FAIL'}",
+                f"container {v3.mode} test: {'PASS' if v3.passed else 'FAIL'}",
             )
             if not v3.passed:
-                log("V3", "container", "WARNING", v3.error or v3.output[:500])
+                log("V3", "container", "WARNING", v3.error or v3.output[-2000:])
 
         # ── V-7: HA log analysis ──────────────────────────────────────────────
         v7_findings = log_analyzer.analyze(v3.output if v3.ran else "")
         for lf in v7_findings:
             log("V7", "log_analyzer", lf.severity.upper(), f"[{lf.category}] {lf.message}")
 
-        skipped = [] if v3.ran else ["V3"]
+        if not v3.ran:
+            skipped = ["V3"]
+        elif v3.mode != "runtime":
+            skipped = ["V3-runtime"]  # import-only is weaker than running the integration
+        else:
+            skipped = []
         v7_errors = [lf for lf in v7_findings if lf.severity == "error"]
         status = _run_status(
             unresolved=unresolved,
@@ -503,6 +515,7 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
                     ],
                     "_v3_ran": v3.ran,
                     "_v3_passed": v3.passed,
+                    "_v3_mode": v3.mode,
                     "_v7_findings": [
                         {"category": lf.category, "severity": lf.severity, "message": lf.message}
                         for lf in v7_findings

@@ -141,14 +141,12 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     # ── P5-7 discovery blocks for manifest.json + config_flow ────────────────
     zeroconf_types: list[str] = []
     dhcp_hostnames: list[str] = []
-    if ir.discovery.type == DiscoveryType.ZEROCONF:
-        if ir.discovery.service_type:
-            zeroconf_types = [ir.discovery.service_type]
-        if ir.discovery.hostname_pattern:
-            dhcp_hostnames = [ir.discovery.hostname_pattern]
-    elif ir.discovery.type == DiscoveryType.UDP_BROADCAST:
-        # UDP broadcast devices: also add a DHCP block using the app slug as hostname hint
-        dhcp_hostnames = [f"{domain}*"]
+    if ir.discovery.type == DiscoveryType.ZEROCONF and ir.discovery.service_type:
+        zeroconf_types = [ir.discovery.service_type]
+    # Only emit a DHCP matcher for a hostname pattern the app actually uses; an
+    # invented pattern would either never match or match unrelated devices.
+    if ir.discovery.hostname_pattern:
+        dhcp_hostnames = [ir.discovery.hostname_pattern]
 
     # ── BLE characteristics for P4-6 Bleak client template ───────────────────
     ble_char_uuids: dict[str, str] = ir.extra.get("ble_char_uuids", {})

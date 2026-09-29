@@ -93,9 +93,10 @@ def main() -> None:
         if "_v3_ran" in ir.extra:
             if ir.extra["_v3_ran"]:
                 v3s = "PASS" if ir.extra["_v3_passed"] else "FAIL"
+                v3s += f" ({ir.extra.get('_v3_mode', 'import')})"
             else:
                 v3s = "SKIPPED (Docker unavailable)"
-            print(f"  V-3 container import:  {v3s}")
+            print(f"  V-3 container test:    {v3s}")
 
         run_status = ir.extra.get("_status")
         if run_status is not None:

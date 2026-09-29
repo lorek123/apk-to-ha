@@ -5,6 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+def _opt_bool(value: object) -> bool | None:
+    """Missing stays unknown (None) instead of reading as off."""
+    return None if value is None else bool(value)
+
+
 @dataclass
 class RobotState:
     """Parsed state push ({{ state_push_cmd }} event)."""
@@ -22,6 +27,6 @@ class RobotState:
             {{ s.attr }}=data.get("{{ s.key }}"),
 {% endfor %}
 {% for bs in binary_sensors %}
-            {{ bs.attr }}=bool(data.get("{{ bs.key }}")),
+            {{ bs.attr }}=_opt_bool(data.get("{{ bs.key }}")),
 {% endfor %}
         )

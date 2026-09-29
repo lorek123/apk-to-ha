@@ -1,12 +1,16 @@
 # SPDX-License-Identifier: MIT
-"""V-3 — HA container import test.
+"""V-3 — HA container test.
 
-Spins up the pinned HA Docker image, installs the generated SDK, then
-tries to import the integration's async_setup_entry via PYTHONPATH injection.
-Catches import-time errors (missing symbols, bad syntax the AST missed,
-circular imports) without needing a real HA config or device.
+Two modes, strongest available first:
 
-Skipped gracefully when Docker is unavailable.
+``runtime``  The sandbox image (``make sandbox``) has pytest-homeassistant-custom-component
+             for the pinned HA version. The generated ``tests/`` run the integration in a
+             real ``hass``: config flow, setup, entity creation, push updates, reconnect,
+             unload — against a mock device speaking the extracted protocol.
+``import``   Fallback on the bare HA image: only checks that the integration imports.
+             Reported via ``mode`` so the run status can flag the weaker check.
+
+Skipped (``ran=False, passed=None``) when Docker is unavailable.
 """
 
 from __future__ import annotations
@@ -14,21 +18,29 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
+import subprocess
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 _LOGGER = logging.getLogger(__name__)
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
 
+# Docker label the sandbox image carries (see docker/sandbox/Dockerfile).
+PHCC_LABEL = "org.hacs-engine.phcc-version"
+
+_RUNTIME_TIMEOUT = 600
+_IMPORT_TIMEOUT = 120
+
 _IMPORT_SCRIPT = """\
-import sys, importlib, pathlib
-# Confirm async_setup_entry is importable
+import importlib
 mod = importlib.import_module("custom_components.{domain}")
 assert hasattr(mod, "async_setup_entry"), "missing async_setup_entry"
 print("V3_IMPORT_OK")
 """
+
+Mode = Literal["runtime", "import", "skipped"]
 
 
 @dataclass
@@ -37,97 +49,114 @@ class ContainerTestResult:
     passed: bool | None  # None when skipped: a skip is not a pass
     output: str
     error: str = ""
+    mode: Mode = "skipped"
 
 
-def _resolve_image(cfg: dict[str, Any]) -> str:
-    """Return the Docker image to use for V-3.
-
-    Prefers the local sandbox image (built by `make sandbox`) because it has
-    ruff/mypy/pytest pre-baked and avoids network installs. Falls back to the
-    official HA image when the sandbox hasn't been built yet.
-    """
-    sandbox = cfg.get("sandbox", {})
-    sb_image = sandbox.get("image", "hacs-engine-sandbox")
-    sb_tag = sandbox.get("tag", "latest")
-    full_sandbox = f"{sb_image}:{sb_tag}"
-
-    # Check if the sandbox image exists locally (inspect doesn't pull)
-    probe = shutil.which("docker")
-    if probe:
-        import subprocess
-
-        result = subprocess.run(
-            ["docker", "image", "inspect", full_sandbox],
-            capture_output=True,
-            check=False,
-        )
-        if result.returncode == 0:
-            _LOGGER.info("V-3: using sandbox image %s", full_sandbox)
-            return full_sandbox
-
-    # Fallback: bare HA image
-    ha_image = cfg["docker"]["ha_image"]
-    ha_tag = cfg["docker"]["ha_image_tag"]
-    fallback = f"{ha_image}:{ha_tag}"
-    _LOGGER.info("V-3: sandbox image not found — using %s", fallback)
-    return fallback
-
-
-def _prepare(sdk_output_dir: Path) -> tuple[str, Path | None, Path]:
-    """Blocking setup for run(): resolve image, SDK package dir and mount path."""
+def _load_target() -> dict[str, Any]:
     with open(_HA_TARGET, "rb") as fh:
-        cfg = tomllib.load(fh)
-    image = _resolve_image(cfg)
+        return tomllib.load(fh)
 
-    # sdk_output_dir layout: {sdk_package}/ pyproject.toml custom_components/{domain}/
-    sdk_pkg_dir = next(
-        (d for d in sdk_output_dir.iterdir() if d.is_dir() and not d.name.startswith("custom")),
-        None,
+
+def _image_label(image: str, label: str) -> str | None:
+    """Return *label* of a local image, or None if the image doesn't exist locally."""
+    result = subprocess.run(
+        [
+            "docker",
+            "image",
+            "inspect",
+            "--format",
+            f'{{{{index .Config.Labels "{label}"}}}}',
+            image,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
     )
-    return image, sdk_pkg_dir, sdk_output_dir.resolve()
+    return result.stdout.strip() if result.returncode == 0 else None
 
 
-async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
-    """Run the container import test. Returns result (skipped if no Docker)."""
+def _resolve_image(cfg: dict[str, Any]) -> tuple[str, Mode]:
+    """Pick the sandbox image when it matches the pinned phcc version, else bare HA."""
+    sandbox = cfg.get("sandbox", {})
+    full_sandbox = f"{sandbox.get('image', 'hacs-engine-sandbox')}:{sandbox.get('tag', 'latest')}"
+    want = sandbox.get("phcc_version")
+
+    have = _image_label(full_sandbox, PHCC_LABEL)
+    if want and have == want:
+        _LOGGER.info("V-3: runtime tests in %s (phcc %s)", full_sandbox, have)
+        return full_sandbox, "runtime"
+    if have is not None:
+        _LOGGER.warning(
+            "V-3: %s has phcc %r but %r is pinned — run `make sandbox`", full_sandbox, have, want
+        )
+
+    fallback = f"{cfg['docker']['ha_image']}:{cfg['docker']['ha_image_tag']}"
+    _LOGGER.warning("V-3: sandbox unavailable — import-only check with %s", fallback)
+    return fallback, "import"
+
+
+def _prepare(out_dir: Path) -> tuple[str, Mode, bool, Path]:
+    """Blocking setup for run(): image + mode, whether tests exist, mount path."""
+    image, mode = _resolve_image(_load_target())
+    return image, mode, (out_dir / "tests").is_dir(), out_dir.resolve()
+
+
+async def run(domain: str, out_dir: Path) -> ContainerTestResult:
+    """Run V-3 on *out_dir* (SDK package + custom_components/ + tests/)."""
     if not shutil.which("docker"):
         _LOGGER.info("Docker not found — V-3 container test skipped")
         return ContainerTestResult(ran=False, passed=None, output="skipped")
 
-    image, sdk_pkg_dir, out_mount = await asyncio.to_thread(_prepare, sdk_output_dir)
+    image, mode, has_tests, mount = await asyncio.to_thread(_prepare, out_dir)
+    if mode == "runtime" and not has_tests:
+        _LOGGER.warning("V-3: no generated tests/ — falling back to import-only check")
+        mode = "import"
 
-    script = _IMPORT_SCRIPT.format(domain=domain)
-
-    # Build docker command: install SDK from mounted dir, then run import script
-    install_cmd = f"pip install -q /out/{sdk_pkg_dir.name}/.." if sdk_pkg_dir else "true"
-    full_cmd = f"{install_cmd} && PYTHONPATH=/out python3 -c '{script}'"
+    # Work on a writable copy; the SDK package and custom_components/ both sit at the
+    # root, so PYTHONPATH makes them importable without installing anything.
+    if mode == "runtime":
+        script = "python3 -m pytest -q -p no:cacheprovider tests"
+        timeout = _RUNTIME_TIMEOUT
+    else:
+        script = f"python3 -c '{_IMPORT_SCRIPT.format(domain=domain)}'"
+        timeout = _IMPORT_TIMEOUT
+    full_cmd = f"cp -r /out /tmp/work && cd /tmp/work && PYTHONPATH=/tmp/work {script}"
 
     cmd = [
         "docker",
         "run",
         "--rm",
-        "-v",
-        f"{out_mount}:/out:ro",
-        image,
+        "--network",
+        "none",
+        "--entrypoint",
         "sh",
+        "-v",
+        f"{mount}:/out:ro",
+        image,
         "-c",
         full_cmd,
     ]
 
-    _LOGGER.info("V-3: docker run %s (import test for %s)", image, domain)
+    _LOGGER.info("V-3: %s test for %s in %s", mode, domain, image)
     try:
         proc = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
-        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=120)
-        output = stdout.decode()
-        passed = "V3_IMPORT_OK" in output and (proc.returncode or 0) == 0
-        _LOGGER.info("V-3: %s (rc=%d)", "PASS" if passed else "FAIL", proc.returncode or 0)
-        return ContainerTestResult(ran=True, passed=passed, output=output)
+    except OSError as exc:
+        return ContainerTestResult(ran=True, passed=False, output="", error=str(exc), mode=mode)
+    try:
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout)
     except TimeoutError:
+        proc.kill()
+        await proc.wait()
         return ContainerTestResult(
-            ran=True, passed=False, output="", error="Container test timed out after 120s"
+            ran=True, passed=False, output="", error=f"timed out after {timeout}s", mode=mode
         )
-    except Exception as exc:
-        return ContainerTestResult(ran=True, passed=False, output="", error=str(exc))
+
+    output = stdout.decode(errors="replace")
+    rc = proc.returncode or 0
+    passed = rc == 0 and (mode == "runtime" or "V3_IMPORT_OK" in output)
+    _LOGGER.info("V-3: %s (%s, rc=%d)", "PASS" if passed else "FAIL", mode, rc)
+    return ContainerTestResult(ran=True, passed=passed, output=output, mode=mode)

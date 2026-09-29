@@ -12,6 +12,64 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 _LOGGER = logging.getLogger(__name__)
 _TEMPLATES_DIR = Path(__file__).parents[1] / "templates" / "hacs"
+_TESTS_TEMPLATES_DIR = Path(__file__).parents[1] / "templates" / "hacs_tests"
+
+
+def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
+    """Render runtime tests into *out_root*/tests/ (run by V-3 in the sandbox).
+
+    Returns the tests dir, or None when the integration has no push-state entity
+    to probe or uses a transport the mock device can't speak (BLE).
+    """
+    probe = _test_probe(ctx)
+    if probe is None or ctx.get("has_ble"):
+        _LOGGER.info("No runtime tests emitted for %s (no probe entity or BLE)", ctx["domain"])
+        return None
+
+    env = Environment(
+        loader=FileSystemLoader(str(_TESTS_TEMPLATES_DIR)),
+        undefined=StrictUndefined,
+        trim_blocks=True,
+        lstrip_blocks=True,
+        keep_trailing_newline=True,
+    )
+    tests_ctx = {
+        **ctx,
+        "test_probe": probe,
+        "test_initial_state": {probe["key"]: probe["initial_value"]},
+    }
+    tests_dir = out_root / "tests"
+    tests_dir.mkdir(parents=True, exist_ok=True)
+    _render(env, tests_ctx, out_root, "pytest.ini.j2", "pytest.ini")
+    for name in ("__init__.py", "conftest.py", "test_integration.py"):
+        _render(env, tests_ctx, tests_dir, f"{name}.j2", name)
+    _fix_imports(tests_dir)
+    return tests_dir
+
+
+def _test_probe(ctx: dict[str, Any]) -> dict[str, Any] | None:
+    """Pick one state-backed entity whose value the runtime tests drive and observe."""
+    if ctx.get("sensors"):
+        spec = ctx["sensors"][0]
+        return {
+            "platform": "sensor",
+            "key": spec["key"],
+            "initial_value": 1,
+            "initial_state": "1",
+            "next_value": 2,
+            "next_state": "2",
+        }
+    if ctx.get("binary_sensors"):
+        spec = ctx["binary_sensors"][0]
+        return {
+            "platform": "binary_sensor",
+            "key": spec["key"],
+            "initial_value": True,
+            "initial_state": "on",
+            "next_value": False,
+            "next_state": "off",
+        }
+    return None
 
 
 def emit(ctx: dict[str, Any], out_root: Path) -> Path:
