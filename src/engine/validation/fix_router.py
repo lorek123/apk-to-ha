@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -48,6 +49,8 @@ _FILE_TO_TEMPLATE: dict[str, str] = {
     "const.py": "const.py.j2",
 }
 
+_RUFF_FIXED_RE = re.compile(r"\((\d+) fixed|Fixed (\d+)")
+
 # Manifest keys that can be inferred from ctx
 _MANIFEST_CTX_KEYS = {"iot_class", "version", "ha_min_version", "quality_scale"}
 
@@ -64,8 +67,13 @@ def route_and_apply(
     hassfest_findings: list[Finding],
     ctx: dict[str, Any],
     integration_dir: Path,
+    sdk_dir: Path | None = None,
 ) -> FixResult:
-    """Apply deterministic fixes for *findings*. Returns counts."""
+    """Apply deterministic fixes for *findings*. Returns counts.
+
+    Blocking (runs ruff as a subprocess) — call via ``asyncio.to_thread`` from async code.
+    Ruff findings are fixed in whichever of *integration_dir* / *sdk_dir* contains the file.
+    """
     applied = 0
     skipped = 0
     details: list[str] = []
@@ -74,10 +82,10 @@ def route_and_apply(
     fixable_ruff = [f for f in ruff_findings if _is_ruff_fixable(f.code)]
     unfixable_ruff = [f for f in ruff_findings if not _is_ruff_fixable(f.code)]
 
-    if fixable_ruff:
-        n = _apply_ruff_fix(integration_dir)
+    for target in _ruff_targets(fixable_ruff, integration_dir, sdk_dir):
+        n = _apply_ruff_fix(target)
         applied += n
-        details.append(f"ruff --fix: {n} fix(es) applied")
+        details.append(f"ruff --fix {target.name}: {n} fix(es) applied")
 
     skipped += len(unfixable_ruff)
     for f in unfixable_ruff:
@@ -106,6 +114,20 @@ def route_and_apply(
 
 
 # ── internal helpers ──────────────────────────────────────────────────────────
+
+
+def _ruff_targets(
+    findings: list[RuffFinding], integration_dir: Path, sdk_dir: Path | None
+) -> list[Path]:
+    """Directories that contain at least one of *findings*' files."""
+    targets: list[Path] = []
+    for directory in (integration_dir, sdk_dir):
+        if directory is None:
+            continue
+        root = directory.resolve()
+        if any(Path(f.file).resolve().is_relative_to(root) for f in findings):
+            targets.append(directory)
+    return targets
 
 
 def _is_ruff_fixable(code: str) -> bool:
@@ -172,14 +194,9 @@ def _apply_ruff_fix(directory: Path) -> int:
         text=True,
         check=False,
     )
-    # "Fixed N errors." appears in stderr on some ruff versions, stdout on others
-    for line in (result.stdout + result.stderr).splitlines():
-        if "Fixed" in line:
-            try:
-                return int(line.split()[1])
-            except IndexError, ValueError:
-                pass
-    return 1 if result.returncode in (0, 1) else 0
+    # Newer ruff: "Found 2 errors (2 fixed, 0 remaining)."; older: "Fixed 2 errors."
+    m = _RUFF_FIXED_RE.search(result.stdout + result.stderr)
+    return int(m.group(1) or m.group(2)) if m else 0
 
 
 def _prepend_spdx(path: Path) -> bool:

@@ -11,6 +11,9 @@ from pathlib import Path
 
 from .pipeline import DuplicateFoundError, TuyaDetectedError, analyze
 
+# Run statuses that make the CLI exit non-zero ("incomplete" = a validator was skipped).
+_FAILING_STATUSES = frozenset({"fail", "needs-human-review"})
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
 
@@ -87,9 +90,20 @@ def main() -> None:
                 print(f"    ✗ [{e['check']}] {e['message']}")
             for w in ir.extra.get("_v2_warnings", []):
                 print(f"    ⚠ [{w['check']}] {w['message']}")
-        if ir.extra.get("_v3_ran"):
-            v3s = "PASS" if ir.extra["_v3_passed"] else "FAIL"
+        if "_v3_ran" in ir.extra:
+            if ir.extra["_v3_ran"]:
+                v3s = "PASS" if ir.extra["_v3_passed"] else "FAIL"
+            else:
+                v3s = "SKIPPED (Docker unavailable)"
             print(f"  V-3 container import:  {v3s}")
+
+        run_status = ir.extra.get("_status")
+        if run_status is not None:
+            print(f"\n  Run status: {run_status.upper()}")
+            for key in ir.extra.get("_unresolved", []):
+                print(f"    ✗ unresolved: {key}")
+            if run_status in _FAILING_STATUSES:
+                sys.exit(1)
 
 
 if __name__ == "__main__":

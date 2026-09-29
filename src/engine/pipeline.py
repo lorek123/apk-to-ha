@@ -10,7 +10,7 @@ import logging
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import aiohttp
 
@@ -32,7 +32,14 @@ from .ingestion import classifier, decompiler, manifest_parser
 from .ingestion import play_store as play_store_fetcher
 from .ir.models import Framework, ProtocolIR
 from .snapshot import harness as snapshot_harness
-from .validation import container_test, fix_router, log_analyzer, quality_checker, ruff_check
+from .validation import (
+    budget,
+    container_test,
+    fix_router,
+    log_analyzer,
+    quality_checker,
+    ruff_check,
+)
 from .validation import hassfest as hassfest_validator
 
 _LOGGER = logging.getLogger(__name__)
@@ -310,13 +317,17 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
             update={"extra": {**ir.extra, "_sdk_dir": str(sdk_dir), "_hacs_dir": str(hacs_dir)}}
         )
 
-        # ── V-1 / V-2 validation loop (max 3 iterations per §8) ──────────────
-        _MAX_ITERATIONS = 3
-        v1_hacs = v1_sdk = v2 = None
-        for iteration in range(_MAX_ITERATIONS):
-            v1_hacs = await ruff_check.check(hacs_dir)
-            v1_sdk = await ruff_check.check(sdk_dir)
-            v2 = await hassfest_validator.validate(hacs_dir)
+        # ── V-1 / V-2 validation loop (budgets per SPECIFICATION.md §8) ───────
+        tracker = budget.FindingTracker()
+        fix_cycles = 0
+        unresolved: list[str] = []
+        while True:
+            iteration = fix_cycles
+            v1_hacs, v1_sdk, v2 = await asyncio.gather(
+                ruff_check.check(hacs_dir),
+                ruff_check.check(sdk_dir),
+                hassfest_validator.validate(hacs_dir),
+            )
 
             v1_errors = v1_hacs.error_count + v1_sdk.error_count
             v1_warnings = v1_hacs.warning_count + v1_sdk.warning_count
@@ -326,6 +337,9 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
                 "INFO" if (v1_hacs.passed and v1_sdk.passed) else "WARNING",
                 f"[iter {iteration}] ruff: {v1_errors} errors, {v1_warnings} warnings",
             )
+            for result in (v1_hacs, v1_sdk):
+                if result.tool_error:
+                    log("V1", "ruff", "ERROR", f"ruff failed: {result.tool_error}")
             for f in v1_hacs.findings + v1_sdk.findings:
                 log(
                     "V1",
@@ -350,14 +364,51 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
                 )
 
             if v1_hacs.passed and v1_sdk.passed and v2.passed:
+                unresolved = []
                 break  # clean — no fixes needed
 
-            fix = fix_router.route_and_apply(
+            blocking = [
+                budget.finding_key(f)
+                for f in v1_hacs.findings + v1_sdk.findings
+                if not f.code.startswith("W")
+            ] + [budget.finding_key(f) for f in v2.errors]
+            blocking += [
+                f"ruff:tool_error:{r.tool_error}" for r in (v1_hacs, v1_sdk) if r.tool_error
+            ]
+
+            stuck = tracker.exhausted(blocking)
+            if stuck:
+                log(
+                    "V5",
+                    "fix_router",
+                    "WARNING",
+                    f"{len(stuck)} finding(s) survived {tracker.max_attempts} fix attempts "
+                    "— needs human review",
+                )
+                for key in stuck:
+                    log("V5", "fix_router", "WARNING", f"not converging: {key}")
+                unresolved = sorted(set(blocking))
+                break
+            if fix_cycles >= budget.MAX_FIX_CYCLES:
+                log(
+                    "V5",
+                    "fix_router",
+                    "WARNING",
+                    f"run cap of {budget.MAX_FIX_CYCLES} fix cycles reached — needs human review",
+                )
+                unresolved = sorted(set(blocking))
+                break
+
+            tracker.record(blocking)
+            fix = await asyncio.to_thread(
+                fix_router.route_and_apply,
                 ruff_findings=v1_hacs.findings + v1_sdk.findings,
                 hassfest_findings=v2.findings,
                 ctx=ctx,
                 integration_dir=hacs_dir,
+                sdk_dir=sdk_dir,
             )
+            fix_cycles += 1
             log(
                 "V5",
                 "fix_router",
@@ -372,11 +423,10 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
                     "V5",
                     "fix_router",
                     "WARNING",
-                    "No deterministic fixes available — escalating to human review",
+                    "No deterministic fixes available — needs human review",
                 )
+                unresolved = sorted(set(blocking))
                 break
-
-        assert v1_hacs is not None and v1_sdk is not None and v2 is not None
 
         # ── V-4: platinum quality rubric ─────────────────────────────────────
         v4 = quality_checker.check(hacs_dir)
@@ -409,10 +459,32 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         for lf in v7_findings:
             log("V7", "log_analyzer", lf.severity.upper(), f"[{lf.category}] {lf.message}")
 
+        skipped = [] if v3.ran else ["V3"]
+        v7_errors = [lf for lf in v7_findings if lf.severity == "error"]
+        status = _run_status(
+            unresolved=unresolved,
+            passed=[v1_hacs.passed and v1_sdk.passed, v2.passed, v4.passed, not v7_errors],
+            v3_passed=v3.passed,
+            skipped=skipped,
+        )
+        log(
+            "pipeline",
+            "status",
+            "INFO" if status == "pass" else "WARNING",
+            f"run status: {status}",
+            unresolved=len(unresolved),
+            skipped=skipped,
+            fix_cycles=fix_cycles,
+        )
+
         ir = ir.model_copy(
             update={
                 "extra": {
                     **ir.extra,
+                    "_status": status,
+                    "_unresolved": unresolved,
+                    "_skipped": skipped,
+                    "_fix_cycles": fix_cycles,
                     "_v1_passed": v1_hacs.passed and v1_sdk.passed,
                     "_v1_errors": v1_hacs.error_count + v1_sdk.error_count,
                     "_v1_warnings": v1_hacs.warning_count + v1_sdk.warning_count,
@@ -446,6 +518,27 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
 
     log("pipeline", "done", "INFO", "Pipeline complete", run_id=run_id, output_hash=output_hash)
     return ir
+
+
+RunStatus = Literal["pass", "fail", "needs-human-review", "incomplete"]
+
+
+def _run_status(
+    unresolved: list[str], passed: list[bool], v3_passed: bool | None, skipped: list[str]
+) -> RunStatus:
+    """Collapse validator results into one run status.
+
+    ``needs-human-review``: the fix loop gave up on blocking findings (SPEC §8).
+    ``fail``: a validator failed. ``incomplete``: nothing failed, but a validator
+    was skipped (e.g. no Docker for V-3) — a skip is not a pass.
+    """
+    if unresolved:
+        return "needs-human-review"
+    if not all(passed) or v3_passed is False:
+        return "fail"
+    if skipped:
+        return "incomplete"
+    return "pass"
 
 
 def _write_run_state(
@@ -487,6 +580,10 @@ def _write_run_state(
         "app_name": ir.app_name,
         "ts": time.time(),
         "emit": emit,
+        "status": ir.extra.get("_status", "analysis-only"),
+        "unresolved_findings": ir.extra.get("_unresolved", []),
+        "skipped_validators": ir.extra.get("_skipped", []),
+        "fix_cycles": ir.extra.get("_fix_cycles", 0),
         "v1_passed": ir.extra.get("_v1_passed"),
         "v2_passed": ir.extra.get("_v2_passed"),
         "v2_tier": ir.extra.get("_v2_tier"),

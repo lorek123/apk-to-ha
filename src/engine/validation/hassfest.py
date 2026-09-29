@@ -85,7 +85,7 @@ async def validate(integration_dir: Path) -> HassfestResult:
     # Attempt real hassfest on top of the structural checks
     real_result = await _try_real_hassfest(integration_dir)
     if real_result is not None:
-        rc, output, _tier = real_result
+        rc, output, tier = real_result
         # Detect when the image doesn't ship script.hassfest and skip gracefully
         _hassfest_unavailable = (
             "No module named 'script'" in output or "No module named 'script.hassfest'" in output
@@ -97,8 +97,10 @@ async def validate(integration_dir: Path) -> HassfestResult:
         elif _hassfest_unavailable:
             _LOGGER.info("hassfest script not present in Docker image — structural checks only")
         _LOGGER.debug("hassfest raw output (rc=%d):\n%s", rc, output[:2000])
+        tier_name = "structural" if _hassfest_unavailable else tier
+    else:
+        tier_name = "structural"
 
-    tier_name = real_result[2] if real_result is not None else "structural"
     passed = not any(f.severity == "error" for f in findings)
     return HassfestResult(passed=passed, tier=tier_name, findings=findings)
 

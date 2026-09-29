@@ -34,7 +34,7 @@ print("V3_IMPORT_OK")
 @dataclass
 class ContainerTestResult:
     ran: bool  # False when Docker unavailable — test skipped
-    passed: bool
+    passed: bool | None  # None when skipped: a skip is not a pass
     output: str
     error: str = ""
 
@@ -91,7 +91,7 @@ async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
     """Run the container import test. Returns result (skipped if no Docker)."""
     if not shutil.which("docker"):
         _LOGGER.info("Docker not found — V-3 container test skipped")
-        return ContainerTestResult(ran=False, passed=True, output="skipped")
+        return ContainerTestResult(ran=False, passed=None, output="skipped")
 
     image, sdk_pkg_dir, out_mount = await asyncio.to_thread(_prepare, sdk_output_dir)
 
