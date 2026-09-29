@@ -6,7 +6,7 @@ PHCC_VERSION := $(shell python3 -c "import tomllib; cfg=tomllib.load(open('confi
 SANDBOX_IMAGE := hacs-engine-sandbox
 SANDBOX_TAG   := latest
 
-.PHONY: help sandbox fixtures test lint typecheck
+.PHONY: help sandbox fixtures corpus test lint typecheck
 
 help:          ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -33,6 +33,9 @@ sandbox-build: ## Build the sandbox image only (no test run)
 
 fixtures:      ## Download APKs listed in fixtures/sources.yaml to fixtures/_cache/
 	uv run python scripts/download_fixtures.py
+
+corpus:        ## Run the pipeline over every cached fixture and check verdicts
+	uv run python scripts/run_corpus.py
 
 # ── Dev loop ──────────────────────────────────────────────────────────────────
 

@@ -333,7 +333,13 @@ async def analyze(
     ir = ir.model_copy(update={"extra": {**ir.extra, "_snapshot_dir": str(snap_dir)}})
 
     # ── P4/P5: emit SDK + HACS integration ────────────────────────────────────
-    if emit:
+    extracted = bool(ir.commands or ir.events or ir.state.fields)
+    if emit and not extracted:
+        # An integration with no commands, events or state is not a partial result,
+        # it's broken output (and fails V-3 at import). Say so instead.
+        log("P5", "emit", "ERROR", "Nothing extracted (no commands/events/state) — not emitting")
+        ir = ir.model_copy(update={"extra": {**ir.extra, "_status": "nothing-extracted"}})
+    if emit and extracted:
         ctx = emitter_context.build(ir)
         for cmd in ctx["unmapped_commands"]:
             log("P5", "entities", "WARNING", f"no entity for {cmd['cmd']}: {cmd['reason']}")
@@ -603,8 +609,8 @@ def _write_run_state(
 
     # Output hash — detects regressions across runs for the same APK
     output_hash: str | None = None
-    if emit:
-        hacs_path = Path(ir.extra.get("_hacs_dir", ""))
+    if emit and "_hacs_dir" in ir.extra:  # Path("") would be the cwd
+        hacs_path = Path(ir.extra["_hacs_dir"])
         if hacs_path.exists():
             h = hashlib.sha256()
             for fp in sorted(hacs_path.rglob("*")):

@@ -12,7 +12,7 @@ from pathlib import Path
 from .pipeline import DuplicateFoundError, TuyaDetectedError, analyze
 
 # Run statuses that make the CLI exit non-zero ("incomplete" = a validator was skipped).
-_FAILING_STATUSES = frozenset({"fail", "needs-human-review"})
+_FAILING_STATUSES = frozenset({"fail", "needs-human-review", "nothing-extracted"})
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
