@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 from pathlib import Path
@@ -87,6 +88,7 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     )
 
     _render(env, ctx, domain_dir, "manifest.json.j2", "manifest.json")
+    sort_manifest(domain_dir / "manifest.json")
     _render(env, ctx, domain_dir, "__init__.py.j2", "__init__.py")
     _render(env, ctx, domain_dir, "const.py.j2", "const.py")
     _render(env, ctx, domain_dir, "config_flow.py.j2", "config_flow.py")
@@ -113,9 +115,28 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     if ctx.get("has_camera"):
         _render(env, ctx, domain_dir, "camera.py.j2", "camera.py")
 
+    # HACS repo metadata: the minimum HA version lives here, not in manifest.json
+    # (hassfest rejects a "homeassistant" key in custom integration manifests).
+    _render(env, ctx, out_root, "hacs.json.j2", "hacs.json")
+
     _fix_imports(domain_dir)
     _LOGGER.info("HACS integration emitted to %s", domain_dir)
     return domain_dir
+
+
+def sort_manifest(path: Path) -> bool:
+    """Order manifest keys as hassfest requires: domain, name, then alphabetical.
+
+    Returns True if the file changed.
+    """
+    data = json.loads(path.read_text())
+    head = {k: data[k] for k in ("domain", "name") if k in data}
+    ordered = head | {k: data[k] for k in sorted(data) if k not in head}
+    text = json.dumps(ordered, indent=2, ensure_ascii=False) + "\n"
+    if text == path.read_text():
+        return False
+    path.write_text(text)
+    return True
 
 
 def _fix_imports(directory: Path) -> None:

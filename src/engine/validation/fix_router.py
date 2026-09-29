@@ -10,6 +10,7 @@ Strategies (cheapest first):
   ruff_fix          — run `ruff --fix` on the integration directory
   spdx_prepend      — prepend missing SPDX header to a Python file
   manifest_patch    — update a key in manifest.json using the known ctx value
+  manifest_sort     — reorder manifest.json keys the way hassfest requires
   template_rerender — re-render one HACS template with (optionally patched) ctx
 """
 
@@ -171,6 +172,13 @@ def _fix_hassfest(finding: Finding, ctx: dict[str, Any], d: Path) -> str | None:
             _rerender_manifest(d, ctx)
             return "manifest: re-rendered manifest.json from template"
 
+        return None
+
+    if finding.check == "hassfest:manifest" and "keys are not sorted" in msg:
+        from ..emitters.hacs_emitter import sort_manifest
+
+        if sort_manifest(d / "manifest.json"):
+            return "manifest: sorted keys (domain, name, then alphabetical)"
         return None
 
     if finding.check == "config_flow":

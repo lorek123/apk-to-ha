@@ -466,12 +466,11 @@ async def analyze(apk_path: Path, apk_id: str | None = None, emit: bool = True) 
         for lf in v7_findings:
             log("V7", "log_analyzer", lf.severity.upper(), f"[{lf.category}] {lf.message}")
 
+        skipped = [] if v2.tier == "hassfest_docker" else ["V2-hassfest"]
         if not v3.ran:
-            skipped = ["V3"]
+            skipped.append("V3")
         elif v3.mode != "runtime":
-            skipped = ["V3-runtime"]  # import-only is weaker than running the integration
-        else:
-            skipped = []
+            skipped.append("V3-runtime")  # import-only is weaker than running the integration
         v7_errors = [lf for lf in v7_findings if lf.severity == "error"]
         status = _run_status(
             unresolved=unresolved,

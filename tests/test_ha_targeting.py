@@ -3,7 +3,7 @@
 
 Verifies that changing ha_target.toml flows correctly into:
   - the emitter context dict (ha_min_version)
-  - the emitted manifest.json (homeassistant field)
+  - the emitted hacs.json (homeassistant field)
   - the bump script (all version fields updated consistently)
 """
 
@@ -146,7 +146,7 @@ def test_context_iot_class_websocket_is_local_push() -> None:
 # ── manifest propagation ──────────────────────────────────────────────────────
 
 
-def test_emitted_manifest_embeds_ha_min_version(tmp_path: Path) -> None:
+def test_emitted_hacs_json_embeds_ha_min_version(tmp_path: Path) -> None:
     from engine.emitters import hacs_emitter
     from engine.emitters.context import build
 
@@ -154,8 +154,11 @@ def test_emitted_manifest_embeds_ha_min_version(tmp_path: Path) -> None:
         expected = tomllib.load(f)["target"]["generated_minimum_required"]
     ctx = build(_make_minimal_ir())
     hacs_dir = hacs_emitter.emit(ctx, tmp_path)
-    manifest = json.loads((hacs_dir / "manifest.json").read_text())
-    assert manifest["homeassistant"] == expected
+
+    hacs = json.loads((tmp_path / "hacs.json").read_text())
+    assert hacs["homeassistant"] == expected
+    # hassfest rejects this key in a custom integration's manifest.json
+    assert "homeassistant" not in json.loads((hacs_dir / "manifest.json").read_text())
 
 
 def test_emitted_manifest_iot_class_http_rest(tmp_path: Path) -> None:

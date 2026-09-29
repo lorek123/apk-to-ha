@@ -159,17 +159,23 @@ def test_platinum_via_base_class(tmp_path: Path) -> None:
 # ── generated integration smoke test ─────────────────────────────────────────
 
 
-def test_generated_r2d2_passes_structural() -> None:
-    """The integration we generated from the R2-D2 snapshot must pass all structural checks."""
+def test_generated_r2d2_passes_structural(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The integration generated from the R2-D2 IR snapshot must pass all structural checks."""
     import asyncio
 
-    from engine.validation.hassfest import validate
+    from engine.emitters import context, hacs_emitter
+    from engine.ir.models import ProtocolIR
+    from engine.validation import hassfest
 
-    hacs_dir = (
-        Path(__file__).parents[1] / "sdk_output/bullb_r2d2/custom_components/r2d2"
-    ).resolve()
-    if not hacs_dir.exists():
-        pytest.skip("generated integration not present — run the pipeline first")
-    result = asyncio.run(validate(hacs_dir))
+    snapshot = Path(__file__).parents[1] / "fixtures/snapshots/bullb_r2d2/ir.json"
+    ir = ProtocolIR.model_validate_json(snapshot.read_text())
+    hacs_dir = hacs_emitter.emit(context.build(ir), tmp_path)
+
+    async def no_real_hassfest(_: Path) -> None:  # structural only; V-2 e2e covers the image
+        return None
+
+    monkeypatch.setattr(hassfest, "_run_real_hassfest", no_real_hassfest)
+    result = asyncio.run(hassfest.validate(hacs_dir))
     errors = [f.message for f in result.errors]
     assert result.passed, "Structural checks failed:\n" + "\n".join(errors)
+    assert result.tier == "structural"
