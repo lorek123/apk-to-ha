@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Tests for P1-1 JadxClient — typed async wrapper around the JADX plugin HTTP API."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -9,8 +10,8 @@ import pytest
 
 from engine.ingestion.jadx_client import JadxClient
 
-
 # ── helpers ────────────────────────────────────────────────────────────────────
+
 
 def _mock_session(response_map: dict[str, Any]) -> MagicMock:
     """Build a mock aiohttp.ClientSession whose GET responses come from response_map.
@@ -18,6 +19,7 @@ def _mock_session(response_map: dict[str, Any]) -> MagicMock:
     response_map keys are endpoint substrings (e.g. "health", "class-source").
     Each value is either a dict (returned as JSON) or an Exception (raised).
     """
+
     def _make_resp(payload: Any) -> MagicMock:
         if isinstance(payload, Exception):
             raise payload
@@ -50,6 +52,7 @@ async def _client_with(responses: dict[str, Any]) -> JadxClient:
 
 # ── is_available ───────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_is_available_true_on_health_response() -> None:
     client = await _client_with({"health": {"status": "ok"}})
@@ -77,11 +80,12 @@ async def test_is_available_false_on_connection_error() -> None:
 
 # ── get_all_classes ────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_all_classes_returns_list() -> None:
-    client = await _client_with({
-        "all-classes": {"classes": ["com.example.Foo", "com.example.Bar"]}
-    })
+    client = await _client_with(
+        {"all-classes": {"classes": ["com.example.Foo", "com.example.Bar"]}}
+    )
     result = await client.get_all_classes()
     assert result == ["com.example.Foo", "com.example.Bar"]
 
@@ -100,7 +104,9 @@ async def test_get_all_classes_passes_pagination_params() -> None:
     await client.get_all_classes(offset=10, count=50)
     call_kwargs = session.get.call_args
     assert call_kwargs is not None
-    params = call_kwargs.kwargs.get("params") or call_kwargs.args[1] if len(call_kwargs.args) > 1 else {}
+    params = (
+        call_kwargs.kwargs.get("params") or call_kwargs.args[1] if len(call_kwargs.args) > 1 else {}
+    )
     # params may be in kwargs
     params = session.get.call_args.kwargs.get("params", {})
     assert params.get("offset") == 10
@@ -108,6 +114,7 @@ async def test_get_all_classes_passes_pagination_params() -> None:
 
 
 # ── get_class_source ───────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_get_class_source_returns_source() -> None:
@@ -139,11 +146,10 @@ async def test_get_class_source_returns_none_on_network_error() -> None:
 
 # ── get_methods_of_class ───────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_methods_of_class_returns_list() -> None:
-    client = await _client_with({
-        "methods-of-class": {"methods": ["foo()", "bar(int)"]}
-    })
+    client = await _client_with({"methods-of-class": {"methods": ["foo()", "bar(int)"]}})
     assert await client.get_methods_of_class("com.example.Cls") == ["foo()", "bar(int)"]
 
 
@@ -154,6 +160,7 @@ async def test_get_methods_of_class_empty_on_no_methods_key() -> None:
 
 
 # ── get_fields_of_class ────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_get_fields_of_class_returns_list_of_dicts() -> None:
@@ -166,9 +173,14 @@ async def test_get_fields_of_class_returns_list_of_dicts() -> None:
 
 # ── get_method_by_name ─────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_method_by_name_returns_dict() -> None:
-    payload = {"class_name": "com.example.Client", "method_name": "connect", "source": "void connect(){}"}
+    payload = {
+        "class_name": "com.example.Client",
+        "method_name": "connect",
+        "source": "void connect(){}",
+    }
     client = await _client_with({"method-by-name": payload})
     result = await client.get_method_by_name("com.example.Client", "connect")
     assert result is not None
@@ -189,20 +201,21 @@ async def test_get_method_by_name_returns_none_on_empty() -> None:
 
 # ── search_classes_by_keyword ──────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_search_classes_by_keyword_returns_list() -> None:
-    client = await _client_with({
-        "search-classes-by-keyword": {"classes": ["com.example.WsClient"]}
-    })
+    client = await _client_with(
+        {"search-classes-by-keyword": {"classes": ["com.example.WsClient"]}}
+    )
     result = await client.search_classes_by_keyword("WebSocket")
     assert "com.example.WsClient" in result
 
 
 @pytest.mark.asyncio
 async def test_search_classes_by_keyword_accepts_results_key() -> None:
-    client = await _client_with({
-        "search-classes-by-keyword": {"results": ["com.example.AuthManager"]}
-    })
+    client = await _client_with(
+        {"search-classes-by-keyword": {"results": ["com.example.AuthManager"]}}
+    )
     result = await client.search_classes_by_keyword("grantAccess")
     assert "com.example.AuthManager" in result
 
@@ -216,6 +229,7 @@ async def test_search_classes_by_keyword_empty_on_unavailable() -> None:
 
 # ── search_method_by_name ──────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_search_method_by_name_returns_list() -> None:
     methods = [{"class_name": "com.example.Signer", "method_name": "sign"}]
@@ -226,6 +240,7 @@ async def test_search_method_by_name_returns_list() -> None:
 
 
 # ── get_android_manifest ───────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_get_android_manifest_returns_xml() -> None:
@@ -242,9 +257,13 @@ async def test_get_android_manifest_returns_none_on_empty() -> None:
 
 # ── get_strings ────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_strings_returns_list() -> None:
-    strings = [{"name": "app_name", "value": "R2-D2"}, {"name": "error_msg", "value": "Connection failed"}]
+    strings = [
+        {"name": "app_name", "value": "R2-D2"},
+        {"name": "error_msg", "value": "Connection failed"},
+    ]
     client = await _client_with({"strings": {"strings": strings}})
     result = await client.get_strings()
     assert len(result) == 2
@@ -252,6 +271,7 @@ async def test_get_strings_returns_list() -> None:
 
 
 # ── cross-references ───────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_get_xrefs_to_class_returns_references() -> None:
@@ -287,6 +307,7 @@ async def test_xrefs_empty_on_network_error() -> None:
 
 # ── get_smali ─────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_smali_returns_content() -> None:
     smali = ".class public Lcom/example/Foo;\n.super Ljava/lang/Object;"
@@ -301,6 +322,7 @@ async def test_get_smali_returns_none_on_empty() -> None:
 
 
 # ── context manager lifecycle ──────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_context_manager_creates_and_closes_session() -> None:
@@ -323,6 +345,7 @@ async def test_context_manager_clears_session_after_exit() -> None:
 
 
 # ── custom host / port ─────────────────────────────────────────────────────────
+
 
 def test_custom_host_port_sets_base_url() -> None:
     client = JadxClient(host="192.168.1.5", port=9000)

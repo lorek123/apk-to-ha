@@ -4,6 +4,7 @@
 The reconciler does not mutate the IR directly — it returns a ReconciliationReport
 that the pipeline applies via ir.model_copy().
 """
+
 from __future__ import annotations
 
 import base64
@@ -18,14 +19,11 @@ from ..extraction.signing_emitter import build as build_signing_ctx
 from ..ir.models import (
     Direction,
     Endpoint,
-    FieldDef,
-    FieldKind,
     ProtocolIR,
     SigningComponent,
     SigningTrace,
-    TransportType,
 )
-from .capture_model import CaptureSession, HmacCapture, HttpCapture, WsCapture
+from .capture_model import CaptureSession, HmacCapture
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +31,7 @@ _LOGGER = logging.getLogger(__name__)
 @dataclass
 class SigningVerification:
     """Result of verifying the P2-6 signer against a live HMAC capture."""
+
     verified: bool
     corrected: bool = False
     corrected_trace: SigningTrace | None = None
@@ -42,6 +41,7 @@ class SigningVerification:
 @dataclass
 class ReconciliationReport:
     """Full output of one oracle reconciliation pass."""
+
     # Signing
     signing: SigningVerification | None = None
     # IR patches
@@ -101,7 +101,8 @@ def reconcile(
         if ir.discovery.port and ir.discovery.port != observed_port:
             _LOGGER.info(
                 "reconciler: discovery port corrected %d → %d",
-                ir.discovery.port, observed_port,
+                ir.discovery.port,
+                observed_port,
             )
             report.discovery_port_correction = observed_port
 
@@ -114,10 +115,11 @@ def reconcile(
             if observed_auth and observed_auth != ir.auth.handshake_cmd:
                 _LOGGER.info(
                     "reconciler: auth_cmd corrected %r → %r",
-                    ir.auth.handshake_cmd, observed_auth,
+                    ir.auth.handshake_cmd,
+                    observed_auth,
                 )
                 report.auth_cmd_correction = observed_auth
-        except (json.JSONDecodeError, AttributeError):
+        except json.JSONDecodeError, AttributeError:
             pass
 
     # ── 6. Build patched IR if anything changed ───────────────────────────────
@@ -126,6 +128,7 @@ def reconcile(
 
 
 # ── signing verification ──────────────────────────────────────────────────────
+
 
 def _verify_signing(
     hmac_calls: list[HmacCapture],
@@ -147,9 +150,7 @@ def _verify_signing(
         digest_name = signing_ctx.get("signing_digest", "sha256")
         digest_func = getattr(hashlib, digest_name, hashlib.sha256)
 
-        computed = base64.b64encode(
-            hmac.new(key_bytes, input_bytes, digest_func).digest()
-        ).decode()
+        computed = base64.b64encode(hmac.new(key_bytes, input_bytes, digest_func).digest()).decode()
         actual_b64 = base64.b64encode(bytes.fromhex(capture.output_hex)).decode()
 
         if computed == actual_b64:
@@ -162,7 +163,9 @@ def _verify_signing(
         )
         if corrected:
             return SigningVerification(
-                verified=False, corrected=True, corrected_trace=corrected,
+                verified=False,
+                corrected=True,
+                corrected_trace=corrected,
                 detail="component order corrected from live capture",
             )
 
@@ -193,15 +196,22 @@ def _attempt_signing_correction(
             # Found a plausible splitting — build a corrected trace
             new_components: list[SigningComponent] = []
             for i, (part, comp) in enumerate(zip(parts, non_literal_comps)):
-                new_components.append(SigningComponent(
-                    kind=comp.kind,
-                    variable_name=comp.variable_name,
-                    confidence=0.9,
-                ))
+                new_components.append(
+                    SigningComponent(
+                        kind=comp.kind,
+                        variable_name=comp.variable_name,
+                        confidence=0.9,
+                    )
+                )
                 if sep and i < len(parts) - 1:
-                    new_components.append(SigningComponent(
-                        kind="literal", variable_name="", value=sep, confidence=1.0,
-                    ))
+                    new_components.append(
+                        SigningComponent(
+                            kind="literal",
+                            variable_name="",
+                            value=sep,
+                            confidence=1.0,
+                        )
+                    )
             return SigningTrace(
                 algorithm=trace.algorithm,
                 components=new_components,
@@ -215,6 +225,7 @@ def _attempt_signing_correction(
 
 # ── command / field extraction ────────────────────────────────────────────────
 
+
 def _extract_commands_from_session(session: CaptureSession) -> set[str]:
     """Extract command names from WS frames and HTTP paths."""
     cmds: set[str] = set()
@@ -225,7 +236,7 @@ def _extract_commands_from_session(session: CaptureSession) -> set[str]:
             cmd = data.get("cmd")
             if cmd and isinstance(cmd, str):
                 cmds.add(cmd)
-        except (json.JSONDecodeError, AttributeError):
+        except json.JSONDecodeError, AttributeError:
             pass
 
     for call in session.http_calls:
@@ -247,14 +258,14 @@ def _field_corrections(session: CaptureSession, ir: ProtocolIR) -> list[dict[str
     for frame in session.ws_sends():
         try:
             observed_bodies.append(json.loads(frame.frame))
-        except (json.JSONDecodeError, AttributeError):
+        except json.JSONDecodeError, AttributeError:
             pass
 
     for call in session.http_calls:
         if call.request_body:
             try:
                 observed_bodies.append(json.loads(call.request_body))
-            except (json.JSONDecodeError, AttributeError):
+            except json.JSONDecodeError, AttributeError:
                 pass
 
     for body in observed_bodies:
@@ -267,17 +278,20 @@ def _field_corrections(session: CaptureSession, ir: ProtocolIR) -> list[dict[str
             for field in ep.request_fields:
                 observed_key = field.serialized_name or field.name
                 if observed_key not in body and field.name in body:
-                    corrections.append({
-                        "cmd": cmd,
-                        "field": field.name,
-                        "old_serialized": observed_key,
-                        "new_serialized": field.name,
-                    })
+                    corrections.append(
+                        {
+                            "cmd": cmd,
+                            "field": field.name,
+                            "old_serialized": observed_key,
+                            "new_serialized": field.name,
+                        }
+                    )
 
     return corrections
 
 
 # ── IR patching ────────────────────────────────────────────────────────────────
+
 
 def _apply_patches(ir: ProtocolIR, report: ReconciliationReport) -> ProtocolIR | None:
     """Return a patched IR copy, or None if nothing changed."""
@@ -303,7 +317,7 @@ def _apply_patches(ir: ProtocolIR, report: ReconciliationReport) -> ProtocolIR |
                 transport=ir.transport.type,
                 direction=Direction.TO_DEVICE,
                 confidence=0.6,
-                description=f"Observed in dynamic capture — not in static IR",
+                description="Observed in dynamic capture — not in static IR",
             )
             for cmd in report.new_commands
         ]
@@ -319,14 +333,10 @@ def _apply_patches(ir: ProtocolIR, report: ReconciliationReport) -> ProtocolIR |
 
     # Auth cmd
     if report.auth_cmd_correction:
-        updates["auth"] = ir.auth.model_copy(
-            update={"handshake_cmd": report.auth_cmd_correction}
-        )
+        updates["auth"] = ir.auth.model_copy(update={"handshake_cmd": report.auth_cmd_correction})
         changed = True
 
     if not changed:
         return None
 
     return ir.model_copy(update=updates)
-
-

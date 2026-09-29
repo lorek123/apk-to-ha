@@ -7,6 +7,7 @@ over a pre-built call graph, enabling cross-file method resolution.
 Graph keys use `ClassName.methodName`.  When a caller records an invocation by
 short name only (e.g. `buildMsg`), BFS resolves it by matching `*.buildMsg`.
 """
+
 from __future__ import annotations
 
 import logging
@@ -48,7 +49,7 @@ class JavaCodeGraph:
     # ── public factory ────────────────────────────────────────────────────────
 
     @classmethod
-    def build(cls, sources_dir: Path) -> "JavaCodeGraph":
+    def build(cls, sources_dir: Path) -> JavaCodeGraph:
         """Parse all .java files under *sources_dir* and return a populated graph."""
         graph = cls()
         if not _TREE_SITTER_AVAILABLE:
@@ -60,12 +61,10 @@ class JavaCodeGraph:
         for jf in java_files:
             try:
                 graph._index_file(jf)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _LOGGER.debug("java_code_graph: error indexing %s: %s", jf, exc)
 
-        _LOGGER.debug(
-            "java_code_graph: indexed %d methods", len(graph.method_sources)
-        )
+        _LOGGER.debug("java_code_graph: indexed %d methods", len(graph.method_sources))
         return graph
 
     # ── public queries ────────────────────────────────────────────────────────
@@ -145,7 +144,7 @@ class JavaCodeGraph:
             key = f"{class_name}.{method_name}"
 
             # Body text: the block including braces
-            body_src = src_text[body_node.start_byte: body_node.end_byte]
+            body_src = src_text[body_node.start_byte : body_node.end_byte]
             self.method_sources[key] = body_src
             self._source_bytes[key] = raw
 
@@ -170,7 +169,8 @@ class JavaCodeGraph:
 
 # ── tree-sitter helpers ───────────────────────────────────────────────────────
 
-def _find_nodes(node: "Node", node_type: str) -> list["Node"]:
+
+def _find_nodes(node: Node, node_type: str) -> list[Node]:
     """Recursively collect all descendant nodes of *node_type*."""
     results: list[Node] = []
     if node.type == node_type:
@@ -180,11 +180,11 @@ def _find_nodes(node: "Node", node_type: str) -> list["Node"]:
     return results
 
 
-def _node_text(node: "Node", src: str) -> str:
-    return src[node.start_byte: node.end_byte]
+def _node_text(node: Node, src: str) -> str:
+    return src[node.start_byte : node.end_byte]
 
 
-def _extract_class_name(root: "Node", src: str) -> str | None:
+def _extract_class_name(root: Node, src: str) -> str | None:
     """Return the simple class name from the first class_declaration in *root*."""
     for node in root.children:
         if node.type == "class_declaration":

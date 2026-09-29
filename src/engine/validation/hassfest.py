@@ -7,9 +7,9 @@ Two tiers:
 
 Returns a HassfestResult with a list of findings.
 """
+
 from __future__ import annotations
 
-import ast
 import asyncio
 import json
 import logging
@@ -24,12 +24,24 @@ _HA_CORE_DIR = Path(__file__).parents[3] / ".cache" / "ha-core"
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
 
 _REQUIRED_MANIFEST_KEYS = {
-    "domain", "name", "codeowners", "config_flow", "documentation",
-    "homeassistant", "iot_class", "quality_scale", "requirements", "version",
+    "domain",
+    "name",
+    "codeowners",
+    "config_flow",
+    "documentation",
+    "homeassistant",
+    "iot_class",
+    "quality_scale",
+    "requirements",
+    "version",
 }
 _VALID_IOT_CLASSES = {
-    "assumed_state", "cloud_polling", "cloud_push",
-    "local_polling", "local_push", "calculated",
+    "assumed_state",
+    "cloud_polling",
+    "cloud_push",
+    "local_polling",
+    "local_push",
+    "calculated",
 }
 _VALID_QUALITY_SCALES = {"internal", "silver", "gold", "platinum"}
 
@@ -39,15 +51,15 @@ _PLATINUM_ENTITY_REQS = {"_attr_has_entity_name", "_attr_unique_id"}
 
 @dataclass
 class Finding:
-    severity: str      # "error" | "warning"
-    check: str         # which check produced this
+    severity: str  # "error" | "warning"
+    check: str  # which check produced this
     message: str
 
 
 @dataclass
 class HassfestResult:
     passed: bool
-    tier: str          # "structural" | "hassfest_local" | "hassfest_docker" | "skipped"
+    tier: str  # "structural" | "hassfest_local" | "hassfest_docker" | "skipped"
     findings: list[Finding] = field(default_factory=list)
 
     @property
@@ -77,17 +89,14 @@ async def validate(integration_dir: Path) -> HassfestResult:
         rc, output, tier = real_result
         # Detect when the image doesn't ship script.hassfest and skip gracefully
         _hassfest_unavailable = (
-            "No module named 'script'" in output
-            or "No module named 'script.hassfest'" in output
+            "No module named 'script'" in output or "No module named 'script.hassfest'" in output
         )
         if rc and not _hassfest_unavailable:
             for line in output.splitlines():
                 if any(kw in line.upper() for kw in ("ERROR", "INVALID", "FAILED")):
                     findings.append(Finding("error", "hassfest", line.strip()))
         elif _hassfest_unavailable:
-            _LOGGER.info(
-                "hassfest script not present in Docker image — structural checks only"
-            )
+            _LOGGER.info("hassfest script not present in Docker image — structural checks only")
         _LOGGER.debug("hassfest raw output (rc=%d):\n%s", rc, output[:2000])
 
     tier_name = real_result[2] if real_result is not None else "structural"
@@ -96,6 +105,7 @@ async def validate(integration_dir: Path) -> HassfestResult:
 
 
 # ── structural checks ─────────────────────────────────────────────────────────
+
 
 def _check_manifest(d: Path, findings: list[Finding]) -> None:
     mf = d / "manifest.json"
@@ -111,15 +121,25 @@ def _check_manifest(d: Path, findings: list[Finding]) -> None:
 
     for key in _REQUIRED_MANIFEST_KEYS:
         if key not in data:
-            findings.append(Finding("error", "manifest", f"manifest.json missing required key: {key!r}"))
+            findings.append(
+                Finding("error", "manifest", f"manifest.json missing required key: {key!r}")
+            )
 
     if data.get("iot_class") not in _VALID_IOT_CLASSES:
-        findings.append(Finding("error", "manifest",
-                                f"iot_class {data.get('iot_class')!r} not in {sorted(_VALID_IOT_CLASSES)}"))
+        findings.append(
+            Finding(
+                "error",
+                "manifest",
+                f"iot_class {data.get('iot_class')!r} not in {sorted(_VALID_IOT_CLASSES)}",
+            )
+        )
 
     if data.get("quality_scale") not in _VALID_QUALITY_SCALES:
-        findings.append(Finding("warning", "manifest",
-                                f"quality_scale {data.get('quality_scale')!r} unrecognised"))
+        findings.append(
+            Finding(
+                "warning", "manifest", f"quality_scale {data.get('quality_scale')!r} unrecognised"
+            )
+        )
 
     if not isinstance(data.get("version"), str):
         findings.append(Finding("error", "manifest", "manifest.json version must be a string"))
@@ -139,8 +159,18 @@ def _check_platforms(d: Path, findings: list[Finding]) -> None:
     domain = data.get("domain", "")
 
     platform_files = {
-        "sensor", "binary_sensor", "switch", "button", "select", "number",
-        "light", "cover", "media_player", "climate", "fan", "lock",
+        "sensor",
+        "binary_sensor",
+        "switch",
+        "button",
+        "select",
+        "number",
+        "light",
+        "cover",
+        "media_player",
+        "climate",
+        "fan",
+        "lock",
     }
     for py_file in d.glob("*.py"):
         name = py_file.stem
@@ -148,8 +178,7 @@ def _check_platforms(d: Path, findings: list[Finding]) -> None:
             continue
         src = py_file.read_text()
         if "async def async_setup_entry" not in src:
-            findings.append(Finding("error", "platforms",
-                                    f"{name}.py missing async_setup_entry"))
+            findings.append(Finding("error", "platforms", f"{name}.py missing async_setup_entry"))
 
 
 def _check_config_flow(d: Path, findings: list[Finding]) -> None:
@@ -162,19 +191,18 @@ def _check_config_flow(d: Path, findings: list[Finding]) -> None:
     if "ConfigFlow" not in src:
         findings.append(Finding("error", "config_flow", "No ConfigFlow subclass found"))
     if "domain=" not in src:
-        findings.append(Finding("error", "config_flow",
-                                "ConfigFlow class missing domain= keyword arg"))
+        findings.append(
+            Finding("error", "config_flow", "ConfigFlow class missing domain= keyword arg")
+        )
     if "async_step_user" not in src:
-        findings.append(Finding("error", "config_flow",
-                                "ConfigFlow missing async_step_user"))
+        findings.append(Finding("error", "config_flow", "ConfigFlow missing async_step_user"))
 
 
 def _check_spdx(d: Path, findings: list[Finding]) -> None:
     for py in d.rglob("*.py"):
         first_line = py.read_text().splitlines()[0] if py.read_text() else ""
         if "SPDX-License-Identifier" not in first_line:
-            findings.append(Finding("error", "spdx",
-                                    f"{py.relative_to(d)}: missing SPDX header"))
+            findings.append(Finding("error", "spdx", f"{py.relative_to(d)}: missing SPDX header"))
 
 
 def _check_platinum(d: Path, findings: list[Finding]) -> None:
@@ -193,19 +221,17 @@ def _check_platinum(d: Path, findings: list[Finding]) -> None:
         if py.stem not in platform_files:
             continue
         src = py.read_text()
-        uses_base = base.exists() and (
-            "entity_base" in src or "Entity(" in src
-        )
+        uses_base = base.exists() and ("entity_base" in src or "Entity(" in src)
         for req in _PLATINUM_ENTITY_REQS:
             if req in src:
                 continue
             if uses_base and req in satisfied_in_base:
                 continue
-            findings.append(Finding("warning", "platinum",
-                                    f"{py.name}: entity missing {req}"))
+            findings.append(Finding("warning", "platinum", f"{py.name}: entity missing {req}"))
 
 
 # ── real hassfest (best-effort) ───────────────────────────────────────────────
+
 
 async def _try_real_hassfest(int_path: Path) -> tuple[int, str, str] | None:
     """Try HA Core clone, then Docker. Returns (rc, output, tier) or None."""
@@ -215,8 +241,15 @@ async def _try_real_hassfest(int_path: Path) -> tuple[int, str, str] | None:
             cfg = tomllib.load(fh)
         python = shutil.which("python3") or "python3"
         rc, out = await _run(
-            [python, "-m", "script.hassfest",
-             "--integration-path", str(int_path), "--action", "validate"],
+            [
+                python,
+                "-m",
+                "script.hassfest",
+                "--integration-path",
+                str(int_path),
+                "--action",
+                "validate",
+            ],
             cwd=_HA_CORE_DIR,
         )
         return rc, out, "hassfest_local"
@@ -226,14 +259,23 @@ async def _try_real_hassfest(int_path: Path) -> tuple[int, str, str] | None:
             cfg = tomllib.load(fh)
         tag = cfg["docker"]["ha_image_tag"]
         _LOGGER.info("Running hassfest via Docker image %s", tag)
-        rc, out = await _run([
-            "docker", "run", "--rm",
-            "-v", f"{int_path}:/tmp/integration:ro",
-            f"homeassistant/home-assistant:{tag}",
-            "python3", "-m", "script.hassfest",
-            "--integration-path", "/tmp/integration",
-            "--action", "validate",
-        ])
+        rc, out = await _run(
+            [
+                "docker",
+                "run",
+                "--rm",
+                "-v",
+                f"{int_path}:/tmp/integration:ro",
+                f"homeassistant/home-assistant:{tag}",
+                "python3",
+                "-m",
+                "script.hassfest",
+                "--integration-path",
+                "/tmp/integration",
+                "--action",
+                "validate",
+            ]
+        )
         return rc, out, "hassfest_docker"
 
     _LOGGER.info("Neither HA Core clone nor Docker found — structural check only")

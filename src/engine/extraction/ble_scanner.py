@@ -13,6 +13,7 @@ Uses a two-level matching strategy:
 Bronze-tier quality: covers common Bluetooth SDK patterns. Dynamic oracle
 (P2-7) upgrades confidence in M3.
 """
+
 from __future__ import annotations
 
 import logging
@@ -39,7 +40,7 @@ _LOGGER = logging.getLogger(__name__)
 # UUID constant declarations:  [Modifiers] UUID CONST_NAME = UUID.fromString("...");
 # Tolerates multi-line formatting (modifiers on one line, UUID.fromString on next).
 _UUID_CONST_RE = re.compile(
-    r'(?:(?:public|private|protected|static|final)\s+)*'
+    r"(?:(?:public|private|protected|static|final)\s+)*"
     r'UUID\s+(\w+)\s*=\s*UUID\.fromString\s*\(\s*"([0-9a-fA-F-]{36})"\s*\)'
 )
 
@@ -49,39 +50,35 @@ _UUID_INLINE_RE = re.compile(r'UUID\.fromString\s*\(\s*"([0-9a-fA-F-]{36})"\s*\)
 # Variable assignment from getCharacteristic:
 #   SomeType varName = anything.getCharacteristic(CONST_NAME)
 _VAR_FROM_GETCHAR_RE = re.compile(
-    r'(?:\w+\s+)?(\w+)\s*=\s*[^;]*?getCharacteristic\s*\(\s*(\w+)\s*\)'
+    r"(?:\w+\s+)?(\w+)\s*=\s*[^;]*?getCharacteristic\s*\(\s*(\w+)\s*\)"
 )
 
 # Patterns that capture a simple variable/const name as the first arg:
 #   gatt.writeCharacteristic(varName)  or  gatt.writeCharacteristic(CONST_NAME, ...)
-_WRITE_VAR_RE = re.compile(r'writeCharacteristic\s*\(\s*(\w+)\s*[,)]')
-_READ_VAR_RE = re.compile(r'readCharacteristic\s*\(\s*(\w+)\s*[,)]')
-_NOTIFY_VAR_RE = re.compile(r'setCharacteristicNotification\s*\(\s*(\w+)\s*[,)]')
+_WRITE_VAR_RE = re.compile(r"writeCharacteristic\s*\(\s*(\w+)\s*[,)]")
+_READ_VAR_RE = re.compile(r"readCharacteristic\s*\(\s*(\w+)\s*[,)]")
+_NOTIFY_VAR_RE = re.compile(r"setCharacteristicNotification\s*\(\s*(\w+)\s*[,)]")
 
 # Inline patterns that capture through nested parens:
 #   gatt.writeCharacteristic(anything.getCharacteristic(CONST) ...)
-_WRITE_INLINE_RE = re.compile(
-    r'writeCharacteristic\s*\([^;]*?getCharacteristic\s*\(\s*(\w+)\s*\)'
-)
-_READ_INLINE_RE = re.compile(
-    r'readCharacteristic\s*\([^;]*?getCharacteristic\s*\(\s*(\w+)\s*\)'
-)
+_WRITE_INLINE_RE = re.compile(r"writeCharacteristic\s*\([^;]*?getCharacteristic\s*\(\s*(\w+)\s*\)")
+_READ_INLINE_RE = re.compile(r"readCharacteristic\s*\([^;]*?getCharacteristic\s*\(\s*(\w+)\s*\)")
 _NOTIFY_INLINE_RE = re.compile(
-    r'setCharacteristicNotification\s*\([^;]*?getCharacteristic\s*\(\s*(\w+)\s*\)'
+    r"setCharacteristicNotification\s*\([^;]*?getCharacteristic\s*\(\s*(\w+)\s*\)"
 )
 
-_HAS_BLE_RE = re.compile(r'BluetoothGatt|BluetoothLeScanner|BleManager|BleClient')
+_HAS_BLE_RE = re.compile(r"BluetoothGatt|BluetoothLeScanner|BleManager|BleClient")
 
 # Prefixes/suffixes stripped from UUID constant names when deriving cmd names
-_STRIP_PREFIX_RE = re.compile(r'^(?:UUID_|CHAR(?:ACTERISTIC)?_|BLE_)', re.I)
-_STRIP_SUFFIX_RE = re.compile(r'_(?:UUID|CHAR(?:ACTERISTIC)?)$', re.I)
+_STRIP_PREFIX_RE = re.compile(r"^(?:UUID_|CHAR(?:ACTERISTIC)?_|BLE_)", re.I)
+_STRIP_SUFFIX_RE = re.compile(r"_(?:UUID|CHAR(?:ACTERISTIC)?)$", re.I)
 
 
 @dataclass
 class _CharInfo:
     const_name: str | None
     uuid: str
-    access: set[str] = field(default_factory=set)   # "write" | "read" | "notify"
+    access: set[str] = field(default_factory=set)  # "write" | "read" | "notify"
     source_class: str | None = None
 
 
@@ -93,8 +90,16 @@ class BLEScanner:
         self.extra: dict[str, Any] = {}
 
     def scan(
-        self, package_name: str,
-    ) -> tuple[TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list[Endpoint], list[Endpoint]]:
+        self,
+        package_name: str,
+    ) -> tuple[
+        TransportContract,
+        DiscoveryMechanism,
+        AuthScheme,
+        StateSchema,
+        list[Endpoint],
+        list[Endpoint],
+    ]:
         java_files = list(self._root.rglob("*.java"))
         if not java_files:
             return _defaults()
@@ -121,7 +126,8 @@ class BLEScanner:
 
         _LOGGER.info(
             "ble_scanner: %d characteristics, %d services found",
-            len(chars), len(service_uuids),
+            len(chars),
+            len(service_uuids),
         )
         self.extra["ble_service_uuids"] = list(dict.fromkeys(service_uuids))
 
@@ -149,6 +155,7 @@ class BLEScanner:
 
 # ── file-level extraction ──────────────────────────────────────────────────────
 
+
 def _scan_file(text: str, class_name: str) -> tuple[list[_CharInfo], list[str]]:
     """Return (characteristics, service_uuids) found in one Java file."""
     # Collect named UUID constants: const_name → uuid
@@ -161,7 +168,7 @@ def _scan_file(text: str, class_name: str) -> tuple[list[_CharInfo], list[str]]:
 
     # Classify each named UUID as service or characteristic
     service_uuids: list[str] = []
-    char_names: dict[str, str] = {}    # const_name → uuid (for characteristics only)
+    char_names: dict[str, str] = {}  # const_name → uuid (for characteristics only)
     for const_name, uuid in named.items():
         if _is_service(const_name, text):
             service_uuids.append(uuid)
@@ -176,18 +183,20 @@ def _scan_file(text: str, class_name: str) -> tuple[list[_CharInfo], list[str]]:
 
     chars: list[_CharInfo] = []
     for const_name, uuid in char_names.items():
-        access = access_map.get(uuid, {"read"})   # default: assume readable
-        chars.append(_CharInfo(const_name=const_name, uuid=uuid, access=access, source_class=class_name))
+        access = access_map.get(uuid, {"read"})  # default: assume readable
+        chars.append(
+            _CharInfo(const_name=const_name, uuid=uuid, access=access, source_class=class_name)
+        )
 
     return chars, service_uuids
 
 
 def _is_service(const_name: str, text: str) -> bool:
     """Return True if this UUID constant is used as a GATT service (not characteristic)."""
-    if re.search(r'SERVICE', const_name, re.I):
+    if re.search(r"SERVICE", const_name, re.I):
         return True
     # Only a service if it appears directly as the argument to getService(...)
-    if re.search(rf'getService\s*\(\s*{re.escape(const_name)}\s*\)', text):
+    if re.search(rf"getService\s*\(\s*{re.escape(const_name)}\s*\)", text):
         return True
     return False
 
@@ -241,6 +250,7 @@ def _build_access_map(text: str, char_names: dict[str, str]) -> dict[str, set[st
 
 # ── deduplication ──────────────────────────────────────────────────────────────
 
+
 def _dedup(chars: list[_CharInfo]) -> list[_CharInfo]:
     merged: dict[str, _CharInfo] = {}
     for ch in chars:
@@ -259,6 +269,7 @@ def _dedup(chars: list[_CharInfo]) -> list[_CharInfo]:
 
 
 # ── endpoint construction ──────────────────────────────────────────────────────
+
 
 def _char_to_endpoint(ch: _CharInfo) -> Endpoint:
     cmd = _uuid_to_cmd(ch.const_name, ch.uuid)
@@ -302,7 +313,10 @@ def _uuid_to_cmd(const_name: str | None, uuid: str) -> str:
 
 # ── defaults ───────────────────────────────────────────────────────────────────
 
-def _defaults() -> tuple[TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list[Any], list[Any]]:
+
+def _defaults() -> tuple[
+    TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list[Any], list[Any]
+]:
     return (
         TransportContract(type=TransportType.BLE),
         DiscoveryMechanism(type=DiscoveryType.NONE),
@@ -311,4 +325,3 @@ def _defaults() -> tuple[TransportContract, DiscoveryMechanism, AuthScheme, Stat
         [],
         [],
     )
-

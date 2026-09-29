@@ -1,28 +1,29 @@
 # SPDX-License-Identifier: MIT
 """Tests for F-3 (LLM escalation client) and F-4 (P2-5 signing trace escalation)."""
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Literal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pydantic import BaseModel
 
+from engine.extraction.signing_tracer import LLM_THRESHOLD, escalate
+from engine.ir.models import SigningComponent, SigningTrace
 from engine.llm import escalator
-from engine.extraction.signing_tracer import escalate, LLM_THRESHOLD
-from engine.ir.models import CryptoUsage, SigningComponent, SigningTrace
-
 
 # ── helpers ────────────────────────────────────────────────────────────────────
+
 
 class _SimpleSchema(BaseModel):
     value: str
     score: float
 
 
-def _mock_anthropic(response_text: str, input_tokens: int = 100, output_tokens: int = 50) -> MagicMock:
+def _mock_anthropic(
+    response_text: str, input_tokens: int = 100, output_tokens: int = 50
+) -> MagicMock:
     """Patch anthropic.AsyncAnthropic to return a fixed response."""
     usage = MagicMock()
     usage.input_tokens = input_tokens
@@ -58,6 +59,7 @@ def _low_trace(unresolved: list[str] | None = None) -> SigningTrace:
 
 # ── escalator unit tests ──────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_call_returns_none_without_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
@@ -66,7 +68,9 @@ async def test_call_returns_none_without_api_key(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.asyncio
-async def test_call_returns_none_when_anthropic_not_installed(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_call_returns_none_when_anthropic_not_installed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     with patch.dict("sys.modules", {"anthropic": None}):
         result = await escalator.call("sys", "user", _SimpleSchema)
@@ -119,16 +123,16 @@ async def test_call_retries_on_rate_limit(monkeypatch: pytest.MonkeyPatch) -> No
     client = MagicMock()
     RateLimitError = type("RateLimitError", (Exception,), {})
     # First call raises 429, second succeeds
-    client.messages.create = AsyncMock(
-        side_effect=[RateLimitError("rate limited"), message]
-    )
+    client.messages.create = AsyncMock(side_effect=[RateLimitError("rate limited"), message])
 
     ant = MagicMock()
     ant.AsyncAnthropic.return_value = client
     ant.RateLimitError = RateLimitError
 
-    with patch.dict("sys.modules", {"anthropic": ant}), \
-         patch("asyncio.sleep", new_callable=AsyncMock):
+    with (
+        patch.dict("sys.modules", {"anthropic": ant}),
+        patch("asyncio.sleep", new_callable=AsyncMock),
+    ):
         result = await escalator.call("sys", "user", _SimpleSchema)
 
     assert result is not None
@@ -137,7 +141,9 @@ async def test_call_retries_on_rate_limit(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 @pytest.mark.asyncio
-async def test_call_returns_none_after_all_retries_exhausted(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_call_returns_none_after_all_retries_exhausted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     RateLimitError = type("RateLimitError", (Exception,), {})
     client = MagicMock()
@@ -147,8 +153,10 @@ async def test_call_returns_none_after_all_retries_exhausted(monkeypatch: pytest
     ant.AsyncAnthropic.return_value = client
     ant.RateLimitError = RateLimitError
 
-    with patch.dict("sys.modules", {"anthropic": ant}), \
-         patch("asyncio.sleep", new_callable=AsyncMock):
+    with (
+        patch.dict("sys.modules", {"anthropic": ant}),
+        patch("asyncio.sleep", new_callable=AsyncMock),
+    ):
         result = await escalator.call("sys", "user", _SimpleSchema)
 
     assert result is None
@@ -181,6 +189,7 @@ def test_sha8_returns_8_chars() -> None:
 
 # ── signing trace escalation (F-4) tests ─────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_escalate_passes_through_high_confidence_traces(tmp_path: Path) -> None:
     high = SigningTrace(
@@ -196,7 +205,9 @@ async def test_escalate_passes_through_high_confidence_traces(tmp_path: Path) ->
 
 
 @pytest.mark.asyncio
-async def test_escalate_passes_through_when_no_api_key(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_escalate_passes_through_when_no_api_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     tr = _low_trace()
     result = await escalate([tr], tmp_path)
@@ -204,7 +215,9 @@ async def test_escalate_passes_through_when_no_api_key(tmp_path: Path, monkeypat
 
 
 @pytest.mark.asyncio
-async def test_escalate_enriches_unresolved_variables(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_escalate_enriches_unresolved_variables(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     llm_response = (
         '{"inputs": ['
@@ -224,11 +237,12 @@ async def test_escalate_enriches_unresolved_variables(tmp_path: Path, monkeypatc
 
 
 @pytest.mark.asyncio
-async def test_escalate_clears_resolved_variables_from_unresolved(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_escalate_clears_resolved_variables_from_unresolved(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     llm_response = (
-        '{"inputs": [{"name": "apiKey", "kind": "secret_key", "order": 0}],'
-        '"confidence": 0.8}'
+        '{"inputs": [{"name": "apiKey", "kind": "secret_key", "order": 0}],"confidence": 0.8}'
     )
     ant = _mock_anthropic(llm_response)
     with patch.dict("sys.modules", {"anthropic": ant}):
@@ -241,7 +255,9 @@ async def test_escalate_clears_resolved_variables_from_unresolved(tmp_path: Path
 
 
 @pytest.mark.asyncio
-async def test_escalate_returns_original_on_llm_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_escalate_returns_original_on_llm_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     ant = _mock_anthropic("not json")
     with patch.dict("sys.modules", {"anthropic": ant}):

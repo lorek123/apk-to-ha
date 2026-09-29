@@ -63,6 +63,7 @@ packages = ["src/engine"]
 [tool.ruff]
 line-length = 100
 target-version = "py314"
+extend-exclude = [".cache", ".claude", "runs", "sdk_output", "fixtures/_cache"]
 
 [tool.ruff.lint]
 select = [
@@ -93,6 +94,8 @@ disallow_any_unimported = true
 plugins = ["pydantic.mypy"]
 mypy_path = ["src"]
 explicit_package_bases = true
+files = ["src", "tests"]
+exclude = ["^sdk_output/", "^runs/", "^\\.cache/", "^\\.claude/"]
 
 [[tool.mypy.overrides]]
 module = ["bleak.*"]

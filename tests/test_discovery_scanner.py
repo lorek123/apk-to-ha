@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: MIT
 """Tests for P5-7 discovery scanner and manifest/config_flow emission."""
+
 from __future__ import annotations
 
 from pathlib import Path
-
-import pytest
 
 from engine.extraction.discovery_scanner import (
     _hostname_from_package,
@@ -13,8 +12,8 @@ from engine.extraction.discovery_scanner import (
 )
 from engine.ir.models import DiscoveryType
 
-
 # ── _normalize_service_type ───────────────────────────────────────────────────
+
 
 def test_normalize_adds_local_suffix() -> None:
     assert _normalize_service_type("_device._tcp") == "_device._tcp.local."
@@ -42,6 +41,7 @@ def test_normalize_trailing_dot() -> None:
 
 # ── _hostname_from_package ────────────────────────────────────────────────────
 
+
 def test_hostname_from_package_simple() -> None:
     assert _hostname_from_package("com.example.mydevice") == "mydevice"
 
@@ -56,6 +56,7 @@ def test_hostname_from_package_empty() -> None:
 
 
 # ── scan() ────────────────────────────────────────────────────────────────────
+
 
 def _write_java(tmp_path: Path, content: str, name: str = "DeviceManager.java") -> Path:
     p = tmp_path / "sources" / "com" / "example" / name

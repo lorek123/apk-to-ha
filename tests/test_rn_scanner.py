@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: MIT
 """Tests for P1-6 React Native scanner."""
+
 from __future__ import annotations
 
 from pathlib import Path
-
-import pytest
 
 from engine.extraction.rn_scanner import (
     RNScanner,
@@ -12,9 +11,8 @@ from engine.extraction.rn_scanner import (
     _hermes_extract_strings,
     _path_to_cmd,
     _port_from_url,
-    _read_bundle,
 )
-from engine.ir.models import AuthType, Direction, DiscoveryType, TransportType
+from engine.ir.models import AuthType, DiscoveryType, TransportType
 
 
 def _write(tmp_path: Path, content: str, name: str = "index.android.bundle") -> Path:
@@ -25,6 +23,7 @@ def _write(tmp_path: Path, content: str, name: str = "index.android.bundle") -> 
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def test_port_from_url_ws() -> None:
     assert _port_from_url("ws://192.168.1.1:8887/ws") == 8887
@@ -56,6 +55,7 @@ def test_path_to_cmd_dict_input() -> None:
 
 # ── _hermes_extract_strings ───────────────────────────────────────────────────
 
+
 def test_hermes_extract_strings_finds_urls() -> None:
     # Simulate Hermes bytecode with embedded strings
     payload = b"\xc6\x1f\xbc\x03" + b"\x00" * 20
@@ -69,8 +69,10 @@ def test_hermes_extract_strings_finds_urls() -> None:
 
 # ── _ast_extract ──────────────────────────────────────────────────────────────
 
+
 def test_ast_extract_fetch_call() -> None:
     import esprima
+
     src = "fetch('/api/v1/power', {method: 'POST'});"
     tree = esprima.parseScript(src, tolerant=True)
     data = _ast_extract(tree)
@@ -79,6 +81,7 @@ def test_ast_extract_fetch_call() -> None:
 
 def test_ast_extract_axios_get() -> None:
     import esprima
+
     src = "axios.get('/api/v1/status');"
     tree = esprima.parseScript(src, tolerant=True)
     data = _ast_extract(tree)
@@ -87,6 +90,7 @@ def test_ast_extract_axios_get() -> None:
 
 def test_ast_extract_websocket_ctor() -> None:
     import esprima
+
     src = "var ws = new WebSocket('ws://192.168.1.1:8887');"
     tree = esprima.parseScript(src, tolerant=True)
     data = _ast_extract(tree)
@@ -95,6 +99,7 @@ def test_ast_extract_websocket_ctor() -> None:
 
 def test_ast_extract_cmd_literal() -> None:
     import esprima
+
     src = "ws.send(JSON.stringify({cmd: 'powerControl', enable: true}));"
     tree = esprima.parseScript(src, tolerant=True)
     data = _ast_extract(tree)
@@ -103,6 +108,7 @@ def test_ast_extract_cmd_literal() -> None:
 
 def test_ast_extract_cmd_fields() -> None:
     import esprima
+
     src = "send({cmd: 'setMode', mode: 1, speed: 2.5});"
     tree = esprima.parseScript(src, tolerant=True)
     data = _ast_extract(tree)
@@ -209,7 +215,6 @@ def test_rn_scanner_command_confidence_below_native(tmp_path: Path) -> None:
 
 def test_rn_scanner_hermes_bundle(tmp_path: Path) -> None:
     # Hermes magic + embedded strings
-    import struct
     payload = b"\xc6\x1f\xbc\x03" + b"\x00" * 100
     payload += b"ws://192.168.1.1:8887\x00"
     payload += b"powerControl\x00"
@@ -224,4 +229,5 @@ def test_rn_scanner_hermes_bundle(tmp_path: Path) -> None:
 def test_rn_scanner_framework_detected_by_classifier(tmp_path: Path) -> None:
     _write(tmp_path, _BUNDLE_WS)
     from engine.ingestion.classifier import classify
+
     assert classify(tmp_path).value == "react_native"

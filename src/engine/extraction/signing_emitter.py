@@ -3,6 +3,7 @@
 
 No code is rendered here; this module only builds the dict that the templates consume.
 """
+
 from __future__ import annotations
 
 import re
@@ -91,6 +92,7 @@ def build(traces: list[SigningTrace]) -> dict[str, Any]:
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _resolve_param_name(kind: str, variable_name: str | None, seen: set[str]) -> str:
     """Return a clean Python identifier for this component.

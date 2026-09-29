@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: MIT
 """Tests for P4-6 Bleak BLE client template rendering."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-
-import pytest
 
 from engine.emitters import context as ctx_mod
 from engine.emitters import sdk_emitter
@@ -77,6 +76,7 @@ def _build_ctx(ir: ProtocolIR) -> dict[str, Any]:
 
 # ── context builder ───────────────────────────────────────────────────────────
 
+
 def test_has_ble_true_for_ble_ir() -> None:
     ctx = _build_ctx(_make_ble_ir())
     assert ctx["has_ble"] is True
@@ -121,8 +121,12 @@ def test_ble_char_has_access() -> None:
 def test_ble_char_key_is_snake_case() -> None:
     ir = _make_ble_ir(
         commands=[
-            Endpoint(cmd="batteryLevel", transport=TransportType.BLE,
-                     direction=Direction.TO_DEVICE, confidence=0.7),
+            Endpoint(
+                cmd="batteryLevel",
+                transport=TransportType.BLE,
+                direction=Direction.TO_DEVICE,
+                confidence=0.7,
+            ),
         ],
         events=[],
         extra={
@@ -144,10 +148,22 @@ def test_ble_chars_deduped() -> None:
     # Same UUID in commands and events — should appear once
     uuid = "0000fff1-0000-1000-8000-00805f9b34fb"
     ir = _make_ble_ir(
-        commands=[Endpoint(cmd="rwChar", transport=TransportType.BLE,
-                           direction=Direction.TO_DEVICE, confidence=0.7)],
-        events=[Endpoint(cmd="rwChar", transport=TransportType.BLE,
-                          direction=Direction.FROM_DEVICE, confidence=0.7)],
+        commands=[
+            Endpoint(
+                cmd="rwChar",
+                transport=TransportType.BLE,
+                direction=Direction.TO_DEVICE,
+                confidence=0.7,
+            )
+        ],
+        events=[
+            Endpoint(
+                cmd="rwChar",
+                transport=TransportType.BLE,
+                direction=Direction.FROM_DEVICE,
+                confidence=0.7,
+            )
+        ],
         extra={
             "ble_char_uuids": {"rwChar": uuid},
             "ble_char_access": {"rwChar": ["read", "write"]},
@@ -158,6 +174,7 @@ def test_ble_chars_deduped() -> None:
 
 
 # ── template rendering ────────────────────────────────────────────────────────
+
 
 def test_ble_client_file_emitted(tmp_path: Path) -> None:
     ctx = _build_ctx(_make_ble_ir())
@@ -176,8 +193,9 @@ def test_ble_client_not_emitted_for_http(tmp_path: Path) -> None:
     ir = _make_ble_ir(
         transport=TransportContract(type=TransportType.HTTP_REST, port=8080),
         commands=[
-            Endpoint(cmd="powerControl", transport=TransportType.HTTP_REST,
-                     direction=Direction.TO_DEVICE),
+            Endpoint(
+                cmd="powerControl", transport=TransportType.HTTP_REST, direction=Direction.TO_DEVICE
+            ),
         ],
         events=[],
         extra={},

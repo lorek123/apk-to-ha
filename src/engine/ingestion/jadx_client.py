@@ -13,6 +13,7 @@ Usage:
 
 The pipeline falls back to file-based scanning when is_available() returns False.
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,7 +41,7 @@ class JadxClient:
         self._timeout = timeout
         self._session: aiohttp.ClientSession | None = None
 
-    async def __aenter__(self) -> "JadxClient":
+    async def __aenter__(self) -> JadxClient:
         self._session = aiohttp.ClientSession()
         return self
 
@@ -51,9 +52,7 @@ class JadxClient:
 
     # ── internal helpers ───────────────────────────────────────────────────────
 
-    async def _get(
-        self, endpoint: str, params: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    async def _get(self, endpoint: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """GET endpoint; returns {} on any network or HTTP error."""
         assert self._session is not None, "JadxClient must be used as an async context manager"
         url = f"{self._base}/{endpoint.lstrip('/')}"
@@ -100,9 +99,7 @@ class JadxClient:
         data = await self._get("fields-of-class", {"class_name": class_name})
         return [dict(f) for f in data.get("fields", [])]
 
-    async def get_method_by_name(
-        self, class_name: str, method_name: str
-    ) -> dict[str, Any] | None:
+    async def get_method_by_name(self, class_name: str, method_name: str) -> dict[str, Any] | None:
         """Return the method descriptor dict, or None if not found."""
         data = await self._get(
             "method-by-name", {"class_name": class_name, "method_name": method_name}

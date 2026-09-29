@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Tests for V-7 HA log analyzer."""
+
 from __future__ import annotations
 
 from engine.validation.log_analyzer import LogFinding, analyze, summary

@@ -10,16 +10,15 @@ Skipped gracefully when:
   - All signing traces have confidence ≥ 0.9 and zero unresolved fields
   - The caller passes skip=True
 """
+
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from pathlib import Path
 
 from ..ir.models import ProtocolIR
 from .adb_client import connect, ensure_frida_server, install_apk, launch_app, start_frida_server
-from .capture_model import CaptureSession
 from .frida_runner import FridaUnavailableError, capture
 from .ir_reconciler import ReconciliationReport, reconcile
 from .mock_device_server import mock_device
@@ -54,7 +53,9 @@ async def run(
     empty report (confidence_boost=0) without launching the container.
     """
     if not force and _should_skip(ir):
-        _LOGGER.info("oracle: skipped — static confidence already ≥ %.1f", _ORACLE_CONFIDENCE_THRESHOLD)
+        _LOGGER.info(
+            "oracle: skipped — static confidence already ≥ %.1f", _ORACLE_CONFIDENCE_THRESHOLD
+        )
         return ReconciliationReport()
 
     pkg = package_name or ir.package_name
@@ -82,14 +83,17 @@ async def run(
     except FridaUnavailableError as exc:
         _LOGGER.warning("oracle: frida unavailable — skipping P2-7 (%s)", exc)
         return ReconciliationReport()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _LOGGER.error("oracle: unexpected error — skipping P2-7 (%s)", exc)
         return ReconciliationReport()
 
     elapsed = int((time.time() - t0) * 1000)
     _LOGGER.info(
         "oracle: capture complete in %dms — hmac=%d http=%d ws=%d",
-        elapsed, len(session.hmac_calls), len(session.http_calls), len(session.ws_frames),
+        elapsed,
+        len(session.hmac_calls),
+        len(session.http_calls),
+        len(session.ws_frames),
     )
 
     report = reconcile(session, ir)

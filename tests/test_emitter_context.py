@@ -1,37 +1,46 @@
 # SPDX-License-Identifier: MIT
 """Tests for the emitter context builder."""
+
 from __future__ import annotations
+
+from typing import Any
 
 import pytest
 
-from engine.emitters.context import build, _class_prefix, _slugify
+from engine.emitters.context import _class_prefix, _slugify, build
 from engine.snapshot.harness import load
-from typing import Any
-
 
 # ── unit helpers ──────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("domain,expected", [
-    ("r2d2", "R2D2"),
-    ("my_device", "MyDevice"),
-    ("shelly", "Shelly"),
-    ("r2d2_hub", "R2D2Hub"),
-    ("esphome", "Esphome"),
-])
+
+@pytest.mark.parametrize(
+    "domain,expected",
+    [
+        ("r2d2", "R2D2"),
+        ("my_device", "MyDevice"),
+        ("shelly", "Shelly"),
+        ("r2d2_hub", "R2D2Hub"),
+        ("esphome", "Esphome"),
+    ],
+)
 def test_class_prefix(domain: Any, expected: Any) -> None:
     assert _class_prefix(domain) == expected
 
 
-@pytest.mark.parametrize("text,expected", [
-    ("com.bullb.R2-D2", "com_bullb_r2_d2"),
-    ("my device", "my_device"),
-    ("r2d2", "r2d2"),
-])
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("com.bullb.R2-D2", "com_bullb_r2_d2"),
+        ("my device", "my_device"),
+        ("r2d2", "r2d2"),
+    ],
+)
 def test_slugify(text: Any, expected: Any) -> None:
     assert _slugify(text) == expected
 
 
 # ── context from snapshot ─────────────────────────────────────────────────────
+
 
 @pytest.fixture(scope="module")
 def r2d2_ctx() -> Any:

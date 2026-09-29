@@ -5,13 +5,14 @@ Listens on the device's expected ports (WebSocket + UDP) and returns canned
 responses so the app proceeds past discovery → auth → state, generating the
 signing calls and API requests the Frida agent needs to capture.
 """
+
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Callable, Awaitable
 
 from aiohttp import web
 
@@ -38,7 +39,9 @@ def _ws_handler_factory(
             _LOGGER.debug("mock: WS recv cmd=%r", cmd)
 
             if cmd == auth_cmd:
-                await ws.send_str(json.dumps({"cmd": auth_cmd, "result": "ok", "token": "mock_token_123"}))
+                await ws.send_str(
+                    json.dumps({"cmd": auth_cmd, "result": "ok", "token": "mock_token_123"})
+                )
                 # After auth, push a fake state so the app thinks everything is normal
                 await asyncio.sleep(0.2)
                 await ws.send_str(json.dumps({"cmd": state_cmd, "state": "mock", "status": 1}))
@@ -89,12 +92,14 @@ class MockDeviceServer:
             def datagram_received(inner_self, data: bytes, addr: tuple[str, int]) -> None:
                 _LOGGER.debug("mock: UDP recv %d bytes from %s", len(data), addr)
                 # Respond with a fake device discovery packet
-                reply = json.dumps({
-                    "cmd": "devInfo",
-                    "ip": "127.0.0.1",
-                    "port": self.ws_port,
-                    "model": "MockDevice",
-                }).encode()
+                reply = json.dumps(
+                    {
+                        "cmd": "devInfo",
+                        "ip": "127.0.0.1",
+                        "port": self.ws_port,
+                        "model": "MockDevice",
+                    }
+                ).encode()
                 if inner_self.transport:
                     inner_self.transport.sendto(reply, addr)
 

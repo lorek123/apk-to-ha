@@ -1,15 +1,11 @@
 # SPDX-License-Identifier: MIT
 """Tests for P2-1 RetrofitScanner and P2-3 Interceptor detection."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
-
-import pytest
 
 from engine.extraction.retrofit_scanner import (
-    InterceptorInfo,
-    RetrofitEndpoint,
     RetrofitScanner,
     _extract_static_headers,
     _scan_file,
@@ -17,8 +13,8 @@ from engine.extraction.retrofit_scanner import (
 )
 from engine.ir.models import Direction, TransportType
 
-
 # ── helpers ────────────────────────────────────────────────────────────────────
+
 
 def _java(tmp_path: Path, name: str, content: str) -> Path:
     """Write a .java file into tmp_path/sources/com/test/ and return apk_out_dir."""
@@ -29,6 +25,7 @@ def _java(tmp_path: Path, name: str, content: str) -> Path:
 
 
 # ── _extract_static_headers ───────────────────────────────────────────────────
+
 
 def test_extract_static_headers_single() -> None:
     src = '@Headers({"Content-Type: application/json"})'
@@ -48,6 +45,7 @@ def test_extract_static_headers_empty_block() -> None:
 
 
 # ── _scan_file: verb + path ────────────────────────────────────────────────────
+
 
 def test_scan_file_post_endpoint() -> None:
     src = """
@@ -97,6 +95,7 @@ def test_scan_file_case_insensitive_verb() -> None:
 
 # ── _scan_file: body type ─────────────────────────────────────────────────────
 
+
 def test_scan_file_body_type_extracted() -> None:
     src = """
     @POST("/api/v1/control")
@@ -117,6 +116,7 @@ def test_scan_file_no_body_when_absent() -> None:
 
 # ── _scan_file: response type ─────────────────────────────────────────────────
 
+
 def test_scan_file_response_type_extracted() -> None:
     src = """
     @GET("/api/v1/status")
@@ -136,6 +136,7 @@ def test_scan_file_observable_response_type() -> None:
 
 
 # ── _scan_file: header annotations ────────────────────────────────────────────
+
 
 def test_scan_file_static_headers_extracted() -> None:
     src = """
@@ -176,6 +177,7 @@ def test_scan_file_no_header_map_when_absent() -> None:
 
 # ── _scan_file: interface name ─────────────────────────────────────────────────
 
+
 def test_scan_file_interface_name_set() -> None:
     src = '@POST("/api/v1/power")\nCall<Void> power(@Body Req r);'
     eps = _scan_file(src, "MyApiService")
@@ -183,6 +185,7 @@ def test_scan_file_interface_name_set() -> None:
 
 
 # ── _scan_interceptor (P2-3) ───────────────────────────────────────────────────
+
 
 def test_scan_interceptor_detects_implements() -> None:
     src = """
@@ -243,8 +246,12 @@ def test_scan_interceptor_no_headers_still_detected() -> None:
 
 # ── RetrofitScanner.scan() (filesystem integration) ───────────────────────────
 
+
 def test_scanner_scan_finds_endpoints(tmp_path: Path) -> None:
-    apk_dir = _java(tmp_path, "DeviceService.java", """
+    apk_dir = _java(
+        tmp_path,
+        "DeviceService.java",
+        """
     public interface DeviceService {
         @GET("/api/v1/status")
         Call<StatusResp> getStatus();
@@ -252,7 +259,8 @@ def test_scanner_scan_finds_endpoints(tmp_path: Path) -> None:
         @POST("/api/v1/power")
         Call<Void> setPower(@Body PowerReq body);
     }
-    """)
+    """,
+    )
     scanner = RetrofitScanner(apk_dir)
     endpoints, interceptors = scanner.scan("com.test")
     assert len(endpoints) == 2
@@ -260,14 +268,18 @@ def test_scanner_scan_finds_endpoints(tmp_path: Path) -> None:
 
 
 def test_scanner_scan_finds_interceptor(tmp_path: Path) -> None:
-    apk_dir = _java(tmp_path, "AuthInterceptor.java", """
+    apk_dir = _java(
+        tmp_path,
+        "AuthInterceptor.java",
+        """
     public class AuthInterceptor implements Interceptor {
         public Response intercept(Chain chain) {
             return chain.proceed(chain.request().newBuilder()
                 .addHeader("X-Token", token).build());
         }
     }
-    """)
+    """,
+    )
     scanner = RetrofitScanner(apk_dir)
     endpoints, interceptors = scanner.scan("com.test")
     assert len(interceptors) == 1
@@ -275,12 +287,16 @@ def test_scanner_scan_finds_interceptor(tmp_path: Path) -> None:
 
 
 def test_scanner_to_ir_endpoints(tmp_path: Path) -> None:
-    apk_dir = _java(tmp_path, "DeviceService.java", """
+    apk_dir = _java(
+        tmp_path,
+        "DeviceService.java",
+        """
     public interface DeviceService {
         @POST("/api/v1/power")
         Call<PowerResponse> setPower(@Body PowerRequest body);
     }
-    """)
+    """,
+    )
     scanner = RetrofitScanner(apk_dir)
     ret_eps, _ = scanner.scan("com.test")
     ir_eps = scanner.to_ir_endpoints(ret_eps)
@@ -293,12 +309,16 @@ def test_scanner_to_ir_endpoints(tmp_path: Path) -> None:
 
 
 def test_scanner_to_ir_dynamic_header_becomes_field(tmp_path: Path) -> None:
-    apk_dir = _java(tmp_path, "DeviceService.java", """
+    apk_dir = _java(
+        tmp_path,
+        "DeviceService.java",
+        """
     public interface DeviceService {
         @GET("/api/v1/data")
         Call<DataResponse> getData(@Header("X-API-Key") String apiKey);
     }
-    """)
+    """,
+    )
     scanner = RetrofitScanner(apk_dir)
     ret_eps, _ = scanner.scan("com.test")
     ir_eps = scanner.to_ir_endpoints(ret_eps)

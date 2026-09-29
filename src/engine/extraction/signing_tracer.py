@@ -19,6 +19,7 @@ Handles:
 Variable kind inference uses camelCase/snake_case token splitting so that
 `requestPath` → "path", `httpMethod` → "http_method", `apiKey` → "secret_key".
 """
+
 from __future__ import annotations
 
 import logging
@@ -39,27 +40,33 @@ LLM_THRESHOLD = 0.6
 # ── component-kind heuristics (token-level, applied after camelCase split) ────
 
 _KIND_RULES: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r'^(timestamp|epoch|time|ts)$', re.I),          "timestamp"),
-    (re.compile(r'^(nonce|rand|random)$', re.I),                "nonce"),
-    (re.compile(r'^(path|url|uri|endpoint|route)$', re.I),      "path"),
-    (re.compile(r'^(method|verb)$', re.I),                      "http_method"),
-    (re.compile(r'^(host|domain)$', re.I),                      "host"),
-    (re.compile(r'^(body|data|payload|content)$', re.I),        "body"),
-    (re.compile(r'^(apikey|api|appkey|appsecret|secret|token'
-                r'|accesskey|secretkey|hmackey|key)$', re.I),   "secret_key"),
+    (re.compile(r"^(timestamp|epoch|time|ts)$", re.I), "timestamp"),
+    (re.compile(r"^(nonce|rand|random)$", re.I), "nonce"),
+    (re.compile(r"^(path|url|uri|endpoint|route)$", re.I), "path"),
+    (re.compile(r"^(method|verb)$", re.I), "http_method"),
+    (re.compile(r"^(host|domain)$", re.I), "host"),
+    (re.compile(r"^(body|data|payload|content)$", re.I), "body"),
+    (
+        re.compile(
+            r"^(apikey|api|appkey|appsecret|secret|token"
+            r"|accesskey|secretkey|hmackey|key)$",
+            re.I,
+        ),
+        "secret_key",
+    ),
 ]
 
 # ── structural regexes ────────────────────────────────────────────────────────
 
-_SECRET_KEY_RE = re.compile(r'new\s+SecretKeySpec\(\s*([^,)]+)')
-_SB_DECL_RE = re.compile(r'(?:StringBuilder|StringBuffer)\s+(\w+)\s*=')
-_APPEND_RE = re.compile(r'\.append\(([^)]+)\)')
+_SECRET_KEY_RE = re.compile(r"new\s+SecretKeySpec\(\s*([^,)]+)")
+_SB_DECL_RE = re.compile(r"(?:StringBuilder|StringBuffer)\s+(\w+)\s*=")
+_APPEND_RE = re.compile(r"\.append\(([^)]+)\)")
 _METHOD_SIG_RE = re.compile(
-    r'(?:(?:private|public|protected|static|final|synchronized)\s+)*'
-    r'(?:String|byte\[\]|void|boolean|int|long|Object)\s+(\w+)\s*\('
+    r"(?:(?:private|public|protected|static|final|synchronized)\s+)*"
+    r"(?:String|byte\[\]|void|boolean|int|long|Object)\s+(\w+)\s*\("
 )
 _ASSIGN_RE = re.compile(
-    r'(?:String|byte\[\]|CharSequence|Object)\s+(\w+)\s*=\s*(.+?);',
+    r"(?:String|byte\[\]|CharSequence|Object)\s+(\w+)\s*=\s*(.+?);",
     re.DOTALL,
 )
 
@@ -85,12 +92,16 @@ def trace(
             results.append(t)
             _LOGGER.debug(
                 "signing_tracer: %s → confidence=%.2f components=%d unresolved=%d",
-                t.source_method, t.confidence, len(t.components), len(t.unresolved),
+                t.source_method,
+                t.confidence,
+                len(t.components),
+                len(t.unresolved),
             )
     return results
 
 
 # ── per-usage tracer ──────────────────────────────────────────────────────────
+
 
 def _trace_one(
     usage: CryptoUsage,
@@ -118,23 +129,32 @@ def _trace_one(
             components.extend(c)
             unresolved.extend(u)
         return SigningTrace(
-            algorithm=usage.algorithm, components=components, key_source=key_var,
-            source_method=fq_method, confidence=_score(components, unresolved),
+            algorithm=usage.algorithm,
+            components=components,
+            key_source=key_var,
+            source_method=fq_method,
+            confidence=_score(components, unresolved),
             unresolved=unresolved,
         )
 
     if dofinal_var is None:
         return _low_conf(usage, ["doFinal/update input not found"])
 
-    components, unresolved = _resolve_variable(dofinal_var, method_src, src, sources_dir, graph, depth=0)
+    components, unresolved = _resolve_variable(
+        dofinal_var, method_src, src, sources_dir, graph, depth=0
+    )
     return SigningTrace(
-        algorithm=usage.algorithm, components=components, key_source=key_var,
-        source_method=fq_method, confidence=_score(components, unresolved),
+        algorithm=usage.algorithm,
+        components=components,
+        key_source=key_var,
+        source_method=fq_method,
+        confidence=_score(components, unresolved),
         unresolved=unresolved,
     )
 
 
 # ── source-file helpers ───────────────────────────────────────────────────────
+
 
 def _find_class_file(class_name: str, sources_dir: Path) -> Path | None:
     rel = class_name.replace(".", "/") + ".java"
@@ -182,7 +202,7 @@ def _find_crypto_method(src: str, algorithm: str) -> tuple[str, str] | tuple[Non
         if depth == 0 and i > method_start:
             break
 
-    return "\n".join(lines[method_start: method_end + 1]), method_name
+    return "\n".join(lines[method_start : method_end + 1]), method_name
 
 
 def _extract_crypto_inputs(
@@ -229,22 +249,23 @@ def _extract_call_arg(src: str, pattern: str, start: int = 0) -> str | None:
         c = src[i]
         if escaped:
             escaped = False
-        elif c == '\\' and in_str:
+        elif c == "\\" and in_str:
             escaped = True
         elif c == '"':
             in_str = not in_str
         elif not in_str:
-            if c == '(':
+            if c == "(":
                 depth += 1
-            elif c == ')':
+            elif c == ")":
                 depth -= 1
         i += 1
     if depth == 0:
-        return src[idx + len(pattern): i - 1].strip()
+        return src[idx + len(pattern) : i - 1].strip()
     return None
 
 
 # ── variable resolution ───────────────────────────────────────────────────────
+
 
 def _resolve_variable(
     expr: str,
@@ -259,7 +280,7 @@ def _resolve_variable(
     if _is_string_literal(expr):
         return [SigningComponent(kind="literal", variable_name="", value=_unquote(expr))], []
 
-    if re.fullmatch(r'[\d.]+[Ll]?', expr):
+    if re.fullmatch(r"[\d.]+[Ll]?", expr):
         return [SigningComponent(kind="literal", variable_name=expr, value=expr)], []
 
     # Inline concatenation passed directly (e.g. as doFinal arg)
@@ -316,7 +337,7 @@ def _resolve_rhs(
     # Method call — cross-method tracing
     _max_depth = 8 if graph is not None else 2
     if "(" in rhs and depth < _max_depth:
-        m = re.match(r'(\w+)\(', rhs)
+        m = re.match(r"(\w+)\(", rhs)
         if m:
             called = m.group(1)
             # 1) Try same-file text search (fastest)
@@ -327,24 +348,31 @@ def _resolve_rhs(
             if inner_src:
                 inner_dofinal, inner_updates, _ = _extract_crypto_inputs(inner_src)
                 if inner_dofinal:
-                    return _resolve_variable(inner_dofinal, inner_src, class_src,
-                                             sources_dir, graph, depth + 1)
+                    return _resolve_variable(
+                        inner_dofinal, inner_src, class_src, sources_dir, graph, depth + 1
+                    )
                 if inner_updates:
                     all_c: list[SigningComponent] = []
                     all_u: list[str] = []
                     for uv in inner_updates:
-                        c, u = _resolve_variable(uv, inner_src, class_src,
-                                                 sources_dir, graph, depth + 1)
+                        c, u = _resolve_variable(
+                            uv, inner_src, class_src, sources_dir, graph, depth + 1
+                        )
                         all_c.extend(c)
                         all_u.extend(u)
                     return all_c, all_u
-                ret = re.search(r'\breturn\s+(.+?);', inner_src)
+                ret = re.search(r"\breturn\s+(.+?);", inner_src)
                 if ret:
-                    return _resolve_variable(ret.group(1).strip(), inner_src,
-                                             class_src, sources_dir, graph, depth + 1)
-            return [SigningComponent(
-                kind=_classify_name(var_name), variable_name=var_name, confidence=0.35,
-            )], [f"{var_name}={called}(...)"]
+                    return _resolve_variable(
+                        ret.group(1).strip(), inner_src, class_src, sources_dir, graph, depth + 1
+                    )
+            return [
+                SigningComponent(
+                    kind=_classify_name(var_name),
+                    variable_name=var_name,
+                    confidence=0.35,
+                )
+            ], [f"{var_name}={called}(...)"]
 
     kind = _classify_name(var_name)
     conf = 0.75 if kind != "unknown" else 0.35
@@ -374,15 +402,15 @@ def _parse_concat(
 def _parse_stringbuilder(sb_var: str, method_src: str) -> list[SigningComponent] | None:
     """Extract ordered components from StringBuilder append() calls."""
     # Case 1: explicit `sbVar.append(X)` calls (sequential pattern)
-    explicit_pat = re.compile(r'\b' + re.escape(sb_var) + r'\.append\(([^)]+)\)')
+    explicit_pat = re.compile(r"\b" + re.escape(sb_var) + r"\.append\(([^)]+)\)")
     direct_args = explicit_pat.findall(method_src)
     if direct_args:
         return [_arg_to_component(a) for a in direct_args]
 
     # Case 2: `sbVar = new StringBuilder().append(x).append(y)` on one line
     chain_pat = re.compile(
-        r'\b' + re.escape(sb_var) + r'\b\s*=\s*new\s+(?:StringBuilder|StringBuffer)\s*\([^)]*\)'
-        r'((?:\.append\([^)]+\))+)',
+        r"\b" + re.escape(sb_var) + r"\b\s*=\s*new\s+(?:StringBuilder|StringBuffer)\s*\([^)]*\)"
+        r"((?:\.append\([^)]+\))+)",
     )
     m = chain_pat.search(method_src)
     if m:
@@ -404,6 +432,7 @@ def _arg_to_component(arg: str) -> SigningComponent:
 
 # ── expression-level utilities ────────────────────────────────────────────────
 
+
 def _split_concat(expr: str) -> list[str]:
     """Split a Java string-concatenation expression on top-level ` + `."""
     parts: list[str] = []
@@ -415,27 +444,46 @@ def _split_concat(expr: str) -> list[str]:
     while i < len(expr):
         c = expr[i]
         if escaped:
-            buf.append(c); escaped = False; i += 1; continue
-        if c == '\\' and in_str:
-            buf.append(c); escaped = True; i += 1; continue
+            buf.append(c)
+            escaped = False
+            i += 1
+            continue
+        if c == "\\" and in_str:
+            buf.append(c)
+            escaped = True
+            i += 1
+            continue
         if c == '"':
-            in_str = not in_str; buf.append(c); i += 1; continue
+            in_str = not in_str
+            buf.append(c)
+            i += 1
+            continue
         if in_str:
-            buf.append(c); i += 1; continue
-        if c in '([':
-            depth += 1; buf.append(c); i += 1; continue
-        if c in ')]':
-            depth -= 1; buf.append(c); i += 1; continue
-        if depth == 0 and c == '+' and i + 1 < len(expr) and expr[i + 1] not in ('+', '='):
+            buf.append(c)
+            i += 1
+            continue
+        if c in "([":
+            depth += 1
+            buf.append(c)
+            i += 1
+            continue
+        if c in ")]":
+            depth -= 1
+            buf.append(c)
+            i += 1
+            continue
+        if depth == 0 and c == "+" and i + 1 < len(expr) and expr[i + 1] not in ("+", "="):
             if buf:
-                part = ''.join(buf).strip()
+                part = "".join(buf).strip()
                 if part:
                     parts.append(part)
                 buf = []
-            i += 1; continue
-        buf.append(c); i += 1
+            i += 1
+            continue
+        buf.append(c)
+        i += 1
     if buf:
-        part = ''.join(buf).strip()
+        part = "".join(buf).strip()
         if part:
             parts.append(part)
     return [p for p in parts if p]
@@ -444,14 +492,14 @@ def _split_concat(expr: str) -> list[str]:
 def _find_assignment(var: str, method_src: str) -> str | None:
     """Return the RHS of `Type var = RHS;` in method_src."""
     pat = re.compile(
-        r'(?:String|byte\[\]|CharSequence|Object)\s+' + re.escape(var) + r'\s*=\s*(.+?);',
+        r"(?:String|byte\[\]|CharSequence|Object)\s+" + re.escape(var) + r"\s*=\s*(.+?);",
         re.DOTALL,
     )
     m = pat.search(method_src)
     if m:
         return m.group(1).strip()
     # bare reassignment `var = RHS;`
-    pat2 = re.compile(r'\b' + re.escape(var) + r'\s*=\s*(.+?);', re.DOTALL)
+    pat2 = re.compile(r"\b" + re.escape(var) + r"\s*=\s*(.+?);", re.DOTALL)
     m2 = pat2.search(method_src)
     if m2:
         rhs = m2.group(1).strip()
@@ -464,21 +512,24 @@ def _find_method_in_class(method_name: str, class_src: str) -> str | None:
     """Return the body of a named method found in class_src."""
     lines = class_src.splitlines()
     for i, line in enumerate(lines):
-        if re.search(r'\b' + re.escape(method_name) + r'\s*\(', line) and \
-                _METHOD_SIG_RE.search(line) and "{" in line:
+        if (
+            re.search(r"\b" + re.escape(method_name) + r"\s*\(", line)
+            and _METHOD_SIG_RE.search(line)
+            and "{" in line
+        ):
             depth = 0
             for j in range(i, len(lines)):
                 depth += lines[j].count("{")
                 depth -= lines[j].count("}")
                 if depth == 0 and j > i:
-                    return "\n".join(lines[i: j + 1])
+                    return "\n".join(lines[i : j + 1])
     return None
 
 
 def _is_sb_variable(var: str, method_src: str) -> bool:
-    explicit = re.compile(r'\b' + re.escape(var) + r'\.append\(').search(method_src)
+    explicit = re.compile(r"\b" + re.escape(var) + r"\.append\(").search(method_src)
     chain = re.compile(
-        r'\b' + re.escape(var) + r'\b\s*=\s*new\s+(?:StringBuilder|StringBuffer)'
+        r"\b" + re.escape(var) + r"\b\s*=\s*new\s+(?:StringBuilder|StringBuffer)"
     ).search(method_src)
     return bool(explicit or chain)
 
@@ -487,11 +538,11 @@ def _unwrap_bytes(expr: str) -> str:
     """Strip .getBytes(...) and .encode() wrappers — nothing else."""
     expr = expr.strip()
     for pat in (
-        re.compile(r'\.getBytes\([^)]*\)$'),
-        re.compile(r'\.getBytes\(\)$'),
-        re.compile(r'\.encode\([^)]*\)$'),
+        re.compile(r"\.getBytes\([^)]*\)$"),
+        re.compile(r"\.getBytes\(\)$"),
+        re.compile(r"\.encode\([^)]*\)$"),
     ):
-        expr = pat.sub('', expr).strip()
+        expr = pat.sub("", expr).strip()
     return expr
 
 
@@ -503,9 +554,9 @@ def _unwrap_conversions(expr: str) -> str:
     """
     expr = expr.strip()
     for pat in (
-        re.compile(r'^String\.valueOf\((.+)\)$', re.DOTALL),
-        re.compile(r'^(?:Integer|Long|Double|Float|Short|Byte)\.toString\((.+?)\)$', re.DOTALL),
-        re.compile(r'^(?:Integer|Long|Double|Float)\.valueOf\((.+?)\)$', re.DOTALL),
+        re.compile(r"^String\.valueOf\((.+)\)$", re.DOTALL),
+        re.compile(r"^(?:Integer|Long|Double|Float|Short|Byte)\.toString\((.+?)\)$", re.DOTALL),
+        re.compile(r"^(?:Integer|Long|Double|Float)\.valueOf\((.+?)\)$", re.DOTALL),
     ):
         m = pat.match(expr)
         if m:
@@ -523,15 +574,16 @@ def _unquote(s: str) -> str:
 
 
 def _is_simple_name(s: str) -> bool:
-    return bool(re.fullmatch(r'[A-Za-z_$][A-Za-z0-9_$]*', s.strip()))
+    return bool(re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_$]*", s.strip()))
 
 
 # ── classification ────────────────────────────────────────────────────────────
 
+
 def _split_camel(name: str) -> list[str]:
     """Split camelCase / snake_case into lowercase tokens."""
-    s = re.sub(r'([a-z])([A-Z])', r'\1 \2', name)
-    return [t.lower() for t in re.split(r'[_\s]+', s) if t]
+    s = re.sub(r"([a-z])([A-Z])", r"\1 \2", name)
+    return [t.lower() for t in re.split(r"[_\s]+", s) if t]
 
 
 def _classify_name(name: str) -> str:
@@ -546,6 +598,7 @@ def _classify_name(name: str) -> str:
 
 # ── confidence scoring ────────────────────────────────────────────────────────
 
+
 def _score(components: list[SigningComponent], unresolved: list[str]) -> float:
     if not components:
         return 0.1
@@ -557,17 +610,30 @@ def _score(components: list[SigningComponent], unresolved: list[str]) -> float:
 
 def _low_conf(usage: CryptoUsage, unresolved: list[str]) -> SigningTrace:
     return SigningTrace(
-        algorithm=usage.algorithm, components=[], key_source=None,
-        source_method=usage.call_site, confidence=0.1, unresolved=unresolved,
+        algorithm=usage.algorithm,
+        components=[],
+        key_source=None,
+        source_method=usage.call_site,
+        confidence=0.1,
+        unresolved=unresolved,
     )
 
 
 # ── F-4: LLM escalation path ──────────────────────────────────────────────────
 
-_VALID_KINDS = frozenset({
-    "timestamp", "nonce", "path", "http_method", "host",
-    "body", "secret_key", "literal", "unknown",
-})
+_VALID_KINDS = frozenset(
+    {
+        "timestamp",
+        "nonce",
+        "path",
+        "http_method",
+        "host",
+        "body",
+        "secret_key",
+        "literal",
+        "unknown",
+    }
+)
 
 _SYSTEM_PROMPT = """\
 You are a static analysis assistant specialising in Android app signing protocols.
@@ -585,8 +651,15 @@ http_method, host, body, secret_key, literal, unknown)
 class _LLMInput(BaseModel):
     name: str
     kind: Literal[
-        "timestamp", "nonce", "path", "http_method", "host",
-        "body", "secret_key", "literal", "unknown"
+        "timestamp",
+        "nonce",
+        "path",
+        "http_method",
+        "host",
+        "body",
+        "secret_key",
+        "literal",
+        "unknown",
     ]
     order: int
 
@@ -608,7 +681,7 @@ async def escalate(
     versions.  High-confidence traces are passed through unchanged.  If the
     LLM is unavailable, the original traces are returned unmodified.
     """
-    from ..llm import escalator  # noqa: PLC0415 — lazy import avoids hard dep
+    from ..llm import escalator
 
     enriched: list[SigningTrace] = []
     for tr in traces:
@@ -638,20 +711,25 @@ async def escalate(
         new_components: list[SigningComponent] = list(tr.components)
         for inp in sorted(result.inputs, key=lambda x: x.order):
             if inp.name in tr.unresolved:
-                new_components.append(SigningComponent(
-                    kind=inp.kind,
-                    variable_name=inp.name,
-                    confidence=result.confidence,
-                ))
+                new_components.append(
+                    SigningComponent(
+                        kind=inp.kind,
+                        variable_name=inp.name,
+                        confidence=result.confidence,
+                    )
+                )
 
-        merged = tr.model_copy(update={
-            "components": new_components,
-            "confidence": max(tr.confidence, result.confidence),
-            "unresolved": [
-                v for v in tr.unresolved
-                if not any(c.variable_name == v for c in new_components)
-            ],
-        })
+        merged = tr.model_copy(
+            update={
+                "components": new_components,
+                "confidence": max(tr.confidence, result.confidence),
+                "unresolved": [
+                    v
+                    for v in tr.unresolved
+                    if not any(c.variable_name == v for c in new_components)
+                ],
+            }
+        )
         _LOGGER.info(
             "F-4 escalation: %s confidence %.2f → %.2f (resolved %d/%d)",
             tr.source_method,

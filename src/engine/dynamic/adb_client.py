@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Async ADB wrapper for the redroid container."""
+
 from __future__ import annotations
 
 import asyncio
@@ -55,8 +56,9 @@ async def ensure_frida_server() -> None:
     if not _FRIDA_SERVER_LOCAL.exists():
         _LOGGER.info("adb: downloading frida-server %s", _FRIDA_SERVER_VERSION)
         _FRIDA_SERVER_LOCAL.parent.mkdir(parents=True, exist_ok=True)
-        import urllib.request
         import lzma
+        import urllib.request
+
         xz_path = Path(str(_FRIDA_SERVER_LOCAL) + ".xz")
         urllib.request.urlretrieve(_FRIDA_SERVER_URL, xz_path)  # noqa: S310
         with lzma.open(xz_path) as f_in, _FRIDA_SERVER_LOCAL.open("wb") as f_out:
@@ -82,9 +84,7 @@ async def start_frida_server() -> None:
 
 async def get_package_name_from_apk(apk_path: Path) -> str | None:
     """Extract package name from APK using aapt (if available) or manifest."""
-    rc, out, _ = await _run(
-        ["aapt", "dump", "badging", str(apk_path)], check=False
-    )
+    rc, out, _ = await _run(["aapt", "dump", "badging", str(apk_path)], check=False)
     if rc == 0:
         for line in out.splitlines():
             if line.startswith("package:"):
@@ -98,6 +98,11 @@ async def launch_app(package_name: str) -> None:
     """Start the app's main activity via Android intent."""
     _LOGGER.info("adb: launching %s", package_name)
     await adb(
-        "shell", "monkey", "-p", package_name,
-        "-c", "android.intent.category.LAUNCHER", "1",
+        "shell",
+        "monkey",
+        "-p",
+        package_name,
+        "-c",
+        "android.intent.category.LAUNCHER",
+        "1",
     )

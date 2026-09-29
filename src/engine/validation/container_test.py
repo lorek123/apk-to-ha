@@ -8,6 +8,7 @@ circular imports) without needing a real HA config or device.
 
 Skipped gracefully when Docker is unavailable.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -32,7 +33,7 @@ print("V3_IMPORT_OK")
 
 @dataclass
 class ContainerTestResult:
-    ran: bool          # False when Docker unavailable — test skipped
+    ran: bool  # False when Docker unavailable — test skipped
     passed: bool
     output: str
     error: str = ""
@@ -54,6 +55,7 @@ def _resolve_image(cfg: dict[str, Any]) -> str:
     probe = shutil.which("docker")
     if probe:
         import subprocess
+
         result = subprocess.run(
             ["docker", "image", "inspect", full_sandbox],
             capture_output=True,
@@ -94,10 +96,15 @@ async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
     full_cmd = f"{install_cmd} && PYTHONPATH=/out python3 -c '{script}'"
 
     cmd = [
-        "docker", "run", "--rm",
-        "-v", f"{sdk_output_dir.resolve()}:/out:ro",
+        "docker",
+        "run",
+        "--rm",
+        "-v",
+        f"{sdk_output_dir.resolve()}:/out:ro",
         image,
-        "sh", "-c", full_cmd,
+        "sh",
+        "-c",
+        full_cmd,
     ]
 
     _LOGGER.info("V-3: docker run %s (import test for %s)", image, domain)
@@ -112,8 +119,9 @@ async def run(domain: str, sdk_output_dir: Path) -> ContainerTestResult:
         passed = "V3_IMPORT_OK" in output and (proc.returncode or 0) == 0
         _LOGGER.info("V-3: %s (rc=%d)", "PASS" if passed else "FAIL", proc.returncode or 0)
         return ContainerTestResult(ran=True, passed=passed, output=output)
-    except asyncio.TimeoutError:
-        return ContainerTestResult(ran=True, passed=False,
-                                   output="", error="Container test timed out after 120s")
+    except TimeoutError:
+        return ContainerTestResult(
+            ran=True, passed=False, output="", error="Container test timed out after 120s"
+        )
     except Exception as exc:
         return ContainerTestResult(ran=True, passed=False, output="", error=str(exc))

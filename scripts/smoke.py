@@ -7,6 +7,7 @@ Verifies required files exist, all JSON is valid, and ruff passes.
 
 Exit 0 on pass, 1 on failure.
 """
+
 from __future__ import annotations
 
 import json
@@ -19,9 +20,17 @@ _REPO = Path(__file__).parents[1]
 
 # ── colour helpers ────────────────────────────────────────────────────────────
 
-def _ok(msg: str) -> None:  print(f"\033[1;32m[ok]\033[0m    {msg}")
-def _fail(msg: str) -> None: print(f"\033[1;31m[FAIL]\033[0m  {msg}", file=sys.stderr)
-def _info(msg: str) -> None: print(f"\033[1;34m[smoke]\033[0m {msg}")
+
+def _ok(msg: str) -> None:
+    print(f"\033[1;32m[ok]\033[0m    {msg}")
+
+
+def _fail(msg: str) -> None:
+    print(f"\033[1;31m[FAIL]\033[0m  {msg}", file=sys.stderr)
+
+
+def _info(msg: str) -> None:
+    print(f"\033[1;34m[smoke]\033[0m {msg}")
 
 
 # ── checks ────────────────────────────────────────────────────────────────────
@@ -125,7 +134,9 @@ def check_ruff(domain_dir: Path) -> list[str]:
     try:
         result = subprocess.run(
             ["ruff", "check", str(domain_dir)],
-            capture_output=True, text=True, check=False,
+            capture_output=True,
+            text=True,
+            check=False,
         )
         if result.returncode != 0:
             for line in result.stdout.strip().splitlines()[:5]:
@@ -136,6 +147,7 @@ def check_ruff(domain_dir: Path) -> list[str]:
 
 
 # ── main ──────────────────────────────────────────────────────────────────────
+
 
 def main(verbose: bool = False) -> int:
     sys.path.insert(0, str(_REPO / "src"))
@@ -153,8 +165,10 @@ def main(verbose: bool = False) -> int:
     _info(f"Loading IR snapshot from {snapshot.relative_to(_REPO)}")
     ir = ProtocolIR.model_validate_json(snapshot.read_text())
     _ok(f"IR loaded: {ir.package_name} ({ir.framework.value})")
-    _ok(f"  {len(ir.commands)} commands, {len(ir.events)} events, "
-        f"transport={ir.transport.type.value}")
+    _ok(
+        f"  {len(ir.commands)} commands, {len(ir.events)} events, "
+        f"transport={ir.transport.type.value}"
+    )
 
     with tempfile.TemporaryDirectory(prefix="hacs_smoke_") as tmp:
         out = Path(tmp)
@@ -183,7 +197,7 @@ def main(verbose: bool = False) -> int:
         all_errors += check_ruff(domain_dir)
 
         if verbose:
-            _info(f"Domain dir contents:")
+            _info("Domain dir contents:")
             for p in sorted(domain_dir.rglob("*")):
                 if p.is_file():
                     print(f"    {p.relative_to(domain_dir)}")
@@ -194,7 +208,7 @@ def main(verbose: bool = False) -> int:
             _fail(f"  • {e}")
         return 1
 
-    _ok(f"Smoke test passed — HACS integration is valid.")
+    _ok("Smoke test passed — HACS integration is valid.")
     return 0
 
 

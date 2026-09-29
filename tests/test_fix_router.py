@@ -1,19 +1,18 @@
 # SPDX-License-Identifier: MIT
 """Tests for V-5 fix router (deterministic strategies)."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 from engine.validation.fix_router import route_and_apply
 from engine.validation.hassfest import Finding
 from engine.validation.ruff_check import RuffFinding
 
-
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _make_integration(tmp_path: Path, *, iot_class: str = "local_push") -> Path:
     """Minimal integration directory that passes structural checks."""
@@ -67,6 +66,7 @@ def _base_ctx() -> dict[str, Any]:
 
 # ── iot_class patch ───────────────────────────────────────────────────────────
 
+
 def test_patches_invalid_iot_class(tmp_path: Path) -> None:
     d = _make_integration(tmp_path, iot_class="cloud_magic")
     ctx = {**_base_ctx(), "iot_class": "local_polling"}
@@ -93,6 +93,7 @@ def test_no_patch_when_iot_class_already_valid(tmp_path: Path) -> None:
 
 
 # ── missing manifest key ──────────────────────────────────────────────────────
+
 
 def test_patches_missing_manifest_key(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
@@ -130,6 +131,7 @@ def test_skips_unknown_manifest_key(tmp_path: Path) -> None:
 
 # ── SPDX header ───────────────────────────────────────────────────────────────
 
+
 def test_prepends_spdx_header(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
     sensor = d / "sensor.py"
@@ -163,6 +165,7 @@ def test_spdx_not_prepended_twice(tmp_path: Path) -> None:
 
 # ── warnings are skipped ──────────────────────────────────────────────────────
 
+
 def test_warnings_not_counted_as_errors(tmp_path: Path) -> None:
     d = _make_integration(tmp_path)
     finding = Finding(
@@ -178,8 +181,10 @@ def test_warnings_not_counted_as_errors(tmp_path: Path) -> None:
 
 # ── ruff fixable detection ────────────────────────────────────────────────────
 
+
 def test_ruff_fixable_codes_are_routed() -> None:
     from engine.validation.fix_router import _is_ruff_fixable
+
     assert _is_ruff_fixable("I001")
     assert _is_ruff_fixable("F401")
     assert _is_ruff_fixable("W291")
@@ -204,9 +209,11 @@ def test_unfixable_ruff_findings_are_skipped(tmp_path: Path) -> None:
 
 # ── iot_class inference from context ─────────────────────────────────────────
 
+
 def test_context_iot_class_http_rest() -> None:
     from engine.emitters.context import _infer_iot_class
     from engine.ir.models import TransportType
+
     assert _infer_iot_class(TransportType.HTTP_REST) == "local_polling"
     assert _infer_iot_class(TransportType.WEBSOCKET) == "local_push"
     assert _infer_iot_class(TransportType.BLE) == "local_push"

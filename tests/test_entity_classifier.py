@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: MIT
 """Tests for entity hint classification."""
+
 from __future__ import annotations
 
-import pytest
-
 from typing import Any
+
 from engine.extraction.entity_classifier import classify
 from engine.ir.models import (
     Direction,
-    EntityHint,
     Endpoint,
+    EntityHint,
     FieldDef,
     FieldKind,
     Framework,
@@ -20,9 +20,14 @@ from engine.ir.models import (
 
 def _make_ir(**kwargs: Any) -> ProtocolIR:
     from engine.ir.models import (
-        AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
-        StateSchema, TransportContract,
+        AuthScheme,
+        AuthType,
+        DiscoveryMechanism,
+        DiscoveryType,
+        StateSchema,
+        TransportContract,
     )
+
     defaults = dict(
         apk_path="test.apk",
         package_name="com.test.device",
@@ -39,7 +44,12 @@ def _make_ir(**kwargs: Any) -> ProtocolIR:
     return ProtocolIR(**defaults)
 
 
-def _ep(cmd: Any, direction: Direction = Direction.TO_DEVICE, fields: list[FieldDef] | None = None, awaits: bool = False) -> Endpoint:
+def _ep(
+    cmd: Any,
+    direction: Direction = Direction.TO_DEVICE,
+    fields: list[FieldDef] | None = None,
+    awaits: bool = False,
+) -> Endpoint:
     return Endpoint(
         cmd=cmd,
         transport=TransportType.WEBSOCKET,
@@ -58,6 +68,7 @@ def _int_field(name: str) -> FieldDef:
 
 
 # ── TO_DEVICE classification ──────────────────────────────────────────────────
+
 
 def test_switch_has_enable_field() -> None:
     ir = _make_ir(commands=[_ep("mute", fields=[_bool_field("enable")])])
@@ -94,8 +105,10 @@ def test_from_device_always_sensor() -> None:
 
 # ── state field classification ────────────────────────────────────────────────
 
+
 def test_boolean_state_field_becomes_binary_sensor() -> None:
     from engine.ir.models import StateSchema
+
     ir = _make_ir(state=StateSchema(fields=[_bool_field("arm")]))
     result = classify(ir)
     assert result.state.fields[0].entity_hint == EntityHint.BINARY_SENSOR
@@ -103,12 +116,14 @@ def test_boolean_state_field_becomes_binary_sensor() -> None:
 
 def test_integer_state_field_becomes_sensor() -> None:
     from engine.ir.models import StateSchema
+
     ir = _make_ir(state=StateSchema(fields=[_int_field("battery")]))
     result = classify(ir)
     assert result.state.fields[0].entity_hint == EntityHint.SENSOR
 
 
 # ── idempotency ───────────────────────────────────────────────────────────────
+
 
 def test_classify_is_idempotent() -> None:
     ir = _make_ir(commands=[_ep("mute", fields=[_bool_field("enable")])])

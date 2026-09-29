@@ -7,6 +7,7 @@ Runs ruff with a relaxed rule set appropriate for generated code:
   - Skips: line-length (generated code can be verbose), complexity rules
 Returns structured findings so the pipeline can surface them.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -19,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Rules relevant to generated code; omit opinionated style rules
 _RUFF_SELECT = "E,F,W,I"
-_RUFF_IGNORE = "E501"   # line-length — generated lines can be long
+_RUFF_IGNORE = "E501"  # line-length — generated lines can be long
 
 
 @dataclass
@@ -42,10 +43,14 @@ class RuffResult:
 async def check(path: Path) -> RuffResult:
     """Run ruff on *path* (file or directory). Returns structured result."""
     proc = await asyncio.create_subprocess_exec(
-        "ruff", "check",
-        "--select", _RUFF_SELECT,
-        "--ignore", _RUFF_IGNORE,
-        "--output-format", "json",
+        "ruff",
+        "check",
+        "--select",
+        _RUFF_SELECT,
+        "--ignore",
+        _RUFF_IGNORE,
+        "--output-format",
+        "json",
         str(path),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
@@ -74,7 +79,9 @@ async def check(path: Path) -> RuffResult:
 
     _LOGGER.info(
         "ruff: %d errors, %d warnings in %s",
-        len(errors), len(warnings), path.name,
+        len(errors),
+        len(warnings),
+        path.name,
     )
     return RuffResult(
         passed=len(errors) == 0,

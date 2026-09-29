@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: MIT
 """Tests for P3-2 OpenAPI emitter and P3-3 validator."""
+
 from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
 
 import pytest
 
-from typing import Any
-from pathlib import Path
 from engine.ir.models import (
     AuthScheme,
     AuthType,
@@ -29,8 +31,8 @@ from engine.ir.openapi_emitter import (
 )
 from engine.ir.openapi_validator import validate
 
-
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _make_ir(**overrides: Any) -> ProtocolIR:
     defaults = dict(
@@ -75,14 +77,18 @@ def _make_ir(**overrides: Any) -> ProtocolIR:
 
 # ── unit: _field_schema ───────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("kind,expected_type", [
-    (FieldKind.STRING, "string"),
-    (FieldKind.INTEGER, "integer"),
-    (FieldKind.NUMBER, "number"),
-    (FieldKind.BOOLEAN, "boolean"),
-    (FieldKind.OBJECT, "object"),
-    (FieldKind.ARRAY, "array"),
-])
+
+@pytest.mark.parametrize(
+    "kind,expected_type",
+    [
+        (FieldKind.STRING, "string"),
+        (FieldKind.INTEGER, "integer"),
+        (FieldKind.NUMBER, "number"),
+        (FieldKind.BOOLEAN, "boolean"),
+        (FieldKind.OBJECT, "object"),
+        (FieldKind.ARRAY, "array"),
+    ],
+)
 def test_field_schema_type_mapping(kind: Any, expected_type: Any) -> None:
     f = FieldDef(name="x", kind=kind)
     assert _field_schema(f)["type"] == expected_type
@@ -124,6 +130,7 @@ def test_schema_name() -> None:
 
 
 # ── unit: emit() structure ────────────────────────────────────────────────────
+
 
 def test_emit_returns_dict() -> None:
     doc = emit(_make_ir())
@@ -190,13 +197,15 @@ def test_emit_components_schemas_populated() -> None:
 
 
 def test_emit_no_request_body_for_no_fields() -> None:
-    ir = _make_ir(commands=[
-        Endpoint(
-            cmd="ping",
-            transport=TransportType.WEBSOCKET,
-            direction=Direction.TO_DEVICE,
-        ),
-    ])
+    ir = _make_ir(
+        commands=[
+            Endpoint(
+                cmd="ping",
+                transport=TransportType.WEBSOCKET,
+                direction=Direction.TO_DEVICE,
+            ),
+        ]
+    )
     doc = emit(ir)
     assert "requestBody" not in doc["paths"]["/ping"]["post"]
 
@@ -231,6 +240,7 @@ def test_emit_empty_ir_no_crash() -> None:
 
 
 # ── P3-3 validator ────────────────────────────────────────────────────────────
+
 
 def test_valid_doc_passes() -> None:
     doc = emit(_make_ir())
@@ -270,6 +280,7 @@ def test_validator_warns_missing_version() -> None:
 def test_validator_round_trip_ir() -> None:
     """Full round-trip: IR → OpenAPI dict → YAML string → validate."""
     import yaml
+
     ir = _make_ir()
     doc = emit(ir)
     yaml_str = yaml.dump(doc, sort_keys=False)
@@ -280,9 +291,12 @@ def test_validator_round_trip_ir() -> None:
 
 # ── snapshot integration ──────────────────────────────────────────────────────
 
+
 def test_snapshot_writes_openapi_yaml(tmp_path: Path) -> None:
     from unittest.mock import patch
+
     import engine.snapshot.harness as harness
+
     with patch.object(harness, "_SNAPSHOTS_DIR", tmp_path):
         snap_dir = harness.write("test_apk", _make_ir(), tmp_path)
     assert (snap_dir / "openapi.yaml").exists()
@@ -292,7 +306,9 @@ def test_snapshot_writes_openapi_yaml(tmp_path: Path) -> None:
 def test_snapshot_openapi_yaml_is_valid(tmp_path: Path) -> None:
     import json
     from unittest.mock import patch
+
     import engine.snapshot.harness as harness
+
     with patch.object(harness, "_SNAPSHOTS_DIR", tmp_path):
         snap_dir = harness.write("test_apk", _make_ir(), tmp_path)
     report_data = json.loads((snap_dir / "openapi_validation.json").read_text())

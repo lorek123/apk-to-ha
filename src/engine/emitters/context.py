@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Build the template context dict from a ProtocolIR."""
+
 from __future__ import annotations
 
 import re
@@ -8,7 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from ..extraction.signing_emitter import build as build_signing_ctx
-from ..ir.models import Direction, DiscoveryType, EntityHint, ProtocolIR, StreamingContract, TransportType
+from ..ir.models import (
+    Direction,
+    DiscoveryType,
+    EntityHint,
+    ProtocolIR,
+    StreamingContract,
+    TransportType,
+)
 
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
 
@@ -65,9 +73,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     clean_name = re.sub(r"[_\s]+\d[\d.]+.*$", "", ir.app_name).replace("_", " ").strip()
     if not clean_name:
         clean_name = ir.app_name
-    mode_actions: dict[int, str] = {
-        int(k): v for k, v in ir.extra.get("mode_actions", {}).items()
-    }
+    mode_actions: dict[int, str] = {int(k): v for k, v in ir.extra.get("mode_actions", {}).items()}
 
     # ── categorise commands ───────────────────────────────────────────────────
     switches, buttons, selects, numbers = [], [], [], []
@@ -75,38 +81,46 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         if ep.cmd in _SKIP_CMDS:
             continue
         if ep.entity_hint == EntityHint.SWITCH and ep.cmd not in _NOT_SWITCH:
-            switches.append({
-                "cmd": ep.cmd,
-                "name": _human(ep.cmd),
-                "key": _slugify(ep.cmd),
-            })
+            switches.append(
+                {
+                    "cmd": ep.cmd,
+                    "name": _human(ep.cmd),
+                    "key": _slugify(ep.cmd),
+                }
+            )
         elif ep.entity_hint == EntityHint.SELECT:
             options = [v for v in mode_actions.values()] if mode_actions else []
-            selects.append({
-                "cmd": ep.cmd,
-                "name": _human(ep.cmd),
-                "key": _slugify(ep.cmd),
-                "options": options,
-            })
+            selects.append(
+                {
+                    "cmd": ep.cmd,
+                    "name": _human(ep.cmd),
+                    "key": _slugify(ep.cmd),
+                    "options": options,
+                }
+            )
         elif ep.entity_hint == EntityHint.NUMBER:
             # Emit first integer field as the number value
             int_fields = [f for f in ep.request_fields if f.name not in ("cmd", "seq")]
             selects_field = next((f for f in int_fields), None)
-            numbers.append({
-                "cmd": ep.cmd,
-                "name": _human(ep.cmd),
-                "key": _slugify(ep.cmd),
-                "param": selects_field.name if selects_field else "value",
-            })
+            numbers.append(
+                {
+                    "cmd": ep.cmd,
+                    "name": _human(ep.cmd),
+                    "key": _slugify(ep.cmd),
+                    "param": selects_field.name if selects_field else "value",
+                }
+            )
         elif ep.entity_hint == EntityHint.BUTTON:
             # Skip config-only commands
             if ep.cmd in ("change_name", "paired_list", "unpair", "getWifiList"):
                 continue
-            buttons.append({
-                "cmd": ep.cmd,
-                "name": _human(ep.cmd),
-                "key": _slugify(ep.cmd.replace("-", "_")),
-            })
+            buttons.append(
+                {
+                    "cmd": ep.cmd,
+                    "name": _human(ep.cmd),
+                    "key": _slugify(ep.cmd.replace("-", "_")),
+                }
+            )
 
     # ── state fields → sensors ────────────────────────────────────────────────
     sensors, binary_sensors = [], []
@@ -148,12 +162,14 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         access: list[str] = list(ble_char_access.get(ep.cmd, []))
         if not access:
             access = ["write"] if ep.direction == Direction.TO_DEVICE else ["read"]
-        ble_chars.append({
-            "cmd": ep.cmd,
-            "key": _to_snake(ep.cmd),
-            "uuid": uuid,
-            "access": access,
-        })
+        ble_chars.append(
+            {
+                "cmd": ep.cmd,
+                "key": _to_snake(ep.cmd),
+                "uuid": uuid,
+                "access": access,
+            }
+        )
     # De-duplicate by UUID (same char may appear in both commands and events)
     seen_uuids: set[str] = set()
     deduped_ble: list[dict[str, Any]] = []
@@ -170,9 +186,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         if "notify" in ch["access"] or "read" in ch["access"]
     ]
     ble_switches: list[dict[str, Any]] = [
-        {**ch, "name": _human(ch["cmd"])}
-        for ch in ble_chars
-        if "write" in ch["access"]
+        {**ch, "name": _human(ch["cmd"])} for ch in ble_chars if "write" in ch["access"]
     ]
 
     # ── P5-6 Android string resources → HA translation strings ───────────────
@@ -190,7 +204,9 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     if all_sensors:
         entity_sections["sensor"] = {str(s["key"]): {"name": s["name"]} for s in all_sensors}
     if binary_sensors:
-        entity_sections["binary_sensor"] = {str(s["key"]): {"name": s["name"]} for s in binary_sensors}
+        entity_sections["binary_sensor"] = {
+            str(s["key"]): {"name": s["name"]} for s in binary_sensors
+        }
     if all_switches:
         entity_sections["switch"] = {str(s["key"]): {"name": s["name"]} for s in all_switches}
     if buttons:
@@ -240,8 +256,17 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "binary_sensors": binary_sensors,
         "mode_actions": mode_actions,
         # platforms present
-        "platforms": _platforms(switches, buttons, selects, numbers, sensors, binary_sensors,
-                                ble_sensors, ble_switches, has_camera=has_camera),
+        "platforms": _platforms(
+            switches,
+            buttons,
+            selects,
+            numbers,
+            sensors,
+            binary_sensors,
+            ble_sensors,
+            ble_switches,
+            has_camera=has_camera,
+        ),
         # P5-7 discovery
         "has_zeroconf": bool(zeroconf_types),
         "has_dhcp": bool(dhcp_hostnames),
@@ -277,9 +302,14 @@ def _infer_iot_class(transport_type: TransportType) -> str:
 
 
 def _platforms(
-    switches: list[Any], buttons: list[Any], selects: list[Any], numbers: list[Any],
-    sensors: list[Any], binary_sensors: list[Any],
-    ble_sensors: list[Any] | None = None, ble_switches: list[Any] | None = None,
+    switches: list[Any],
+    buttons: list[Any],
+    selects: list[Any],
+    numbers: list[Any],
+    sensors: list[Any],
+    binary_sensors: list[Any],
+    ble_sensors: list[Any] | None = None,
+    ble_switches: list[Any] | None = None,
     has_camera: bool = False,
 ) -> list[str]:
     plats = []

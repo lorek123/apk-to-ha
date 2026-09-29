@@ -9,9 +9,11 @@ represent device protocols not covered by the R2-D2 fixture:
 
 No APK binary required — the scanner operates on the sources/ tree.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -19,13 +21,13 @@ from engine.extraction.entity_classifier import classify
 from engine.extraction.protocol_scanner import ProtocolScanner
 from engine.ingestion import classifier, manifest_parser
 from engine.ir.models import AuthType, DiscoveryType, Framework, TransportType
-from typing import Any
 
 _FIXTURES = Path(__file__).parent / "fixtures"
 _GOVEE_DIR = _FIXTURES / "synthetic_govee"
 
 
 # ── Govee HTTP REST fixture ────────────────────────────────────────────────────
+
 
 class TestGoveeHTTPRest:
     """synthetic_govee: Retrofit service + NsdManager discovery + Govee-API-Key header."""
@@ -65,8 +67,10 @@ class TestGoveeHTTPRest:
     def test_entity_hints_on_govee(self, scanner_result: Any) -> None:
         transport, discovery, auth, state, commands, events = scanner_result
         from engine.ir.models import (
-            Framework, ProtocolIR, AuthScheme, DiscoveryMechanism, StateSchema,
+            Framework,
+            ProtocolIR,
         )
+
         ir = ProtocolIR(
             apk_path="synthetic",
             package_name="com.govee.home",
@@ -88,6 +92,7 @@ class TestGoveeHTTPRest:
 
 # ── Govee manifest parsing ─────────────────────────────────────────────────────
 
+
 def test_govee_manifest_parse() -> None:
     info = manifest_parser.parse(_GOVEE_DIR)
     assert info.package_name == "com.govee.home"
@@ -105,6 +110,7 @@ def test_govee_not_tuya() -> None:
 
 
 # ── Tuya early-exit synthetic fixture ────────────────────────────────────────
+
 
 def _make_tuya_tree(tmp_path: Path) -> Path:
     """Create a minimal source tree that looks like a Tuya SDK app."""
@@ -135,13 +141,16 @@ def test_tuya_detection(tmp_path: Path) -> None:
 def test_non_tuya_not_flagged(tmp_path: Path) -> None:
     pkg = tmp_path / "sources" / "com" / "example" / "myapp"
     pkg.mkdir(parents=True)
-    (pkg / "MainActivity.java").write_text("package com.example.myapp; public class MainActivity {}")
+    (pkg / "MainActivity.java").write_text(
+        "package com.example.myapp; public class MainActivity {}"
+    )
     assert not classifier.check_tuya(tmp_path, "com.example.myapp")
 
 
 # ── Tuya whitelabel detection ─────────────────────────────────────────────────
 # These represent obfuscated whitelabel apps where the Tuya package dir is gone
 # but other signals survive.
+
 
 def _make_obfuscated_tree(tmp_path: Path) -> None:
     """Minimal decompiled APK with obfuscated package dirs (no com/tuya/ dir)."""
@@ -160,10 +169,10 @@ def test_whitelabel_detected_via_manifest(tmp_path: Path) -> None:
     (tmp_path / "resources" / "AndroidManifest.xml").write_text(
         '<?xml version="1.0"?>'
         '<manifest package="com.mycompany.smartbulb">'
-        '<application>'
+        "<application>"
         '<service android:name="com.thingclips.smart.camera.middleware.MqttService"/>'
-        '</application>'
-        '</manifest>'
+        "</application>"
+        "</manifest>"
     )
     assert classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
 
@@ -203,10 +212,10 @@ def test_whitelabel_detected_via_api_host_in_source(tmp_path: Path) -> None:
         '<?xml version="1.0"?><manifest package="com.mycompany.smartbulb"/>'
     )
     (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "Config.java").write_text(
-        'package com.mycompany.smartbulb;\n'
-        'public class Config {\n'
+        "package com.mycompany.smartbulb;\n"
+        "public class Config {\n"
         '    static final String API_HOST = "openapi.tuyacn.com";\n'
-        '}'
+        "}"
     )
     assert classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
 
@@ -220,7 +229,7 @@ def test_whitelabel_detected_via_api_host_in_strings_xml(tmp_path: Path) -> None
     (tmp_path / "resources" / "strings.xml").write_text(
         '<?xml version="1.0"?><resources>'
         '<string name="tuya_host">openapi.tuyaeu.com</string>'
-        '</resources>'
+        "</resources>"
     )
     assert classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
 
@@ -235,11 +244,13 @@ def test_import_scan_reads_only_top_of_file(tmp_path: Path) -> None:
     padding = "// " + "x" * 80 + "\n"
     deep_content = (
         "package com.mycompany.smartbulb;\n"
-        + padding * 60   # >4 KB of padding
+        + padding * 60  # >4 KB of padding
         + "import com.tuya.smart.SomeClass;  // too deep, not a real import\n"
         + "public class Hidden {}"
     )
-    (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "Hidden.java").write_text(deep_content)
+    (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "Hidden.java").write_text(
+        deep_content
+    )
     assert not classifier.check_tuya(tmp_path, "com.mycompany.smartbulb")
 
 
@@ -249,10 +260,10 @@ def test_clean_app_not_flagged(tmp_path: Path) -> None:
     (tmp_path / "resources" / "AndroidManifest.xml").write_text(
         '<?xml version="1.0"?>'
         '<manifest package="com.mycompany.smartbulb">'
-        '<application>'
+        "<application>"
         '<service android:name="com.mycompany.smartbulb.SyncService"/>'
-        '</application>'
-        '</manifest>'
+        "</application>"
+        "</manifest>"
     )
     (tmp_path / "sources" / "com" / "mycompany" / "smartbulb" / "App.java").write_text(
         "package com.mycompany.smartbulb;\n"
@@ -264,13 +275,14 @@ def test_clean_app_not_flagged(tmp_path: Path) -> None:
 
 # ── Emitter context for Govee ─────────────────────────────────────────────────
 
+
 def test_govee_emitter_context() -> None:
     """Govee's HTTP REST transport should produce a context with correct domain."""
-    from engine.ir.models import (
-        Framework, ProtocolIR, AuthScheme, AuthType,
-        DiscoveryMechanism, DiscoveryType, StateSchema, TransportContract,
-    )
     from engine.emitters.context import build
+    from engine.ir.models import (
+        Framework,
+        ProtocolIR,
+    )
 
     scanner = ProtocolScanner(_GOVEE_DIR)
     transport, discovery, auth, state, commands, events = scanner.scan("com.govee.home")
@@ -299,13 +311,15 @@ def test_govee_emitter_context() -> None:
 
 # ── Cross-fixture: pipeline produces valid ruff-clean output ──────────────────
 
+
 def test_govee_emitter_output_passes_ruff(tmp_path: Path) -> None:
     """Run emitter on Govee IR and verify output is ruff-clean."""
     import asyncio
-    from engine.ir.models import Framework, ProtocolIR
-    from engine.emitters.context import build
+
     from engine.emitters import hacs_emitter, sdk_emitter
+    from engine.emitters.context import build
     from engine.extraction.entity_classifier import classify
+    from engine.ir.models import Framework, ProtocolIR
     from engine.validation import ruff_check
 
     scanner = ProtocolScanner(_GOVEE_DIR)
@@ -331,7 +345,6 @@ def test_govee_emitter_output_passes_ruff(tmp_path: Path) -> None:
     hacs_dir = hacs_emitter.emit(ctx, tmp_path)
 
     ruff_result = asyncio.run(ruff_check.check(hacs_dir))
-    assert ruff_result.passed, (
-        f"ruff found {ruff_result.error_count} errors:\n"
-        + "\n".join(f"  {f.file}:{f.line} [{f.code}] {f.message}" for f in ruff_result.findings)
+    assert ruff_result.passed, f"ruff found {ruff_result.error_count} errors:\n" + "\n".join(
+        f"  {f.file}:{f.line} [{f.code}] {f.message}" for f in ruff_result.findings
     )

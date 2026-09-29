@@ -12,6 +12,7 @@ Handles:
   - Collections (List<T>, ArrayList<T>) → FieldKind.ARRAY
   - Nested classes (resolved shallowly — 1 level deep)
 """
+
 from __future__ import annotations
 
 import logging
@@ -27,30 +28,28 @@ _LOGGER = logging.getLogger(__name__)
 # @SerializedName("wire_name") followed by optional other annotations, then the field
 _SERIALIZED_NAME_RE = re.compile(
     r'@SerializedName\s*\(\s*"([^"]+)"\s*\)'
-    r'(?:\s*@[\w.]+(?:\([^)]*\))?\s*)*'     # other annotations
-    r'\s*(?:public|private|protected)?\s*'
-    r'(?:static\s+)?(?:final\s+)?'
-    r'([\w.<>, ]+?)\s+(\w+)\s*[;=]',
+    r"(?:\s*@[\w.]+(?:\([^)]*\))?\s*)*"  # other annotations
+    r"\s*(?:public|private|protected)?\s*"
+    r"(?:static\s+)?(?:final\s+)?"
+    r"([\w.<>, ]+?)\s+(\w+)\s*[;=]",
     re.DOTALL,
 )
 
 # @Json(name = "wire_name") — Moshi
 _JSON_NAME_RE = re.compile(
     r'@Json\s*\(\s*name\s*=\s*"([^"]+)"\s*\)'
-    r'(?:\s*@[\w.]+(?:\([^)]*\))?\s*)*'
-    r'\s*(?:public|private|protected)?\s*'
-    r'(?:static\s+)?(?:final\s+)?'
-    r'([\w.<>, ]+?)\s+(\w+)\s*[;=]',
+    r"(?:\s*@[\w.]+(?:\([^)]*\))?\s*)*"
+    r"\s*(?:public|private|protected)?\s*"
+    r"(?:static\s+)?(?:final\s+)?"
+    r"([\w.<>, ]+?)\s+(\w+)\s*[;=]",
     re.DOTALL,
 )
 
 # Collection wrappers that indicate ARRAY kind
-_COLLECTION_RE = re.compile(
-    r'\b(?:List|ArrayList|LinkedList|Set|Collection|Array)\s*<'
-)
+_COLLECTION_RE = re.compile(r"\b(?:List|ArrayList|LinkedList|Set|Collection|Array)\s*<")
 
 # Nullable markers
-_NULLABLE_RE = re.compile(r'@(?:Nullable|Null)\b')
+_NULLABLE_RE = re.compile(r"@(?:Nullable|Null)\b")
 
 
 # ── resolver ──────────────────────────────────────────────────────────────────
@@ -67,7 +66,7 @@ class PayloadResolver:
         """Return a PayloadSchema for *type_name*; fields=[] if class not found."""
         is_collection = False
         # Unwrap List<T> / ArrayList<T>
-        col_m = re.match(r'(?:List|ArrayList|LinkedList|Set|Collection)<(\w+)>', type_name)
+        col_m = re.match(r"(?:List|ArrayList|LinkedList|Set|Collection)<(\w+)>", type_name)
         if col_m:
             type_name = col_m.group(1)
             is_collection = True
@@ -109,20 +108,24 @@ class PayloadResolver:
                     continue
                 seen.add(wire_name)
 
-                nullable = bool(_NULLABLE_RE.search(src[max(0, m.start() - 50): m.start()]))
+                nullable = bool(_NULLABLE_RE.search(src[max(0, m.start() - 50) : m.start()]))
                 kind = _kind(java_type)
-                fields.append(FieldDef(
-                    name=java_field,
-                    serialized_name=wire_name,
-                    kind=kind,
-                    required=not nullable,
-                    nullable=nullable,
-                ))
+                fields.append(
+                    FieldDef(
+                        name=java_field,
+                        serialized_name=wire_name,
+                        kind=kind,
+                        required=not nullable,
+                        nullable=nullable,
+                    )
+                )
 
         if fields:
             _LOGGER.info(
                 "PayloadResolver: %s → %d fields (%s)",
-                type_name, len(fields), [f.serialized_name for f in fields],
+                type_name,
+                len(fields),
+                [f.serialized_name for f in fields],
             )
         return fields
 

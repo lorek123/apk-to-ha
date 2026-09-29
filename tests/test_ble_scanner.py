@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: MIT
 """Tests for P2-8 BLE/GATT endpoint scanner."""
+
 from __future__ import annotations
 
 from pathlib import Path
-
-import pytest
 
 from engine.extraction.ble_scanner import (
     BLEScanner,
@@ -14,7 +13,6 @@ from engine.extraction.ble_scanner import (
     _uuid_to_cmd,
 )
 from engine.ir.models import Direction, EntityHint, TransportType
-
 
 # ── Java fixture text ──────────────────────────────────────────────────────────
 
@@ -98,6 +96,7 @@ public class BleDevice {
 
 # ── _uuid_to_cmd ──────────────────────────────────────────────────────────────
 
+
 def test_uuid_to_cmd_strips_char_prefix() -> None:
     assert _uuid_to_cmd("CHAR_WRITE_UUID", "0000fff1-0000-1000-8000-00805f9b34fb") == "write"
 
@@ -121,6 +120,7 @@ def test_uuid_to_cmd_characteristic_prefix() -> None:
 
 
 # ── _char_to_endpoint ─────────────────────────────────────────────────────────
+
 
 def test_char_to_endpoint_write_is_to_device() -> None:
     ch = _CharInfo(const_name="CMD_UUID", uuid="0000fff1-...", access={"write"})
@@ -167,6 +167,7 @@ def test_char_to_endpoint_confidence_below_1() -> None:
 
 # ── _scan_file ────────────────────────────────────────────────────────────────
 
+
 def test_scan_file_finds_service_uuid() -> None:
     chars, services = _scan_file(_JAVA_BLE, "BleManager")
     assert "0000fff0-0000-1000-8000-00805f9b34fb" in services
@@ -209,6 +210,7 @@ def test_scan_file_no_ble_returns_empty() -> None:
 
 
 # ── BLEScanner integration ────────────────────────────────────────────────────
+
 
 def _write_java(tmp_path: Path, content: str, name: str = "BleManager.java") -> Path:
     p = tmp_path / "sources" / "com" / "example" / name

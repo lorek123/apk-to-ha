@@ -9,6 +9,7 @@ compatibility window).
 Usage:  python scripts/bump_ha_version.py 2026.6.0
         make ha-bump NEW=2026.6.0
 """
+
 from __future__ import annotations
 
 import re

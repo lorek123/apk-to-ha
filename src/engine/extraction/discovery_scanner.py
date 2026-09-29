@@ -12,6 +12,7 @@ Detected signals (in priority order):
   5. MulticastLock or CHANGE_WIFI_MULTICAST_STATE permission → ZEROCONF (no type)
   6. DatagramSocket/DatagramPacket → UDP_BROADCAST with port extraction
 """
+
 from __future__ import annotations
 
 import logging
@@ -37,30 +38,25 @@ _MDNS_CONST_RE = re.compile(
 )
 
 # JmDNS: ServiceInfo.create("_type._tcp.", name, port, text)
-_JMDNS_CREATE_RE = re.compile(
-    r'ServiceInfo\.create\s*\(\s*"([^"]+\._(?:tcp|udp)\.?)"'
-)
+_JMDNS_CREATE_RE = re.compile(r'ServiceInfo\.create\s*\(\s*"([^"]+\._(?:tcp|udp)\.?)"')
 
 # registerService(serviceInfo, ...) with inline service type
 _NSD_REGISTER_RE = re.compile(r'registerService\s*\(\s*"([^"]+\._(?:tcp|udp)\.?)"')
 
-_MULTICAST_RE = re.compile(r'createMulticastLock|MulticastLock|CHANGE_WIFI_MULTICAST_STATE')
-_DATAGRAM_RE = re.compile(r'DatagramSocket|DatagramPacket|UDPServer|DatagramChannel')
-_UDP_PORT_RE = re.compile(r'(?:SERVER_PORT|UDP_PORT|BROADCAST_PORT)\s*=\s*(\d+)')
+_MULTICAST_RE = re.compile(r"createMulticastLock|MulticastLock|CHANGE_WIFI_MULTICAST_STATE")
+_DATAGRAM_RE = re.compile(r"DatagramSocket|DatagramPacket|UDPServer|DatagramChannel")
+_UDP_PORT_RE = re.compile(r"(?:SERVER_PORT|UDP_PORT|BROADCAST_PORT)\s*=\s*(\d+)")
 
 # Files worth scanning: skip generated R/BuildConfig
-_SKIP_RE = re.compile(r'(?:^|[\\/])[RB][A-Z]?\.java$|BuildConfig\.java$')
+_SKIP_RE = re.compile(r"(?:^|[\\/])[RB][A-Z]?\.java$|BuildConfig\.java$")
 
 # Supported service type protocols (with or without .local[.] suffix or bare trailing dot)
-_PROTO_RE = re.compile(r'\._(?:tcp|udp)(?:\.local)?\.?$', re.I)
+_PROTO_RE = re.compile(r"\._(?:tcp|udp)(?:\.local)?\.?$", re.I)
 
 
 def scan(sources_dir: Path, app_package: str) -> DiscoveryMechanism:
     """Return the best DiscoveryMechanism found in *sources_dir*."""
-    java_files = [
-        p for p in sources_dir.rglob("*.java")
-        if not _SKIP_RE.search(str(p))
-    ]
+    java_files = [p for p in sources_dir.rglob("*.java") if not _SKIP_RE.search(str(p))]
 
     service_types: list[str] = []
     has_multicast = False
@@ -74,8 +70,13 @@ def scan(sources_dir: Path, app_package: str) -> DiscoveryMechanism:
             continue
 
         # mDNS service type patterns (all five)
-        for pat in (_NSD_DISCOVER_RE, _NSD_SET_TYPE_RE, _MDNS_CONST_RE,
-                    _JMDNS_CREATE_RE, _NSD_REGISTER_RE):
+        for pat in (
+            _NSD_DISCOVER_RE,
+            _NSD_SET_TYPE_RE,
+            _MDNS_CONST_RE,
+            _JMDNS_CREATE_RE,
+            _NSD_REGISTER_RE,
+        ):
             for m in pat.finditer(text):
                 stype = _normalize_service_type(m.group(1))
                 if stype and stype not in service_types:
@@ -92,9 +93,7 @@ def scan(sources_dir: Path, app_package: str) -> DiscoveryMechanism:
 
     # ── pick best discovery type ───────────────────────────────────────────────
     if service_types:
-        _LOGGER.info(
-            "discovery_scanner: zeroconf detected, service_types=%s", service_types
-        )
+        _LOGGER.info("discovery_scanner: zeroconf detected, service_types=%s", service_types)
         return DiscoveryMechanism(
             type=DiscoveryType.ZEROCONF,
             service_type=service_types[0],
@@ -120,6 +119,7 @@ def scan(sources_dir: Path, app_package: str) -> DiscoveryMechanism:
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
 def _normalize_service_type(raw: str) -> str | None:
     """Ensure service type ends with '.local.' e.g. '_device._tcp.local.'."""
     raw = raw.strip()
@@ -137,6 +137,9 @@ def _normalize_service_type(raw: str) -> str | None:
 
 def _hostname_from_package(package: str) -> str:
     """'com.example.mydevice' → 'mydevice'"""
-    parts = [p for p in package.split(".") if p and not p.startswith("com")
-             and p not in ("net", "org", "io", "app")]
+    parts = [
+        p
+        for p in package.split(".")
+        if p and not p.startswith("com") and p not in ("net", "org", "io", "app")
+    ]
     return parts[-1].lower() if parts else ""

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """CLI: python -m engine analyze <apk_path> [--id <apk_id>]"""
+
 from __future__ import annotations
 
 import argparse
@@ -19,7 +20,9 @@ def main() -> None:
 
     p = sub.add_parser("analyze", help="Run P1→P-2.5→P3→snapshot on an APK")
     p.add_argument("apk", type=Path, help="Path to the .apk file")
-    p.add_argument("--id", dest="apk_id", default=None, help="Override fixture ID (default: apk stem)")
+    p.add_argument(
+        "--id", dest="apk_id", default=None, help="Override fixture ID (default: apk stem)"
+    )
     p.add_argument("--verbose", "-v", action="store_true")
 
     args = parser.parse_args()
@@ -45,7 +48,7 @@ def main() -> None:
                 raise
             sys.exit(1)
 
-        print(f"\n✓ Extraction complete")
+        print("\n✓ Extraction complete")
         print(f"  Package:    {ir.package_name}")
         print(f"  Framework:  {ir.framework.value}")
         print(f"  Transport:  {ir.transport.type.value}  port={ir.transport.port}")
@@ -55,8 +58,10 @@ def main() -> None:
         print(f"  Events:     {len(ir.events)}")
         print(f"  State fields: {len(ir.state.fields)}")
         if ir.duplicate_check and ir.duplicate_check.found:
-            print(f"  ⚠  Duplicate: {ir.duplicate_check.location}/{ir.duplicate_check.name}"
-                  f" ({ir.duplicate_check.coverage_estimate} coverage)")
+            print(
+                f"  ⚠  Duplicate: {ir.duplicate_check.location}/{ir.duplicate_check.name}"
+                f" ({ir.duplicate_check.coverage_estimate} coverage)"
+            )
         apk_id = args.apk_id or args.apk.stem.lower()
         print(f"\n  Snapshot:   fixtures/snapshots/{apk_id}/")
         if "_sdk_dir" in ir.extra:
@@ -64,7 +69,9 @@ def main() -> None:
             print(f"  HACS:       {ir.extra['_hacs_dir']}")
         if "_v1_passed" in ir.extra:
             v1s = "PASS" if ir.extra["_v1_passed"] else "FAIL"
-            print(f"\n  V-1 ruff:              {v1s} — {ir.extra['_v1_errors']} errors, {ir.extra['_v1_warnings']} warnings")
+            print(
+                f"\n  V-1 ruff:              {v1s} — {ir.extra['_v1_errors']} errors, {ir.extra['_v1_warnings']} warnings"
+            )
         if "_v2_passed" in ir.extra:
             status = "PASS" if ir.extra["_v2_passed"] else "FAIL"
             tier = ir.extra["_v2_tier"]

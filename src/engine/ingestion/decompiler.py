@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """JADX CLI wrapper — decompiles an APK to a source tree."""
+
 from __future__ import annotations
 
 import asyncio
@@ -31,7 +32,8 @@ async def decompile(apk_path: Path, out_dir: Path) -> Path:
         jadx,
         "--deobf",
         "--show-bad-code",
-        "-d", str(out_dir),
+        "-d",
+        str(out_dir),
         str(apk_path),
     ]
     _LOGGER.info("Decompiling %s → %s", apk_path.name, out_dir)
@@ -42,15 +44,19 @@ async def decompile(apk_path: Path, out_dir: Path) -> Path:
     )
     try:
         _, stderr = await asyncio.wait_for(proc.communicate(), timeout=JADX_TIMEOUT)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         proc.kill()
         raise RuntimeError(f"jadx timed out after {JADX_TIMEOUT}s on {apk_path.name}")
 
     # JADX exit codes: 0=clean, 1=partial errors, 2=bad args, 3+=severe but may still produce output.
     # Trust the output directory rather than the exit code.
-    java_files = list((out_dir / "sources").rglob("*.java")) if (out_dir / "sources").exists() else []
+    java_files = (
+        list((out_dir / "sources").rglob("*.java")) if (out_dir / "sources").exists() else []
+    )
     if not java_files:
-        raise RuntimeError(f"jadx produced no Java files (rc={proc.returncode}): {stderr.decode()[:500]}")
+        raise RuntimeError(
+            f"jadx produced no Java files (rc={proc.returncode}): {stderr.decode()[:500]}"
+        )
 
     error_lines = [ln for ln in stderr.decode().splitlines() if "ERROR" in ln]
     if error_lines:

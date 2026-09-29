@@ -8,6 +8,7 @@ Skips entries where the local file already exists.
 Usage:  uv run python scripts/download_fixtures.py
         make fixtures
 """
+
 from __future__ import annotations
 
 import sys

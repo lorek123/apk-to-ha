@@ -23,6 +23,7 @@ Rules (in priority order):
     - STRING kind                           → sensor
     - OBJECT / ARRAY kind                   → sensor  (emitter may skip)
 """
+
 from __future__ import annotations
 
 from ..ir.models import (
@@ -36,17 +37,38 @@ from ..ir.models import (
 )
 
 # State fields that are device metadata, not HA sensors
-_METADATA_FIELDS = frozenset({
-    "name", "uuid", "ssid", "ip", "ip_address", "host",
-    "mac", "mac_address", "timestamp", "ts",
-    "self_update", "update_dl_progress",
-})
+_METADATA_FIELDS = frozenset(
+    {
+        "name",
+        "uuid",
+        "ssid",
+        "ip",
+        "ip_address",
+        "host",
+        "mac",
+        "mac_address",
+        "timestamp",
+        "ts",
+        "self_update",
+        "update_dl_progress",
+    }
+)
 
 # Field names that are boolean regardless of their declared type
-_BOOLEAN_FIELD_NAMES = frozenset({
-    "charging", "connected", "docked", "asleep", "locked",
-    "armed", "online", "presence", "occupancy", "motion",
-})
+_BOOLEAN_FIELD_NAMES = frozenset(
+    {
+        "charging",
+        "connected",
+        "docked",
+        "asleep",
+        "locked",
+        "armed",
+        "online",
+        "presence",
+        "occupancy",
+        "motion",
+    }
+)
 
 
 def classify(ir: ProtocolIR) -> ProtocolIR:
@@ -58,11 +80,13 @@ def classify(ir: ProtocolIR) -> ProtocolIR:
     new_state_fields = [_hint_field(f) for f in ir.state.fields]
     new_state = ir.state.model_copy(update={"fields": new_state_fields})
 
-    return ir.model_copy(update={
-        "commands": new_commands,
-        "events": new_events,
-        "state": new_state,
-    })
+    return ir.model_copy(
+        update={
+            "commands": new_commands,
+            "events": new_events,
+            "state": new_state,
+        }
+    )
 
 
 def _hint_endpoint(ep: Endpoint, mode_action_keys: set[int]) -> Endpoint:

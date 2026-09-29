@@ -8,6 +8,7 @@ Writes a committable snapshot bundle to fixtures/snapshots/{apk_id}/:
 
 No APK binaries are written. All output is text/JSON.
 """
+
 from __future__ import annotations
 
 import logging
@@ -35,7 +36,9 @@ def write(apk_id: str, ir: ProtocolIR, apk_out_dir: Path) -> Path:
 
     # openapi.yaml (P3-2)
     openapi_doc = openapi_emit(ir)
-    (snap_dir / "openapi.yaml").write_text(yaml.dump(openapi_doc, sort_keys=False, allow_unicode=True))
+    (snap_dir / "openapi.yaml").write_text(
+        yaml.dump(openapi_doc, sort_keys=False, allow_unicode=True)
+    )
 
     # openapi validation report (P3-3)
     validation = openapi_validate(openapi_doc)
@@ -45,7 +48,11 @@ def write(apk_id: str, ir: ProtocolIR, apk_out_dir: Path) -> Path:
             _LOGGER.warning("openapi: %s", err)
     (snap_dir / "openapi_validation.json").write_text(
         __import__("json").dumps(
-            {"passed": validation.passed, "errors": validation.errors, "warnings": validation.warnings},
+            {
+                "passed": validation.passed,
+                "errors": validation.errors,
+                "warnings": validation.warnings,
+            },
             indent=2,
         )
     )

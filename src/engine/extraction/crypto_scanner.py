@@ -13,6 +13,7 @@ Detection targets:
   - Common third-party idioms: OkHttp RequestBody signing, Apache Commons
     HmacUtils, Tink primitives
 """
+
 from __future__ import annotations
 
 import logging
@@ -25,7 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Patterns for getInstance("...") calls — capture the algorithm string
 _GETINSTANCE = re.compile(
-    r'(?:Mac|MessageDigest|Cipher|KeyGenerator|KeyAgreement)'
+    r"(?:Mac|MessageDigest|Cipher|KeyGenerator|KeyAgreement)"
     r'\.getInstance\(\s*"([^"]+)"',
 )
 # SecretKeySpec(key, "AES") — capture the algorithm
@@ -83,12 +84,14 @@ def _scan_file(
             continue
         seen.add(key)
 
-        snippet = "\n".join(lines[max(0, i - 1): i + 3])
-        out.append(CryptoUsage(
-            algorithm=algo_norm,
-            call_site=class_name,
-            context_snippet=snippet[:500],
-        ))
+        snippet = "\n".join(lines[max(0, i - 1) : i + 3])
+        out.append(
+            CryptoUsage(
+                algorithm=algo_norm,
+                call_site=class_name,
+                context_snippet=snippet[:500],
+            )
+        )
 
     # Low-confidence pass: if file imports crypto but no specific call found
     if _IMPORT_CRYPTO.search(src) and not any(u.call_site == class_name for u in out):
@@ -97,12 +100,14 @@ def _scan_file(
         key = (class_name, pkg)
         if key not in seen:
             seen.add(key)
-            out.append(CryptoUsage(
-                algorithm="unknown",
-                call_site=class_name,
-                context_snippet=f"import {pkg}",
-                confidence=0.4,
-            ))
+            out.append(
+                CryptoUsage(
+                    algorithm="unknown",
+                    call_site=class_name,
+                    context_snippet=f"import {pkg}",
+                    confidence=0.4,
+                )
+            )
 
 
 def _extract_algorithm(line: str) -> str | None:

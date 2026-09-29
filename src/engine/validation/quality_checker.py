@@ -4,21 +4,26 @@
 Runs the 10 deterministic PLT-* rules against a rendered HACS integration
 directory and returns a QualityReport.
 """
+
 from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 
 from .quality_rubric import QualityRule, deterministic_rules
 
 _LOGGER = logging.getLogger(__name__)
 
 _VALID_IOT_CLASSES = {
-    "assumed_state", "cloud_polling", "cloud_push",
-    "local_polling", "local_push", "calculated",
+    "assumed_state",
+    "cloud_polling",
+    "cloud_push",
+    "local_polling",
+    "local_push",
+    "calculated",
 }
 
 
@@ -59,11 +64,16 @@ def check(integration_dir: Path) -> QualityReport:
             continue
         try:
             result = fn(integration_dir, rule)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _LOGGER.warning("quality_checker: %s raised %s", rule.id, exc)
             result = RuleResult(rule=rule, passed=False, detail=f"checker error: {exc}")
         results.append(result)
-        _LOGGER.debug("quality_checker: %s → %s %s", rule.id, "PASS" if result.passed else "FAIL", result.detail)
+        _LOGGER.debug(
+            "quality_checker: %s → %s %s",
+            rule.id,
+            "PASS" if result.passed else "FAIL",
+            result.detail,
+        )
 
     passed = not any(not r.passed and r.rule.severity == "error" for r in results)
     return QualityReport(passed=passed, results=results)
@@ -71,11 +81,14 @@ def check(integration_dir: Path) -> QualityReport:
 
 # ── individual checkers ───────────────────────────────────────────────────────
 
+
 def _check_entity_name(d: Path, rule: QualityRule) -> RuleResult:
     base = d / "entity_base.py"
     if base.exists() and "_attr_has_entity_name = True" in base.read_text():
         return RuleResult(rule=rule, passed=True)
-    return RuleResult(rule=rule, passed=False, detail="entity_base.py missing _attr_has_entity_name = True")
+    return RuleResult(
+        rule=rule, passed=False, detail="entity_base.py missing _attr_has_entity_name = True"
+    )
 
 
 def _check_unique_id(d: Path, rule: QualityRule) -> RuleResult:
@@ -97,7 +110,11 @@ def _check_aiohttp_client(d: Path, rule: QualityRule) -> RuleResult:
         f = d / filename
         if f.exists() and "async_get_clientsession" in f.read_text():
             return RuleResult(rule=rule, passed=True)
-    return RuleResult(rule=rule, passed=False, detail="async_get_clientsession not found in __init__.py or config_flow.py")
+    return RuleResult(
+        rule=rule,
+        passed=False,
+        detail="async_get_clientsession not found in __init__.py or config_flow.py",
+    )
 
 
 def _check_update_failed(d: Path, rule: QualityRule) -> RuleResult:
@@ -106,7 +123,9 @@ def _check_update_failed(d: Path, rule: QualityRule) -> RuleResult:
         src = coord.read_text()
         if "UpdateFailed" in src and "raise UpdateFailed" in src:
             return RuleResult(rule=rule, passed=True)
-    return RuleResult(rule=rule, passed=False, detail="coordinator.py does not import and raise UpdateFailed")
+    return RuleResult(
+        rule=rule, passed=False, detail="coordinator.py does not import and raise UpdateFailed"
+    )
 
 
 def _check_device_info(d: Path, rule: QualityRule) -> RuleResult:
@@ -115,7 +134,9 @@ def _check_device_info(d: Path, rule: QualityRule) -> RuleResult:
         src = base.read_text()
         if "DeviceInfo" in src and "identifiers=" in src:
             return RuleResult(rule=rule, passed=True)
-    return RuleResult(rule=rule, passed=False, detail="entity_base.py missing DeviceInfo with identifiers=")
+    return RuleResult(
+        rule=rule, passed=False, detail="entity_base.py missing DeviceInfo with identifiers="
+    )
 
 
 def _check_spdx_headers(d: Path, rule: QualityRule) -> RuleResult:
@@ -157,7 +178,9 @@ def _check_iot_class(d: Path, rule: QualityRule) -> RuleResult:
     iot = data.get("iot_class")
     if iot in _VALID_IOT_CLASSES:
         return RuleResult(rule=rule, passed=True)
-    return RuleResult(rule=rule, passed=False, detail=f"iot_class {iot!r} not in {sorted(_VALID_IOT_CLASSES)}")
+    return RuleResult(
+        rule=rule, passed=False, detail=f"iot_class {iot!r} not in {sorted(_VALID_IOT_CLASSES)}"
+    )
 
 
 def _check_translation_coverage(d: Path, rule: QualityRule) -> RuleResult:

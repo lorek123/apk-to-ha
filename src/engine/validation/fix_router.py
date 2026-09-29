@@ -12,6 +12,7 @@ Strategies (cheapest first):
   manifest_patch    — update a key in manifest.json using the known ctx value
   template_rerender — re-render one HACS template with (optionally patched) ctx
 """
+
 from __future__ import annotations
 
 import json
@@ -80,7 +81,9 @@ def route_and_apply(
 
     skipped += len(unfixable_ruff)
     for f in unfixable_ruff:
-        _LOGGER.warning("fix_router: no auto-fix for ruff [%s] %s:%d", f.code, Path(f.file).name, f.line)
+        _LOGGER.warning(
+            "fix_router: no auto-fix for ruff [%s] %s:%d", f.code, Path(f.file).name, f.line
+        )
 
     # ── V-2: hassfest ─────────────────────────────────────────────────────────
     for finding in hassfest_findings:
@@ -95,13 +98,15 @@ def route_and_apply(
             skipped += 1
             _LOGGER.warning(
                 "fix_router: no deterministic fix for [%s] %s",
-                finding.check, finding.message,
+                finding.check,
+                finding.message,
             )
 
     return FixResult(applied=applied, skipped=skipped, details=details)
 
 
 # ── internal helpers ──────────────────────────────────────────────────────────
+
 
 def _is_ruff_fixable(code: str) -> bool:
     return any(code.startswith(prefix) for prefix in _RUFF_AUTO_FIXABLE)
@@ -173,7 +178,7 @@ def _apply_ruff_fix(directory: Path) -> int:
         if "Fixed" in line:
             try:
                 return int(line.split()[1])
-            except (IndexError, ValueError):
+            except IndexError, ValueError:
                 pass
     return 1 if result.returncode in (0, 1) else 0
 

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """P5 — HACS integration emitter: renders the custom_components package."""
+
 from __future__ import annotations
 
 import logging
@@ -71,6 +72,8 @@ def _fix_imports(directory: Path) -> None:
         _LOGGER.debug("ruff not found; skipping import sort")
 
 
-def _render(env: Environment, ctx: dict[str, Any], out_dir: Path, template: str, filename: str) -> None:
+def _render(
+    env: Environment, ctx: dict[str, Any], out_dir: Path, template: str, filename: str
+) -> None:
     rendered = env.get_template(template).render(**ctx)
     (out_dir / filename).write_text(rendered)

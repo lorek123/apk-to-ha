@@ -10,6 +10,7 @@ the HA developer docs quality-scale failure modes:
   deprecation     — Deprecated API usage (warning)
   schema_error    — Config / vol.Schema / pydantic validation error (error)
 """
+
 from __future__ import annotations
 
 import re
@@ -18,10 +19,10 @@ from dataclasses import dataclass
 
 @dataclass
 class LogFinding:
-    category: str     # see module docstring
-    severity: str     # "error" | "warning"
-    message: str      # human-readable summary
-    raw_line: str     # original log line
+    category: str  # see module docstring
+    severity: str  # "error" | "warning"
+    message: str  # human-readable summary
+    raw_line: str  # original log line
 
 
 # ── detection patterns ────────────────────────────────────────────────────────
@@ -50,11 +51,11 @@ _SCHEMA_ERROR = re.compile(
 )
 
 _RULES: list[tuple[re.Pattern[str], str, str]] = [
-    (_IMPORT_ERROR,    "import_error",    "error"),
-    (_SETUP_FAILURE,   "setup_failure",   "error"),
+    (_IMPORT_ERROR, "import_error", "error"),
+    (_SETUP_FAILURE, "setup_failure", "error"),
     (_ASYNC_VIOLATION, "async_violation", "warning"),
-    (_DEPRECATION,     "deprecation",     "warning"),
-    (_SCHEMA_ERROR,    "schema_error",    "error"),
+    (_DEPRECATION, "deprecation", "warning"),
+    (_SCHEMA_ERROR, "schema_error", "error"),
 ]
 
 
@@ -76,12 +77,14 @@ def analyze(container_output: str) -> list[LogFinding]:
                 if key in seen:
                     break
                 seen.add(key)
-                findings.append(LogFinding(
-                    category=category,
-                    severity=severity,
-                    message=_summarise(category, stripped),
-                    raw_line=stripped,
-                ))
+                findings.append(
+                    LogFinding(
+                        category=category,
+                        severity=severity,
+                        message=_summarise(category, stripped),
+                        raw_line=stripped,
+                    )
+                )
                 break  # one finding per line
 
     return findings
@@ -96,6 +99,7 @@ def summary(findings: list[LogFinding]) -> dict[str, int]:
 
 
 # ── internal helpers ──────────────────────────────────────────────────────────
+
 
 def _summarise(category: str, line: str) -> str:
     """Return a short human-readable message for a finding."""

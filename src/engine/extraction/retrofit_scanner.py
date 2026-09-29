@@ -10,13 +10,13 @@ Scans decompiled Java source for:
   P2-3: `implements Interceptor`              → detects OkHttp Interceptor
         `.addHeader(...)` / `.header(...)`    → headers added dynamically
 """
+
 from __future__ import annotations
 
 import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 from ..ir.models import Direction, Endpoint, FieldDef, FieldKind, TransportType
 
@@ -28,24 +28,22 @@ _VERB_RE = re.compile(
     r'@(GET|POST|PUT|DELETE|PATCH|HEAD)\s*\(\s*"([^"]+)"\s*\)',
     re.IGNORECASE,
 )
-_HEADERS_BLOCK_RE = re.compile(r'@Headers\s*\(\s*\{([^}]+)\}\s*\)', re.DOTALL)
+_HEADERS_BLOCK_RE = re.compile(r"@Headers\s*\(\s*\{([^}]+)\}\s*\)", re.DOTALL)
 _HEADER_STRING_RE = re.compile(r'"([^"]+?):\s*([^"]+?)"')
 _HEADER_PARAM_RE = re.compile(r'@Header\s*\(\s*"([^"]+)"\s*\)')
-_HEADERMAP_RE = re.compile(r'@HeaderMap\b')
+_HEADERMAP_RE = re.compile(r"@HeaderMap\b")
 # @Body matches: "@Body TypeName var" or "@Body @Nullable TypeName var"
-_BODY_RE = re.compile(r'@Body\s+(?:@\w+\s+)*(?:[\w.<>, ]*?)(\b[A-Z]\w*)\s+\w+')
+_BODY_RE = re.compile(r"@Body\s+(?:@\w+\s+)*(?:[\w.<>, ]*?)(\b[A-Z]\w*)\s+\w+")
 # Return types from Retrofit / RxJava wrappers
 _RETURN_RE = re.compile(
-    r'\b(?:Call|Observable|Single|Maybe|Completable|Flowable|LiveData|Response)'
-    r'<(?:Response<)?([A-Z]\w*)>?'
+    r"\b(?:Call|Observable|Single|Maybe|Completable|Flowable|LiveData|Response)"
+    r"<(?:Response<)?([A-Z]\w*)>?"
 )
-_METHOD_NAME_RE = re.compile(r'\b([a-z]\w*)\s*\(', re.MULTILINE)
+_METHOD_NAME_RE = re.compile(r"\b([a-z]\w*)\s*\(", re.MULTILINE)
 
 # P2-3: Interceptor detection
-_INTERCEPTOR_IMPL_RE = re.compile(r'\bimplements\b[^{]*\bInterceptor\b')
-_INTERCEPTOR_HEADER_RE = re.compile(
-    r'\.(?:addHeader|header)\s*\(\s*"([^"]+)"\s*,'
-)
+_INTERCEPTOR_IMPL_RE = re.compile(r"\bimplements\b[^{]*\bInterceptor\b")
+_INTERCEPTOR_HEADER_RE = re.compile(r'\.(?:addHeader|header)\s*\(\s*"([^"]+)"\s*,')
 
 # ── data model ────────────────────────────────────────────────────────────────
 
@@ -53,21 +51,23 @@ _INTERCEPTOR_HEADER_RE = re.compile(
 @dataclass
 class RetrofitEndpoint:
     """Fully-annotated Retrofit method extracted from one interface file."""
+
     interface_name: str
     method_name: str
-    http_verb: str                             # GET / POST / PUT / DELETE / …
-    path: str                                  # raw URL path from annotation
+    http_verb: str  # GET / POST / PUT / DELETE / …
+    path: str  # raw URL path from annotation
     static_headers: dict[str, str] = field(default_factory=dict)
     dynamic_headers: list[str] = field(default_factory=list)
     has_header_map: bool = False
-    body_type: str | None = None               # Java class name for @Body
-    response_type: str | None = None           # Generic type from Call<T>
+    body_type: str | None = None  # Java class name for @Body
+    response_type: str | None = None  # Generic type from Call<T>
     source_file: str = ""
 
 
 @dataclass
 class InterceptorInfo:
     """P2-3 — One OkHttp Interceptor class that injects headers dynamically."""
+
     class_name: str
     injected_headers: list[str] = field(default_factory=list)  # header names found
 
@@ -90,12 +90,21 @@ class RetrofitScanner:
             java_files = list(pkg_path.rglob("*.java"))
         else:
             java_files = [
-                f for f in self._sources.rglob("*.java")
-                if not any(lib in str(f) for lib in (
-                    "androidx/", "android/support/", "com/google/",
-                    "kotlin/", "okhttp3/", "retrofit2/", "okio/",
-                    "com/squareup/",
-                ))
+                f
+                for f in self._sources.rglob("*.java")
+                if not any(
+                    lib in str(f)
+                    for lib in (
+                        "androidx/",
+                        "android/support/",
+                        "com/google/",
+                        "kotlin/",
+                        "okhttp3/",
+                        "retrofit2/",
+                        "okio/",
+                        "com/squareup/",
+                    )
+                )
             ]
 
         endpoints: list[RetrofitEndpoint] = []
@@ -114,51 +123,58 @@ class RetrofitScanner:
         if endpoints:
             _LOGGER.info(
                 "RetrofitScanner: %d endpoints from %d interceptors",
-                len(endpoints), len(interceptors),
+                len(endpoints),
+                len(interceptors),
             )
         return endpoints, interceptors
 
-    def to_ir_endpoints(
-        self, retrofit_eps: list[RetrofitEndpoint]
-    ) -> list[Endpoint]:
+    def to_ir_endpoints(self, retrofit_eps: list[RetrofitEndpoint]) -> list[Endpoint]:
         """Convert RetrofitEndpoint objects to IR Endpoint objects."""
         result: list[Endpoint] = []
         for ep in retrofit_eps:
             # Infer a minimal field list from what we know statically
             req_fields: list[FieldDef] = []
             if ep.body_type:
-                req_fields.append(FieldDef(
-                    name="body",
-                    serialized_name=None,
-                    kind=FieldKind.OBJECT,
-                    description=ep.body_type,
-                ))
+                req_fields.append(
+                    FieldDef(
+                        name="body",
+                        serialized_name=None,
+                        kind=FieldKind.OBJECT,
+                        description=ep.body_type,
+                    )
+                )
             for hdr in ep.dynamic_headers:
-                req_fields.append(FieldDef(
-                    name=hdr.lower().replace("-", "_"),
-                    serialized_name=hdr,
-                    kind=FieldKind.STRING,
-                    description=f"@Header {hdr}",
-                ))
+                req_fields.append(
+                    FieldDef(
+                        name=hdr.lower().replace("-", "_"),
+                        serialized_name=hdr,
+                        kind=FieldKind.STRING,
+                        description=f"@Header {hdr}",
+                    )
+                )
 
             resp_fields: list[FieldDef] = []
             if ep.response_type and ep.response_type.lower() not in ("void", "responseBody"):
-                resp_fields.append(FieldDef(
-                    name="response",
-                    serialized_name=None,
-                    kind=FieldKind.OBJECT,
-                    description=ep.response_type,
-                ))
+                resp_fields.append(
+                    FieldDef(
+                        name="response",
+                        serialized_name=None,
+                        kind=FieldKind.OBJECT,
+                        description=ep.response_type,
+                    )
+                )
 
-            result.append(Endpoint(
-                cmd=f"{ep.http_verb} {ep.path}",
-                transport=TransportType.HTTP_REST,
-                direction=Direction.TO_DEVICE,
-                awaits_response=True,
-                request_fields=req_fields,
-                response_fields=resp_fields,
-                source_class=ep.interface_name,
-            ))
+            result.append(
+                Endpoint(
+                    cmd=f"{ep.http_verb} {ep.path}",
+                    transport=TransportType.HTTP_REST,
+                    direction=Direction.TO_DEVICE,
+                    awaits_response=True,
+                    request_fields=req_fields,
+                    response_fields=resp_fields,
+                    source_class=ep.interface_name,
+                )
+            )
         return result
 
 
@@ -191,8 +207,8 @@ def _scan_file(src: str, file_stem: str) -> list[RetrofitEndpoint]:
         path = verb_m.group(2)
         pos = verb_m.start()
 
-        pre = src[max(0, pos - 400): pos]
-        post = src[pos: pos + 800]
+        pre = src[max(0, pos - 400) : pos]
+        post = src[pos : pos + 800]
 
         static_headers = _extract_static_headers(pre + post)
         dynamic_headers = _HEADER_PARAM_RE.findall(post)
@@ -208,18 +224,20 @@ def _scan_file(src: str, file_stem: str) -> list[RetrofitEndpoint]:
         mn_m = _METHOD_NAME_RE.search(post)
         method_name = mn_m.group(1) if mn_m else "unknown"
 
-        endpoints.append(RetrofitEndpoint(
-            interface_name=file_stem,
-            method_name=method_name,
-            http_verb=http_verb,
-            path=path,
-            static_headers=static_headers,
-            dynamic_headers=dynamic_headers,
-            has_header_map=has_header_map,
-            body_type=body_type,
-            response_type=response_type,
-            source_file=file_stem,
-        ))
+        endpoints.append(
+            RetrofitEndpoint(
+                interface_name=file_stem,
+                method_name=method_name,
+                http_verb=http_verb,
+                path=path,
+                static_headers=static_headers,
+                dynamic_headers=dynamic_headers,
+                has_header_map=has_header_map,
+                body_type=body_type,
+                response_type=response_type,
+                source_file=file_stem,
+            )
+        )
 
     return endpoints
 

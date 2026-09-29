@@ -4,16 +4,16 @@
 Exposes run_ruff, run_mypy, run_hassfest, run_pytest as MCP tools.
 Each returns structured JSON, not raw stderr.
 """
+
 from __future__ import annotations
 
 import asyncio
 import json
 import re
-import shutil
 import sys
+import tomllib
 from pathlib import Path
 
-import tomllib
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("ha-tooling")
@@ -41,6 +41,7 @@ async def _run(cmd: list[str], cwd: Path | None = None) -> tuple[int, str, str]:
 
 
 # ── ruff ───────────────────────────────────────────────────────────────────────
+
 
 @mcp.tool()
 async def run_ruff(path: str, fix: bool = False) -> dict:
@@ -71,6 +72,7 @@ async def run_ruff(path: str, fix: bool = False) -> dict:
 
 # ── mypy ───────────────────────────────────────────────────────────────────────
 
+
 @mcp.tool()
 async def run_mypy(path: str) -> dict:
     """Run mypy --strict on path. Returns {success, error_count, errors[]}."""
@@ -81,17 +83,20 @@ async def run_mypy(path: str) -> dict:
     for line in stdout.splitlines():
         m = re.match(r"^(.+?):(\d+):\s*(error|warning|note):\s*(.+)$", line)
         if m:
-            errors.append({
-                "file": m.group(1),
-                "line": int(m.group(2)),
-                "severity": m.group(3),
-                "message": m.group(4),
-            })
+            errors.append(
+                {
+                    "file": m.group(1),
+                    "line": int(m.group(2)),
+                    "severity": m.group(3),
+                    "message": m.group(4),
+                }
+            )
 
     return {"success": rc == 0, "error_count": len(errors), "errors": errors}
 
 
 # ── hassfest ───────────────────────────────────────────────────────────────────
+
 
 @mcp.tool()
 async def run_hassfest(integration_path: str) -> dict:
@@ -109,9 +114,13 @@ async def run_hassfest(integration_path: str) -> dict:
 
 async def _hassfest_local(int_path: Path) -> dict:
     cmd = [
-        sys.executable, "-m", "script.hassfest",
-        "--integration-path", str(int_path),
-        "--action", "validate",
+        sys.executable,
+        "-m",
+        "script.hassfest",
+        "--integration-path",
+        str(int_path),
+        "--action",
+        "validate",
     ]
     rc, stdout, stderr = await _run(cmd, cwd=_HA_CORE_DIR)
     combined = stdout + stderr
@@ -121,12 +130,19 @@ async def _hassfest_local(int_path: Path) -> dict:
 async def _hassfest_docker(int_path: Path) -> dict:
     tag = _ha_image_tag()
     cmd = [
-        "docker", "run", "--rm",
-        "-v", f"{int_path}:/tmp/integration:ro",
+        "docker",
+        "run",
+        "--rm",
+        "-v",
+        f"{int_path}:/tmp/integration:ro",
         f"homeassistant/home-assistant:{tag}",
-        "python3", "-m", "script.hassfest",
-        "--integration-path", "/tmp/integration",
-        "--action", "validate",
+        "python3",
+        "-m",
+        "script.hassfest",
+        "--integration-path",
+        "/tmp/integration",
+        "--action",
+        "validate",
     ]
     rc, stdout, stderr = await _run(cmd)
     return _parse_hassfest_output(rc, stdout + stderr)
@@ -142,11 +158,21 @@ def _parse_hassfest_output(rc: int, output: str) -> dict:
 
 # ── pytest ─────────────────────────────────────────────────────────────────────
 
+
 @mcp.tool()
 async def run_pytest(path: str, test_path: str | None = None) -> dict:
     """Run pytest. Returns {success, passed, failed, errors[]}."""
     target = test_path or path
-    cmd = [sys.executable, "-m", "pytest", target, "--tb=short", "-q", "--json-report", "--json-report-file=/tmp/pytest_report.json"]
+    cmd = [
+        sys.executable,
+        "-m",
+        "pytest",
+        target,
+        "--tb=short",
+        "-q",
+        "--json-report",
+        "--json-report-file=/tmp/pytest_report.json",
+    ]
     rc, stdout, stderr = await _run(cmd, cwd=Path(path))
 
     # Parse summary line: "X passed, Y failed in Zs"
@@ -164,10 +190,12 @@ async def run_pytest(path: str, test_path: str | None = None) -> dict:
         report = json.loads(Path("/tmp/pytest_report.json").read_text())
         for t in report.get("tests", []):
             if t.get("outcome") == "failed":
-                errors.append({
-                    "test": t.get("nodeid"),
-                    "message": t.get("call", {}).get("longrepr", ""),
-                })
+                errors.append(
+                    {
+                        "test": t.get("nodeid"),
+                        "message": t.get("call", {}).get("longrepr", ""),
+                    }
+                )
     except Exception:
         pass
 

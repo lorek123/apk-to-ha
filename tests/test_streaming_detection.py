@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: MIT
 """Tests for streaming (camera/video WebSocket) detection in ProtocolScanner."""
+
 from __future__ import annotations
 
 from pathlib import Path
-
-import pytest
 
 from engine.extraction.protocol_scanner import ProtocolScanner
 from engine.ir.models import StreamingContract
@@ -27,9 +26,12 @@ def _scanner_with_sources(apk_dir: Path) -> ProtocolScanner:
 
 # ── basic detection ───────────────────────────────────────────────────────────
 
+
 def test_detect_streaming_basic(tmp_path: Path) -> None:
-    apk_dir = _make_sources(tmp_path, {
-        "VideoSocketService.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "VideoSocketService.java": """
         public class VideoSocketService {
             private final int WEBSOCKET_PORT = 12121;
             void decodeFrame(byte[] data) {
@@ -37,7 +39,8 @@ def test_detect_streaming_basic(tmp_path: Path) -> None:
             }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     contract = scanner.extra.get("streaming_contract")
@@ -47,14 +50,17 @@ def test_detect_streaming_basic(tmp_path: Path) -> None:
 
 
 def test_detect_streaming_stored_on_extra(tmp_path: Path) -> None:
-    apk_dir = _make_sources(tmp_path, {
-        "CameraService.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "CameraService.java": """
         public class CameraService {
             private final int WEBSOCKET_PORT = 9090;
             void handle(byte[] raw) { BitmapFactory.decodeByteArray(raw, 0, raw.length); }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     assert "streaming_contract" in scanner.extra
@@ -63,29 +69,36 @@ def test_detect_streaming_stored_on_extra(tmp_path: Path) -> None:
 
 # ── keyword matching ──────────────────────────────────────────────────────────
 
+
 def test_detect_streaming_camera_keyword(tmp_path: Path) -> None:
-    apk_dir = _make_sources(tmp_path, {
-        "CameraSocketHandler.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "CameraSocketHandler.java": """
         public class CameraSocketHandler {
             private final int WEBSOCKET_PORT = 5555;
             void recv(byte[] d) { BitmapFactory.decodeByteArray(d, 0, d.length); }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     assert scanner.extra.get("streaming_contract") is not None
 
 
 def test_detect_streaming_stream_keyword(tmp_path: Path) -> None:
-    apk_dir = _make_sources(tmp_path, {
-        "LiveStreamManager.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "LiveStreamManager.java": """
         public class LiveStreamManager {
             private final int VIDEO_PORT = 7777;
             void process(byte[] frame) { decodeByteArray(frame); }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     assert scanner.extra.get("streaming_contract") is not None
@@ -93,16 +106,20 @@ def test_detect_streaming_stream_keyword(tmp_path: Path) -> None:
 
 # ── negative cases ────────────────────────────────────────────────────────────
 
+
 def test_detect_streaming_skips_non_video_class(tmp_path: Path) -> None:
     """A class with BitmapFactory but no video keyword in name → not detected."""
-    apk_dir = _make_sources(tmp_path, {
-        "ImageHelper.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "ImageHelper.java": """
         public class ImageHelper {
             private final int WEBSOCKET_PORT = 12121;
             void decode(byte[] d) { BitmapFactory.decodeByteArray(d, 0, d.length); }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     assert "streaming_contract" not in scanner.extra
@@ -110,14 +127,17 @@ def test_detect_streaming_skips_non_video_class(tmp_path: Path) -> None:
 
 def test_detect_streaming_requires_bitmap_factory(tmp_path: Path) -> None:
     """A video-named class without BitmapFactory → not detected."""
-    apk_dir = _make_sources(tmp_path, {
-        "VideoSocketService.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "VideoSocketService.java": """
         public class VideoSocketService {
             private final int WEBSOCKET_PORT = 12121;
             void handleMessage(String msg) { /* text only */ }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     assert "streaming_contract" not in scanner.extra
@@ -125,14 +145,17 @@ def test_detect_streaming_requires_bitmap_factory(tmp_path: Path) -> None:
 
 def test_detect_streaming_requires_port_constant(tmp_path: Path) -> None:
     """A video-named class with BitmapFactory but no port constant → not detected."""
-    apk_dir = _make_sources(tmp_path, {
-        "VideoSocket.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "VideoSocket.java": """
         public class VideoSocket {
             // port is passed from outside, no constant here
             void recv(byte[] d) { BitmapFactory.decodeByteArray(d, 0, d.length); }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     assert "streaming_contract" not in scanner.extra
@@ -149,9 +172,12 @@ def test_detect_streaming_empty_sources(tmp_path: Path) -> None:
 
 # ── rotation extraction ───────────────────────────────────────────────────────
 
+
 def test_detect_streaming_rotation_extracted(tmp_path: Path) -> None:
-    apk_dir = _make_sources(tmp_path, {
-        "VideoSocketService.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "VideoSocketService.java": """
         public class VideoSocketService {
             private final int WEBSOCKET_PORT = 12121;
             void decode(byte[] d) {
@@ -160,7 +186,8 @@ def test_detect_streaming_rotation_extracted(tmp_path: Path) -> None:
             }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     contract = scanner.extra.get("streaming_contract")
@@ -169,8 +196,10 @@ def test_detect_streaming_rotation_extracted(tmp_path: Path) -> None:
 
 
 def test_detect_streaming_negative_rotation(tmp_path: Path) -> None:
-    apk_dir = _make_sources(tmp_path, {
-        "VideoSocketService.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "VideoSocketService.java": """
         public class VideoSocketService {
             private final int WEBSOCKET_PORT = 12121;
             void decode(byte[] d) {
@@ -179,7 +208,8 @@ def test_detect_streaming_negative_rotation(tmp_path: Path) -> None:
             }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     contract = scanner.extra.get("streaming_contract")
@@ -188,14 +218,17 @@ def test_detect_streaming_negative_rotation(tmp_path: Path) -> None:
 
 
 def test_detect_streaming_default_rotation_zero(tmp_path: Path) -> None:
-    apk_dir = _make_sources(tmp_path, {
-        "VideoSocket.java": """
+    apk_dir = _make_sources(
+        tmp_path,
+        {
+            "VideoSocket.java": """
         public class VideoSocket {
             private final int WEBSOCKET_PORT = 12121;
             void decode(byte[] d) { BitmapFactory.decodeByteArray(d, 0, d.length); }
         }
         """,
-    })
+        },
+    )
     scanner = _scanner_with_sources(apk_dir)
     scanner._detect_streaming()
     contract = scanner.extra.get("streaming_contract")
@@ -204,6 +237,7 @@ def test_detect_streaming_default_rotation_zero(tmp_path: Path) -> None:
 
 
 # ── via scan() ────────────────────────────────────────────────────────────────
+
 
 def test_detect_streaming_via_scan(tmp_path: Path) -> None:
     """Streaming contract is populated when scan() is called end-to-end."""
@@ -229,6 +263,7 @@ def test_detect_streaming_via_scan(tmp_path: Path) -> None:
 
 
 # ── IR model ─────────────────────────────────────────────────────────────────
+
 
 def test_streaming_contract_model_defaults() -> None:
     c = StreamingContract(port=12121)

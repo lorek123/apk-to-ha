@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: MIT
 """Tests for Play Store metadata fetcher and IR integration."""
+
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from engine.ingestion.play_store import _clean, _fetch_sync, fetch
 from engine.ir.models import PlayStoreInfo
 
-
 # ── _clean helper ─────────────────────────────────────────────────────────────
+
 
 def test_clean_strips_html_tags() -> None:
     assert _clean("<b>Smart</b> lights") == "Smart lights"
@@ -67,7 +67,7 @@ def test_fetch_sync_returns_play_store_info() -> None:
 
 
 def test_fetch_sync_not_found_returns_none() -> None:
-    from google_play_scraper import exceptions  # noqa: PLC0415
+    from google_play_scraper import exceptions
 
     with patch("google_play_scraper.app", side_effect=exceptions.NotFoundError):
         result = _fetch_sync("com.nonexistent.package")
@@ -93,9 +93,9 @@ def test_fetch_sync_maps_all_fields() -> None:
 
 # ── async fetch (graceful degradation) ───────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_fetch_returns_none_on_timeout() -> None:
-    import asyncio
 
     # Simulate timeout by making _fetch_sync raise TimeoutError via asyncio.wait_for
     async def _raise_timeout(*_args: Any, **_kwargs: Any) -> None:
@@ -108,8 +108,9 @@ async def test_fetch_returns_none_on_timeout() -> None:
 
 @pytest.mark.asyncio
 async def test_fetch_returns_none_on_exception() -> None:
-    with patch("engine.ingestion.play_store.asyncio.to_thread",
-               side_effect=RuntimeError("network error")):
+    with patch(
+        "engine.ingestion.play_store.asyncio.to_thread", side_effect=RuntimeError("network error")
+    ):
         result = await fetch("com.example.app")
     assert result is None
 
@@ -129,6 +130,7 @@ async def test_fetch_returns_info_on_success() -> None:
 
 # ── IR model ──────────────────────────────────────────────────────────────────
 
+
 def test_play_store_info_optional_fields() -> None:
     info = PlayStoreInfo(title="App", description="Desc")
     assert info.summary is None
@@ -139,9 +141,17 @@ def test_play_store_info_optional_fields() -> None:
 
 def test_protocol_ir_accepts_play_store_none() -> None:
     from engine.ir.models import (
-        AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
-        Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
+        AuthScheme,
+        AuthType,
+        DiscoveryMechanism,
+        DiscoveryType,
+        Framework,
+        ProtocolIR,
+        StateSchema,
+        TransportContract,
+        TransportType,
     )
+
     ir = ProtocolIR(
         apk_path="test",
         package_name="com.example.app",
@@ -158,9 +168,17 @@ def test_protocol_ir_accepts_play_store_none() -> None:
 
 def test_protocol_ir_stores_play_store_info() -> None:
     from engine.ir.models import (
-        AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
-        Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
+        AuthScheme,
+        AuthType,
+        DiscoveryMechanism,
+        DiscoveryType,
+        Framework,
+        ProtocolIR,
+        StateSchema,
+        TransportContract,
+        TransportType,
     )
+
     ps = PlayStoreInfo(title="App", description="Desc", category="Tools")
     ir = ProtocolIR(
         apk_path="test",
@@ -179,12 +197,20 @@ def test_protocol_ir_stores_play_store_info() -> None:
 
 # ── context propagation ───────────────────────────────────────────────────────
 
+
 def test_context_includes_play_store_fields() -> None:
-    from engine.ir.models import (
-        AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
-        Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
-    )
     from engine.emitters.context import build
+    from engine.ir.models import (
+        AuthScheme,
+        AuthType,
+        DiscoveryMechanism,
+        DiscoveryType,
+        Framework,
+        ProtocolIR,
+        StateSchema,
+        TransportContract,
+        TransportType,
+    )
 
     ps = PlayStoreInfo(
         title="Govee Home",
@@ -213,11 +239,18 @@ def test_context_includes_play_store_fields() -> None:
 
 
 def test_context_empty_strings_when_no_play_store() -> None:
-    from engine.ir.models import (
-        AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
-        Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
-    )
     from engine.emitters.context import build
+    from engine.ir.models import (
+        AuthScheme,
+        AuthType,
+        DiscoveryMechanism,
+        DiscoveryType,
+        Framework,
+        ProtocolIR,
+        StateSchema,
+        TransportContract,
+        TransportType,
+    )
 
     ir = ProtocolIR(
         apk_path="test",
@@ -240,11 +273,18 @@ def test_context_empty_strings_when_no_play_store() -> None:
 
 def test_app_summary_falls_back_to_description_prefix() -> None:
     """When summary is None, app_summary is the first 200 chars of description."""
-    from engine.ir.models import (
-        AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
-        Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
-    )
     from engine.emitters.context import build
+    from engine.ir.models import (
+        AuthScheme,
+        AuthType,
+        DiscoveryMechanism,
+        DiscoveryType,
+        Framework,
+        ProtocolIR,
+        StateSchema,
+        TransportContract,
+        TransportType,
+    )
 
     long_desc = "A" * 300
     ps = PlayStoreInfo(title="App", description=long_desc, summary=None)

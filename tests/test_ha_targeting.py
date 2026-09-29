@@ -6,14 +6,13 @@ Verifies that changing ha_target.toml flows correctly into:
   - the emitted manifest.json (homeassistant field)
   - the bump script (all version fields updated consistently)
 """
+
 from __future__ import annotations
 
 import json
 import tomllib
 from pathlib import Path
 from typing import TYPE_CHECKING
-
-import pytest
 
 if TYPE_CHECKING:
     from engine.ir.models import ProtocolIR
@@ -23,6 +22,7 @@ _HA_TARGET = _ROOT / "config" / "ha_target.toml"
 
 
 # ── ha_target.toml structure ─────────────────────────────────────────────────
+
 
 def test_ha_target_exists() -> None:
     assert _HA_TARGET.exists()
@@ -67,11 +67,20 @@ def test_ha_image_tag_matches_core_major_minor() -> None:
 
 # ── context propagation ───────────────────────────────────────────────────────
 
-def _make_minimal_ir() -> "ProtocolIR":
+
+def _make_minimal_ir() -> ProtocolIR:
     from engine.ir.models import (
-        AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
-        Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
+        AuthScheme,
+        AuthType,
+        DiscoveryMechanism,
+        DiscoveryType,
+        Framework,
+        ProtocolIR,
+        StateSchema,
+        TransportContract,
+        TransportType,
     )
+
     return ProtocolIR(
         apk_path="test",
         package_name="com.example.testapp",
@@ -88,6 +97,7 @@ def _make_minimal_ir() -> "ProtocolIR":
 
 def test_context_ha_min_version_from_toml() -> None:
     from engine.emitters.context import build
+
     with open(_HA_TARGET, "rb") as f:
         expected = tomllib.load(f)["target"]["generated_minimum_required"]
     ctx = build(_make_minimal_ir())
@@ -96,16 +106,25 @@ def test_context_ha_min_version_from_toml() -> None:
 
 def test_context_iot_class_http_rest_is_local_polling() -> None:
     from engine.emitters.context import build
+
     ctx = build(_make_minimal_ir())
     assert ctx["iot_class"] == "local_polling"
 
 
 def test_context_iot_class_websocket_is_local_push() -> None:
-    from engine.ir.models import (
-        AuthScheme, AuthType, DiscoveryMechanism, DiscoveryType,
-        Framework, ProtocolIR, StateSchema, TransportContract, TransportType,
-    )
     from engine.emitters.context import build
+    from engine.ir.models import (
+        AuthScheme,
+        AuthType,
+        DiscoveryMechanism,
+        DiscoveryType,
+        Framework,
+        ProtocolIR,
+        StateSchema,
+        TransportContract,
+        TransportType,
+    )
+
     ir = ProtocolIR(
         apk_path="test",
         package_name="com.example.wsapp",
@@ -124,9 +143,11 @@ def test_context_iot_class_websocket_is_local_push() -> None:
 
 # ── manifest propagation ──────────────────────────────────────────────────────
 
+
 def test_emitted_manifest_embeds_ha_min_version(tmp_path: Path) -> None:
     from engine.emitters import hacs_emitter
     from engine.emitters.context import build
+
     with open(_HA_TARGET, "rb") as f:
         expected = tomllib.load(f)["target"]["generated_minimum_required"]
     ctx = build(_make_minimal_ir())
@@ -138,6 +159,7 @@ def test_emitted_manifest_embeds_ha_min_version(tmp_path: Path) -> None:
 def test_emitted_manifest_iot_class_http_rest(tmp_path: Path) -> None:
     from engine.emitters import hacs_emitter
     from engine.emitters.context import build
+
     ctx = build(_make_minimal_ir())
     hacs_dir = hacs_emitter.emit(ctx, tmp_path)
     manifest = json.loads((hacs_dir / "manifest.json").read_text())
@@ -146,8 +168,10 @@ def test_emitted_manifest_iot_class_http_rest(tmp_path: Path) -> None:
 
 # ── bump script ───────────────────────────────────────────────────────────────
 
+
 def test_bump_script_updates_all_fields(tmp_path: Path) -> None:
     import shutil
+
     from scripts.bump_ha_version import bump
 
     target_copy = tmp_path / "ha_target.toml"
@@ -166,6 +190,7 @@ def test_bump_script_updates_all_fields(tmp_path: Path) -> None:
 
 def test_bump_script_strips_leading_v(tmp_path: Path) -> None:
     import shutil
+
     from scripts.bump_ha_version import bump
 
     target_copy = tmp_path / "ha_target.toml"

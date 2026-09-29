@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: MIT
 """Tests for P5-8 multi-protocol entity mapping (BLE characteristics → HA platforms)."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 from engine.emitters import context as ctx_mod
 from engine.emitters import hacs_emitter
-from engine.extraction.entity_classifier import classify, _hint_endpoint
+from engine.extraction.entity_classifier import _hint_endpoint, classify
 from engine.ir.models import (
     AuthScheme,
     AuthType,
@@ -25,8 +24,8 @@ from engine.ir.models import (
     TransportType,
 )
 
-
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _ble_ep(cmd: str, direction: Direction, hint: EntityHint | None = None) -> Endpoint:
     return Endpoint(
@@ -72,6 +71,7 @@ def _make_ble_ir(**overrides: Any) -> ProtocolIR:
 
 # ── entity_classifier ─────────────────────────────────────────────────────────
 
+
 def test_classifier_preserves_ble_scanner_hint() -> None:
     ep = _ble_ep("write", Direction.TO_DEVICE, EntityHint.SWITCH)
     result = _hint_endpoint(ep, set())
@@ -101,6 +101,7 @@ def test_classify_full_ir_sets_hints() -> None:
 
 
 # ── context builder ───────────────────────────────────────────────────────────
+
 
 def test_ble_sensors_in_context() -> None:
     ctx = ctx_mod.build(_make_ble_ir())
@@ -155,6 +156,7 @@ def test_switch_platform_added_when_ble_switches() -> None:
 
 # ── HACS emission ─────────────────────────────────────────────────────────────
 
+
 def _emit_hacs(tmp_path: Path, ir: ProtocolIR | None = None) -> Path:
     ctx = ctx_mod.build(ir or _make_ble_ir())
     return hacs_emitter.emit(ctx, tmp_path)
@@ -168,8 +170,9 @@ def test_ble_coordinator_emitted(tmp_path: Path) -> None:
 def test_ble_coordinator_not_emitted_for_http(tmp_path: Path) -> None:
     ir = _make_ble_ir(
         transport=TransportContract(type=TransportType.HTTP_REST, port=8080),
-        commands=[Endpoint(cmd="power", transport=TransportType.HTTP_REST,
-                           direction=Direction.TO_DEVICE)],
+        commands=[
+            Endpoint(cmd="power", transport=TransportType.HTTP_REST, direction=Direction.TO_DEVICE)
+        ],
         events=[],
         extra={},
     )

@@ -3,6 +3,7 @@
 
 Reads config/quality_rubric.yaml and exposes typed QualityRule objects.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -18,8 +19,8 @@ class QualityRule:
     id: str
     name: str
     description: str
-    check_type: str   # "deterministic" | "agent"
-    severity: str     # "error" | "warning"
+    check_type: str  # "deterministic" | "agent"
+    severity: str  # "error" | "warning"
 
 
 def load() -> list[QualityRule]:

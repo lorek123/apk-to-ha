@@ -11,6 +11,7 @@ Bronze-tier quality: not all call sites will be found in minified code, but
 the most common patterns (direct URL literals, axios base config, WS ctor) are
 detected reliably.
 """
+
 from __future__ import annotations
 
 import logging
@@ -38,14 +39,14 @@ _LOGGER = logging.getLogger(__name__)
 _HERMES_MAGIC = b"\xc6\x1f\xbc"
 
 # Regexes applied to the raw bundle text as a fast/fallback path
-_WS_URL_RE = re.compile(r'''["'`](wss?://[^"'`\s]+)["'`]''')
-_WS_URL_BARE_RE = re.compile(r'''\b(wss?://[^\s"'`\x00-\x1f]+)''')
-_HTTP_URL_RE = re.compile(r'''["'`](https?://[^"'`\s]+)["'`]''')
-_PATH_RE = re.compile(r'''["'`](/[a-zA-Z0-9_/.-]{3,})["'`]''')
-_CMD_STR_RE = re.compile(r'''['"](cmd)['"]\s*:\s*['"]([\w-]+)['"]''')
-_WS_PORT_RE = re.compile(r'''['"](ws[s]?://[^"']*?:(\d{4,5}))["']''')
+_WS_URL_RE = re.compile(r"""["'`](wss?://[^"'`\s]+)["'`]""")
+_WS_URL_BARE_RE = re.compile(r"""\b(wss?://[^\s"'`\x00-\x1f]+)""")
+_HTTP_URL_RE = re.compile(r"""["'`](https?://[^"'`\s]+)["'`]""")
+_PATH_RE = re.compile(r"""["'`](/[a-zA-Z0-9_/.-]{3,})["'`]""")
+_CMD_STR_RE = re.compile(r"""['"](cmd)['"]\s*:\s*['"]([\w-]+)['"]""")
+_WS_PORT_RE = re.compile(r"""['"](ws[s]?://[^"']*?:(\d{4,5}))["']""")
 _BASE_URL_RE = re.compile(
-    r'''(?:BASE_URL|baseURL|baseUrl|BASE|SERVER_URL)\s*[:=]\s*["'`]([^"'`]+)["'`]'''
+    r"""(?:BASE_URL|baseURL|baseUrl|BASE|SERVER_URL)\s*[:=]\s*["'`]([^"'`]+)["'`]"""
 )
 
 
@@ -56,8 +57,16 @@ class RNScanner:
         self._root = apk_out_dir
 
     def scan(
-        self, package_name: str,
-    ) -> tuple[TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list[Endpoint], list[Endpoint]]:
+        self,
+        package_name: str,
+    ) -> tuple[
+        TransportContract,
+        DiscoveryMechanism,
+        AuthScheme,
+        StateSchema,
+        list[Endpoint],
+        list[Endpoint],
+    ]:
         bundle_path = self._find_bundle()
         if bundle_path is None:
             _LOGGER.warning("rn_scanner: no bundle found under %s", self._root)
@@ -70,18 +79,19 @@ class RNScanner:
         ws_urls = list(dict.fromkeys(_WS_URL_RE.findall(text) + _WS_URL_BARE_RE.findall(text)))
         http_urls = list(dict.fromkeys(_HTTP_URL_RE.findall(text)))
         base_urls = list(dict.fromkeys(_BASE_URL_RE.findall(text)))
-        cmd_names = list(dict.fromkeys(_CMD_STR_RE.findall(text)))   # [(key, value), ...]
+        cmd_names = list(dict.fromkeys(_CMD_STR_RE.findall(text)))  # [(key, value), ...]
         cmd_names_only = [v for _, v in cmd_names]
 
         # ── AST-level extraction (best-effort, tolerant) ──────────────────────
         try:
             import esprima
+
             ast_data = _ast_extract(esprima.parseScript(text, tolerant=True))
             fetch_calls = ast_data["fetch_calls"]
             ws_ctors = ast_data["ws_ctors"]
             cmd_literals = ast_data["cmd_literals"]
             field_maps = ast_data["field_maps"]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _LOGGER.debug("rn_scanner: AST parse failed (%s) — regex only", exc)
             fetch_calls = []
             ws_ctors = list(ws_urls)
@@ -93,7 +103,8 @@ class RNScanner:
         if all_ws:
             port = _port_from_url(all_ws[0]) or 8887
             transport: TransportContract = TransportContract(
-                type=TransportType.WEBSOCKET, port=port,
+                type=TransportType.WEBSOCKET,
+                port=port,
                 url_template=all_ws[0] if "{host}" not in all_ws[0] else all_ws[0],
             )
         elif fetch_calls or http_urls:
@@ -127,13 +138,15 @@ class RNScanner:
                 for k, v in (field_maps.get(cmd) or {}).items()
                 if k != "cmd"
             ]
-            commands.append(Endpoint(
-                cmd=cmd,
-                transport=transport.type,
-                direction=Direction.TO_DEVICE,
-                request_fields=fields,
-                confidence=0.65,
-            ))
+            commands.append(
+                Endpoint(
+                    cmd=cmd,
+                    transport=transport.type,
+                    direction=Direction.TO_DEVICE,
+                    request_fields=fields,
+                    confidence=0.65,
+                )
+            )
 
         # ── commands from fetch/axios calls ───────────────────────────────────
         for call in fetch_calls:
@@ -145,12 +158,14 @@ class RNScanner:
                 method = call.get("method", "GET").upper()
                 call = call.get("url", call)
             direction = Direction.FROM_DEVICE if method == "GET" else Direction.TO_DEVICE
-            commands.append(Endpoint(
-                cmd=cmd,
-                transport=TransportType.HTTP_REST,
-                direction=direction,
-                confidence=0.6,
-            ))
+            commands.append(
+                Endpoint(
+                    cmd=cmd,
+                    transport=TransportType.HTTP_REST,
+                    direction=direction,
+                    confidence=0.6,
+                )
+            )
 
         # ── state (empty for Bronze; populated from responses in P2-1 analogue) ──
         state = StateSchema()
@@ -164,6 +179,7 @@ class RNScanner:
 
 
 # ── bundle reading ────────────────────────────────────────────────────────────
+
 
 def _read_bundle(path: Path) -> str:
     """Return bundle as text. Handles Hermes bytecode by extracting string literals."""
@@ -201,6 +217,7 @@ def _hermes_extract_strings(data: bytes) -> str:
 
 # ── AST extraction ────────────────────────────────────────────────────────────
 
+
 def _ast_extract(tree: Any) -> dict[str, Any]:
     """Walk esprima AST and collect fetch calls, WS constructors, cmd literals."""
     fetch_calls: list[str | dict[str, Any]] = []
@@ -233,9 +250,12 @@ def _ast_extract(tree: Any) -> dict[str, Any]:
                     fetch_calls.append({"url": url, "method": method})
 
             # axios.get/post/put/delete/patch(url, ...)
-            if (callee.type == "MemberExpression" and
-                    hasattr(callee.object, "name") and callee.object.name == "axios" and
-                    args):
+            if (
+                callee.type == "MemberExpression"
+                and hasattr(callee.object, "name")
+                and callee.object.name == "axios"
+                and args
+            ):
                 url = _lit(args[0])
                 http_method = getattr(callee.property, "name", "post").upper()
                 if url:
@@ -258,16 +278,31 @@ def _ast_extract(tree: Any) -> dict[str, Any]:
                 val = _lit(prop.value) if hasattr(prop, "value") else None
                 if key:
                     obj[key] = val
-            if "cmd" in obj and obj["cmd"]:
+            if obj.get("cmd"):
                 cmd = obj["cmd"]
                 cmd_literals.append(cmd)
                 field_maps[cmd] = {k: v for k, v in obj.items() if v is not None}
 
         # Recurse into all child nodes
-        for attr in ("body", "declarations", "expression", "consequent",
-                     "alternate", "callee", "arguments", "properties",
-                     "elements", "left", "right", "object", "property",
-                     "init", "test", "update", "argument"):
+        for attr in (
+            "body",
+            "declarations",
+            "expression",
+            "consequent",
+            "alternate",
+            "callee",
+            "arguments",
+            "properties",
+            "elements",
+            "left",
+            "right",
+            "object",
+            "property",
+            "init",
+            "test",
+            "update",
+            "argument",
+        ):
             child = getattr(node, attr, None)
             if child is None:
                 continue
@@ -279,9 +314,9 @@ def _ast_extract(tree: Any) -> dict[str, Any]:
 
     _walk(tree)
     return {
-        "fetch_calls": list(dict.fromkeys(
-            c["url"] if isinstance(c, dict) else c for c in fetch_calls
-        )),
+        "fetch_calls": list(
+            dict.fromkeys(c["url"] if isinstance(c, dict) else c for c in fetch_calls)
+        ),
         "ws_ctors": list(dict.fromkeys(ws_ctors)),
         "cmd_literals": list(dict.fromkeys(cmd_literals)),
         "field_maps": field_maps,
@@ -290,6 +325,7 @@ def _ast_extract(tree: Any) -> dict[str, Any]:
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _prop_key(prop: Any) -> str | None:
     key = getattr(prop, "key", None)
@@ -345,7 +381,9 @@ def _infer_kind(value: Any) -> FieldKind:
     return FieldKind.STRING
 
 
-def _defaults() -> tuple[TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list[Any], list[Any]]:
+def _defaults() -> tuple[
+    TransportContract, DiscoveryMechanism, AuthScheme, StateSchema, list[Any], list[Any]
+]:
     return (
         TransportContract(type=TransportType.HTTP_REST, port=80),
         DiscoveryMechanism(type=DiscoveryType.NONE),

@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: MIT
 """Tests for P2-5 static signing-input tracer."""
+
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from engine.extraction.crypto_scanner import CryptoUsage
-from typing import Any
 from engine.extraction.signing_tracer import (
     LLM_THRESHOLD,
     _classify_name,
@@ -20,84 +21,90 @@ from engine.extraction.signing_tracer import (
 )
 from engine.ir.models import SigningTrace
 
-
 # ── unit: _split_concat ───────────────────────────────────────────────────────
 
+
 def test_split_concat_simple() -> None:
-    assert _split_concat('a + b + c') == ['a', 'b', 'c']
+    assert _split_concat("a + b + c") == ["a", "b", "c"]
 
 
 def test_split_concat_with_literal() -> None:
-    assert _split_concat('timestamp + ":" + path') == ['timestamp', '":"', 'path']
+    assert _split_concat('timestamp + ":" + path') == ["timestamp", '":"', "path"]
 
 
 def test_split_concat_preserves_parens() -> None:
-    parts = _split_concat('(a + b) + c')
-    assert '(a + b)' in parts
-    assert 'c' in parts
+    parts = _split_concat("(a + b) + c")
+    assert "(a + b)" in parts
+    assert "c" in parts
 
 
 def test_split_concat_nested_call() -> None:
     # String.valueOf(x) should not be split inside the call
     parts = _split_concat('String.valueOf(ts) + "\\n" + path')
-    assert any('valueOf' in p for p in parts)
-    assert any('path' in p for p in parts)
+    assert any("valueOf" in p for p in parts)
+    assert any("path" in p for p in parts)
 
 
 def test_split_concat_empty() -> None:
-    assert _split_concat('') == []
+    assert _split_concat("") == []
 
 
 def test_split_concat_no_concat() -> None:
-    assert _split_concat('timestamp') == ['timestamp']
+    assert _split_concat("timestamp") == ["timestamp"]
 
 
 # ── unit: _classify_name ─────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("name,expected", [
-    ("timestamp", "timestamp"),
-    ("ts", "timestamp"),
-    ("epoch", "timestamp"),
-    ("nonce", "nonce"),
-    ("requestPath", "path"),
-    ("url", "path"),
-    ("httpMethod", "http_method"),
-    ("requestBody", "body"),
-    ("data", "body"),
-    ("apiKey", "secret_key"),
-    ("secretKey", "secret_key"),
-    ("hmacKey", "secret_key"),
-    ("randomVar", "nonce"),
-    ("var0", "unknown"),
-    ("someWeirdThing", "unknown"),
-])
+
+@pytest.mark.parametrize(
+    "name,expected",
+    [
+        ("timestamp", "timestamp"),
+        ("ts", "timestamp"),
+        ("epoch", "timestamp"),
+        ("nonce", "nonce"),
+        ("requestPath", "path"),
+        ("url", "path"),
+        ("httpMethod", "http_method"),
+        ("requestBody", "body"),
+        ("data", "body"),
+        ("apiKey", "secret_key"),
+        ("secretKey", "secret_key"),
+        ("hmacKey", "secret_key"),
+        ("randomVar", "nonce"),
+        ("var0", "unknown"),
+        ("someWeirdThing", "unknown"),
+    ],
+)
 def test_classify_name(name: Any, expected: Any) -> None:
     assert _classify_name(name) == expected
 
 
 # ── unit: _unwrap_bytes ───────────────────────────────────────────────────────
 
+
 def test_unwrap_bytes_getbytes() -> None:
-    assert _unwrap_bytes('signStr.getBytes()') == 'signStr'
+    assert _unwrap_bytes("signStr.getBytes()") == "signStr"
 
 
 def test_unwrap_bytes_charset() -> None:
-    assert _unwrap_bytes('s.getBytes(StandardCharsets.UTF_8)') == 's'
+    assert _unwrap_bytes("s.getBytes(StandardCharsets.UTF_8)") == "s"
 
 
 def test_unwrap_bytes_chain() -> None:
-    assert _unwrap_bytes('data.trim().getBytes()') == 'data.trim()'
+    assert _unwrap_bytes("data.trim().getBytes()") == "data.trim()"
 
 
 def test_unwrap_bytes_plain() -> None:
-    assert _unwrap_bytes('timestamp') == 'timestamp'
+    assert _unwrap_bytes("timestamp") == "timestamp"
 
 
 # ── unit: _is_string_literal / _find_assignment ───────────────────────────────
 
+
 def test_is_string_literal() -> None:
     assert _is_string_literal('"hello"')
-    assert not _is_string_literal('hello')
+    assert not _is_string_literal("hello")
     assert not _is_string_literal('"unterminated')
 
 
@@ -111,6 +118,7 @@ def test_find_assignment_missing() -> None:
 
 
 # ── unit: _parse_stringbuilder ────────────────────────────────────────────────
+
 
 def test_parse_stringbuilder_appends() -> None:
     method = """
@@ -141,6 +149,7 @@ def test_parse_stringbuilder_chained() -> None:
 
 # ── integration: trace() with synthetic Java fixtures ────────────────────────
 
+
 def _write(tmp_path: Path, rel: str, content: str) -> None:
     p = tmp_path / rel
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -151,7 +160,7 @@ def _usage(class_name: str, algo: str = "HMAC-SHA256") -> CryptoUsage:
     return CryptoUsage(
         algorithm=algo,
         call_site=class_name,
-        context_snippet="Mac.getInstance(\"HmacSHA256\")",
+        context_snippet='Mac.getInstance("HmacSHA256")',
         confidence=1.0,
     )
 
@@ -171,6 +180,7 @@ public class Signer {
     }
 }
 """
+
 
 def test_trace_direct_concat(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _JAVA_DIRECT_CONCAT)
@@ -218,6 +228,7 @@ public class HmacUtil {
 }
 """
 
+
 def test_trace_stringbuilder(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/HmacUtil.java", _JAVA_STRINGBUILDER)
     usages = [_usage("com.example.auth.HmacUtil", "HMAC-SHA1")]
@@ -225,7 +236,7 @@ def test_trace_stringbuilder(tmp_path: Path) -> None:
     assert len(result) == 1
     kinds = [c.kind for c in result[0].components]
     assert "secret_key" in kinds or "unknown" in kinds  # apiKey → secret_key
-    assert "timestamp" in kinds or "unknown" in kinds   # ts → timestamp
+    assert "timestamp" in kinds or "unknown" in kinds  # ts → timestamp
 
 
 # Pattern 3 — multi-update
@@ -246,6 +257,7 @@ public class RequestSigner {
     }
 }
 """
+
 
 def test_trace_multi_update(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/sign/RequestSigner.java", _JAVA_MULTI_UPDATE)
@@ -288,6 +300,7 @@ public class ApiAuth {
 }
 """
 
+
 def test_trace_cross_method(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/ApiAuth.java", _JAVA_CROSS_METHOD)
     usages = [_usage("com.example.auth.ApiAuth")]
@@ -302,13 +315,16 @@ def test_trace_cross_method(tmp_path: Path) -> None:
 
 # ── edge cases ────────────────────────────────────────────────────────────────
 
+
 def test_trace_skips_low_confidence_usage(tmp_path: Path) -> None:
-    usages = [CryptoUsage(
-        algorithm="unknown",
-        call_site="com.example.Base",
-        context_snippet="import javax.crypto",
-        confidence=0.4,
-    )]
+    usages = [
+        CryptoUsage(
+            algorithm="unknown",
+            call_site="com.example.Base",
+            context_snippet="import javax.crypto",
+            confidence=0.4,
+        )
+    ]
     result = trace(usages, tmp_path)
     assert result == []
 
@@ -352,6 +368,7 @@ public class Mystery {
 
 def test_signing_trace_ir_model_serialises() -> None:
     from engine.ir.models import SigningComponent, SigningTrace
+
     t = SigningTrace(
         algorithm="HMAC-SHA256",
         components=[

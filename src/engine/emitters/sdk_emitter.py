@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """P4 — SDK emitter: renders the standalone pip-installable SDK package."""
+
 from __future__ import annotations
 
 import logging
@@ -38,8 +39,11 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
         tests_dir = out_root / "tests"
         tests_dir.mkdir(exist_ok=True)
         _render(env, ctx, tests_dir, "tests/test_signing.py.j2", "test_signing.py")
-        _LOGGER.info("Signing helper emitted (algorithm=%s confidence=%.2f)",
-                     ctx["signing_algorithm"], ctx["signing_confidence"])
+        _LOGGER.info(
+            "Signing helper emitted (algorithm=%s confidence=%.2f)",
+            ctx["signing_algorithm"],
+            ctx["signing_confidence"],
+        )
 
     # P4-6: emit Bleak BLE client + test when BLE characteristics were found
     if ctx.get("has_ble"):
@@ -58,6 +62,8 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     return pkg_dir
 
 
-def _render(env: Environment, ctx: dict[str, Any], out_dir: Path, template: str, filename: str) -> None:
+def _render(
+    env: Environment, ctx: dict[str, Any], out_dir: Path, template: str, filename: str
+) -> None:
     rendered = env.get_template(template).render(**ctx)
     (out_dir / filename).write_text(rendered)

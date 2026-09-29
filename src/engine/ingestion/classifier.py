@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """P1-3 — Framework classifier: Native / Flutter / React Native."""
+
 from __future__ import annotations
 
 import logging
@@ -80,7 +81,9 @@ def check_tuya(apk_out_dir: Path, package_name: str) -> bool:
         for tuya_pkg in _TUYA_PACKAGES:
             pkg_path = sources / tuya_pkg.replace(".", "/")
             if pkg_path.exists():
-                _LOGGER.warning("Tuya SDK detected (package dir %s) — use tinytuya instead", pkg_path)
+                _LOGGER.warning(
+                    "Tuya SDK detected (package dir %s) — use tinytuya instead", pkg_path
+                )
                 return True
 
     # Pass 2 — app package name prefix
@@ -153,8 +156,6 @@ def _tuya_in_api_strings(apk_out_dir: Path) -> bool:
             continue
         for host in _TUYA_API_HOSTS:
             if host in text:
-                _LOGGER.warning(
-                    "Tuya SDK detected (API host '%s' in %s)", host, f.name
-                )
+                _LOGGER.warning("Tuya SDK detected (API host '%s' in %s)", host, f.name)
                 return True
     return False

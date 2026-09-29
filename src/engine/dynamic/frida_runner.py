@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Python Frida orchestration: spawn app, inject agent, collect events."""
+
 from __future__ import annotations
 
 import asyncio
@@ -9,6 +10,7 @@ from typing import Any
 
 try:
     import frida
+
     _FRIDA_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _FRIDA_AVAILABLE = False
@@ -17,7 +19,6 @@ from .capture_model import (
     CaptureSession,
     HmacCapture,
     HttpCapture,
-    UdpCapture,
     WsCapture,
 )
 
@@ -102,38 +103,48 @@ async def capture(
     for ev in events:
         t = ev.get("type")
         if t == "hmac_call":
-            session_obj.hmac_calls.append(HmacCapture(
-                algorithm=ev.get("algorithm", "unknown"),
-                key_hex=ev.get("key_hex", ""),
-                input_hex=ev.get("input_hex", ""),
-                output_hex=ev.get("output_hex", ""),
-                timestamp_ms=ev.get("ts", 0),
-            ))
+            session_obj.hmac_calls.append(
+                HmacCapture(
+                    algorithm=ev.get("algorithm", "unknown"),
+                    key_hex=ev.get("key_hex", ""),
+                    input_hex=ev.get("input_hex", ""),
+                    output_hex=ev.get("output_hex", ""),
+                    timestamp_ms=ev.get("ts", 0),
+                )
+            )
         elif t == "http_call":
-            session_obj.http_calls.append(HttpCapture(
-                method=ev.get("method", ""),
-                url=ev.get("url", ""),
-                request_headers=ev.get("request_headers") or {},
-                request_body=ev.get("request_body"),
-                response_code=ev.get("response_code", 0),
-                response_body=ev.get("response_body"),
-                timestamp_ms=ev.get("ts", 0),
-            ))
+            session_obj.http_calls.append(
+                HttpCapture(
+                    method=ev.get("method", ""),
+                    url=ev.get("url", ""),
+                    request_headers=ev.get("request_headers") or {},
+                    request_body=ev.get("request_body"),
+                    response_code=ev.get("response_code", 0),
+                    response_body=ev.get("response_body"),
+                    timestamp_ms=ev.get("ts", 0),
+                )
+            )
         elif t == "ws_send":
-            session_obj.ws_frames.append(WsCapture(
-                direction="send",
-                frame=ev.get("frame", ""),
-                timestamp_ms=ev.get("ts", 0),
-            ))
+            session_obj.ws_frames.append(
+                WsCapture(
+                    direction="send",
+                    frame=ev.get("frame", ""),
+                    timestamp_ms=ev.get("ts", 0),
+                )
+            )
         elif t == "ws_recv":
-            session_obj.ws_frames.append(WsCapture(
-                direction="recv",
-                frame=ev.get("frame", ""),
-                timestamp_ms=ev.get("ts", 0),
-            ))
+            session_obj.ws_frames.append(
+                WsCapture(
+                    direction="recv",
+                    frame=ev.get("frame", ""),
+                    timestamp_ms=ev.get("ts", 0),
+                )
+            )
 
     _LOGGER.info(
         "frida: captured hmac=%d http=%d ws=%d",
-        len(session_obj.hmac_calls), len(session_obj.http_calls), len(session_obj.ws_frames),
+        len(session_obj.hmac_calls),
+        len(session_obj.http_calls),
+        len(session_obj.ws_frames),
     )
     return session_obj

@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: MIT
 """Tests for JavaCodeGraph tree-sitter call graph builder."""
+
 from __future__ import annotations
 
 from pathlib import Path
-
-import pytest
 
 from engine.extraction.java_code_graph import JavaCodeGraph
 
@@ -47,6 +46,7 @@ public class AuthHelper {
 
 # ── build ─────────────────────────────────────────────────────────────────────
 
+
 def test_build_indexes_methods(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
@@ -76,6 +76,7 @@ def test_build_class_name_in_key(tmp_path: Path) -> None:
 
 # ── method_sources ────────────────────────────────────────────────────────────
 
+
 def test_method_source_contains_body(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
@@ -100,6 +101,7 @@ def test_method_source_exact_key(tmp_path: Path) -> None:
 
 # ── call graph edges ──────────────────────────────────────────────────────────
 
+
 def test_callees_recorded(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
@@ -122,6 +124,7 @@ def test_callers_of_missing_returns_empty(tmp_path: Path) -> None:
 
 
 # ── bfs_from ──────────────────────────────────────────────────────────────────
+
 
 def test_bfs_from_short_name(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
@@ -175,6 +178,7 @@ public class B {
 
 # ── subgraph_text ─────────────────────────────────────────────────────────────
 
+
 def test_subgraph_text_includes_method_bodies(tmp_path: Path) -> None:
     _write(tmp_path, "com/example/auth/Signer.java", _SIGNER_JAVA)
     g = JavaCodeGraph.build(tmp_path)
@@ -189,6 +193,7 @@ def test_subgraph_text_missing_start_returns_empty(tmp_path: Path) -> None:
 
 
 # ── integration: signing_tracer uses graph ────────────────────────────────────
+
 
 def test_tracer_uses_graph_for_cross_method(tmp_path: Path) -> None:
     """Graph enables the tracer to resolve a helper in a *separate* file."""
@@ -221,12 +226,14 @@ public class PayloadBuilder {
     from engine.extraction.crypto_scanner import CryptoUsage
     from engine.extraction.signing_tracer import trace
 
-    usages = [CryptoUsage(
-        algorithm="HMAC-SHA256",
-        call_site="com.example.auth.ApiSigner",
-        context_snippet='Mac.getInstance("HmacSHA256")',
-        confidence=1.0,
-    )]
+    usages = [
+        CryptoUsage(
+            algorithm="HMAC-SHA256",
+            call_site="com.example.auth.ApiSigner",
+            context_snippet='Mac.getInstance("HmacSHA256")',
+            confidence=1.0,
+        )
+    ]
     graph = JavaCodeGraph.build(tmp_path)
     result = trace(usages, tmp_path, graph)
     assert len(result) == 1

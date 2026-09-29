@@ -5,6 +5,7 @@ Thin async wrapper around the Anthropic SDK. Returns structured Pydantic objects
 from LLM calls, with full structured logging and graceful degradation when
 ANTHROPIC_API_KEY is absent or the SDK is not installed.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -23,9 +24,9 @@ _LOGGER = logging.getLogger(__name__)
 
 # Per-model cost estimates (USD per million tokens)
 _COST_PER_M: dict[str, tuple[float, float]] = {
-    "claude-sonnet-4-6":          (3.0, 15.0),
-    "claude-opus-4-7":            (15.0, 75.0),
-    "claude-haiku-4-5-20251001":  (0.8, 4.0),
+    "claude-sonnet-4-6": (3.0, 15.0),
+    "claude-opus-4-7": (15.0, 75.0),
+    "claude-haiku-4-5-20251001": (0.8, 4.0),
 }
 _DEFAULT_MODEL = "claude-sonnet-4-6"
 _MAX_TOKENS = 2048
@@ -68,7 +69,7 @@ async def call(
         return None
 
     try:
-        import anthropic  # noqa: PLC0415 — optional dependency
+        import anthropic
     except ImportError:
         _LOGGER.warning(
             "anthropic package not installed; run: uv pip install 'hacs-integration-engine[llm]'"
@@ -98,10 +99,12 @@ async def call(
             )
         except anthropic.RateLimitError:
             if attempt < _MAX_RETRIES:
-                delay = _RETRY_BASE_DELAY * (2 ** attempt)
+                delay = _RETRY_BASE_DELAY * (2**attempt)
                 _LOGGER.warning(
                     "LLM rate-limited (attempt %d/%d) — sleeping %.0fs",
-                    attempt + 1, _MAX_RETRIES + 1, delay,
+                    attempt + 1,
+                    _MAX_RETRIES + 1,
+                    delay,
                 )
                 await asyncio.sleep(delay)
                 continue
@@ -124,8 +127,13 @@ async def call(
         _LOGGER.info(
             "LLM call: model=%s prompt=%s response=%s "
             "input_tokens=%d output_tokens=%d latency_ms=%d cost_usd=%.4f",
-            model, prompt_hash, resp_hash,
-            input_tok, output_tok, latency_ms, cost,
+            model,
+            prompt_hash,
+            resp_hash,
+            input_tok,
+            output_tok,
+            latency_ms,
+            cost,
         )
 
         try:

@@ -9,22 +9,22 @@ Requires:
 The container is started with --privileged so the entrypoint can create
 /dev/binder, /dev/ashmem, and related devices automatically.
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
-import subprocess
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 _LOGGER = logging.getLogger(__name__)
 
 _REDROID_IMAGE = "redroid/redroid:13.0.0-latest"
 _ADB_PORT = 5555
 _FRIDA_PORT = 27042
-_BOOT_TIMEOUT = 120   # seconds to wait for Android to finish booting
-_POLL_INTERVAL = 3    # seconds between boot-check polls
+_BOOT_TIMEOUT = 120  # seconds to wait for Android to finish booting
+_POLL_INTERVAL = 3  # seconds between boot-check polls
 
 
 class RedroidUnavailableError(Exception):
@@ -43,21 +43,23 @@ async def ensure_binder_module() -> None:
         return
     _LOGGER.info("redroid: loading binder_linux kernel module")
     result = await asyncio.create_subprocess_exec(
-        "modprobe", "binder_linux",
+        "modprobe",
+        "binder_linux",
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.PIPE,
     )
     _, stderr = await result.communicate()
     if result.returncode != 0:
-        raise RedroidUnavailableError(
-            f"binder_linux modprobe failed: {stderr.decode().strip()}"
-        )
+        raise RedroidUnavailableError(f"binder_linux modprobe failed: {stderr.decode().strip()}")
 
 
 async def pull_image_if_absent() -> None:
     """Pull the redroid image if not already present locally."""
     proc = await asyncio.create_subprocess_exec(
-        "docker", "image", "inspect", _REDROID_IMAGE,
+        "docker",
+        "image",
+        "inspect",
+        _REDROID_IMAGE,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
     )
@@ -67,7 +69,9 @@ async def pull_image_if_absent() -> None:
 
     _LOGGER.info("redroid: pulling %s (first run, may take a few minutes)", _REDROID_IMAGE)
     proc = await asyncio.create_subprocess_exec(
-        "docker", "pull", _REDROID_IMAGE,
+        "docker",
+        "pull",
+        _REDROID_IMAGE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
     )
@@ -80,17 +84,25 @@ async def start_container(container_name: str = "hacs-engine-redroid") -> str:
     """Start the redroid container and return its ID."""
     # Remove stale container with the same name
     await asyncio.create_subprocess_exec(
-        "docker", "rm", "-f", container_name,
+        "docker",
+        "rm",
+        "-f",
+        container_name,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
     )
 
     proc = await asyncio.create_subprocess_exec(
-        "docker", "run", "-d",
+        "docker",
+        "run",
+        "-d",
         "--privileged",
-        "--name", container_name,
-        "-p", f"{_ADB_PORT}:{_ADB_PORT}",
-        "-p", f"{_FRIDA_PORT}:{_FRIDA_PORT}",
+        "--name",
+        container_name,
+        "-p",
+        f"{_ADB_PORT}:{_ADB_PORT}",
+        "-p",
+        f"{_FRIDA_PORT}:{_FRIDA_PORT}",
         _REDROID_IMAGE,
         "androidboot.redroid_width=1080",
         "androidboot.redroid_height=1920",
@@ -100,9 +112,7 @@ async def start_container(container_name: str = "hacs-engine-redroid") -> str:
     )
     stdout, stderr = await proc.communicate()
     if proc.returncode != 0:
-        raise RedroidUnavailableError(
-            f"docker run failed: {stderr.decode().strip()}"
-        )
+        raise RedroidUnavailableError(f"docker run failed: {stderr.decode().strip()}")
     container_id = stdout.decode().strip()
     _LOGGER.info("redroid: container started (%s)", container_id[:12])
     return container_id
@@ -113,8 +123,11 @@ async def wait_for_boot(container_id: str) -> None:
     deadline = time.monotonic() + _BOOT_TIMEOUT
     while time.monotonic() < deadline:
         proc = await asyncio.create_subprocess_exec(
-            "docker", "exec", container_id,
-            "getprop", "sys.boot_completed",
+            "docker",
+            "exec",
+            container_id,
+            "getprop",
+            "sys.boot_completed",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,
         )
@@ -128,7 +141,10 @@ async def wait_for_boot(container_id: str) -> None:
 
 async def stop_container(container_id: str) -> None:
     proc = await asyncio.create_subprocess_exec(
-        "docker", "rm", "-f", container_id,
+        "docker",
+        "rm",
+        "-f",
+        container_id,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
     )

@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: MIT
 """Tests for the protocol scanner — constant resolution, command lists, events."""
+
 from __future__ import annotations
 
 from pathlib import Path
-
-import pytest
 
 from engine.extraction.protocol_scanner import ProtocolScanner
 from engine.ir.models import Direction, TransportType
@@ -21,11 +20,17 @@ def _make_sources(tmp_path: Path, files: dict[str, str]) -> Path:
 
 # ── constant resolution ───────────────────────────────────────────────────────
 
+
 def test_collect_str_constants(tmp_path: Path) -> None:
-    src = _make_sources(tmp_path, {"Api.java": """
+    src = _make_sources(
+        tmp_path,
+        {
+            "Api.java": """
         public static final String MUTE = "mute";
         private static final String GRANT = "grantAccess";
-    """})
+    """
+        },
+    )
     scanner = ProtocolScanner(src)
     scanner._app_sources = list((src / "sources").rglob("*.java"))
     scanner._collect_str_constants()
@@ -34,7 +39,10 @@ def test_collect_str_constants(tmp_path: Path) -> None:
 
 
 def test_collect_cmd_lists(tmp_path: Path) -> None:
-    src = _make_sources(tmp_path, {"Api.java": """
+    src = _make_sources(
+        tmp_path,
+        {
+            "Api.java": """
         public static final String MUTE = "mute";
         public static final String POWER = "power";
         public static final String GIN = "gin";
@@ -42,7 +50,9 @@ def test_collect_cmd_lists(tmp_path: Path) -> None:
             new ArrayList(Arrays.asList(MUTE, POWER));
         public static final ArrayList ROBOT_NO_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList(GIN));
-    """})
+    """
+        },
+    )
     scanner = ProtocolScanner(src)
     scanner._app_sources = list((src / "sources").rglob("*.java"))
     scanner._collect_str_constants()
@@ -54,8 +64,12 @@ def test_collect_cmd_lists(tmp_path: Path) -> None:
 
 # ── constant-based command extraction ────────────────────────────────────────
 
+
 def test_constant_based_commands_resolved(tmp_path: Path) -> None:
-    src = _make_sources(tmp_path, {"Api.java": """
+    src = _make_sources(
+        tmp_path,
+        {
+            "Api.java": """
         public static final String MUTE = "mute";
         public static final String POWER = "power";
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
@@ -71,7 +85,9 @@ def test_constant_based_commands_resolved(tmp_path: Path) -> None:
             jSONObject.put("cmd", POWER);
             jSONObject.put("enable", false);
         }
-    """})
+    """
+        },
+    )
     scanner = ProtocolScanner(src)
     transport, discovery, auth, state, commands, events = scanner.scan("com.test")
 
@@ -81,7 +97,10 @@ def test_constant_based_commands_resolved(tmp_path: Path) -> None:
 
 
 def test_constant_commands_awaits_response(tmp_path: Path) -> None:
-    src = _make_sources(tmp_path, {"Api.java": """
+    src = _make_sources(
+        tmp_path,
+        {
+            "Api.java": """
         public static final String MUTE = "mute";
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList(MUTE));
@@ -89,7 +108,9 @@ def test_constant_commands_awaits_response(tmp_path: Path) -> None:
             new ArrayList(Arrays.asList());
 
         void x() { jSONObject.put("cmd", MUTE); jSONObject.put("enable", true); }
-    """})
+    """
+        },
+    )
     scanner = ProtocolScanner(src)
     _, _, _, _, commands, _ = scanner.scan("com.test")
     mute = next(c for c in commands if c.cmd == "mute")
@@ -97,14 +118,19 @@ def test_constant_commands_awaits_response(tmp_path: Path) -> None:
 
 
 def test_literal_commands_not_in_response_list(tmp_path: Path) -> None:
-    src = _make_sources(tmp_path, {"Api.java": """
+    src = _make_sources(
+        tmp_path,
+        {
+            "Api.java": """
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
         public static final ArrayList ROBOT_NO_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
 
         void x() { jSONObject.put("cmd", "mode"); jSONObject.put("mode", 3); }
-    """})
+    """
+        },
+    )
     scanner = ProtocolScanner(src)
     _, _, _, _, commands, _ = scanner.scan("com.test")
     mode = next((c for c in commands if c.cmd == "mode"), None)
@@ -114,8 +140,12 @@ def test_literal_commands_not_in_response_list(tmp_path: Path) -> None:
 
 # ── events (no-response list → FROM_DEVICE) ───────────────────────────────────
 
+
 def test_no_response_cmds_become_events(tmp_path: Path) -> None:
-    src = _make_sources(tmp_path, {"Api.java": """
+    src = _make_sources(
+        tmp_path,
+        {
+            "Api.java": """
         public static final String GIN = "gin";
         public static final String STREAMING = "streaming";
         public static final String USER_CONTROL = "user_control";
@@ -123,7 +153,9 @@ def test_no_response_cmds_become_events(tmp_path: Path) -> None:
             new ArrayList(Arrays.asList());
         public static final ArrayList ROBOT_NO_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList(GIN, STREAMING, USER_CONTROL));
-    """})
+    """
+        },
+    )
     scanner = ProtocolScanner(src)
     _, _, _, _, commands, events = scanner.scan("com.test")
 
@@ -137,8 +169,12 @@ def test_no_response_cmds_become_events(tmp_path: Path) -> None:
 
 # ── mode→action extraction ────────────────────────────────────────────────────
 
+
 def test_mode_actions_extracted(tmp_path: Path) -> None:
-    src = _make_sources(tmp_path, {"Adapter.java": """
+    src = _make_sources(
+        tmp_path,
+        {
+            "Adapter.java": """
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
         public static final ArrayList ROBOT_NO_RESPONSE_COMMAND_LIST =
@@ -152,7 +188,9 @@ def test_mode_actions_extracted(tmp_path: Path) -> None:
                 jSONObject.put("mode", 4);
             }
         }
-    """})
+    """
+        },
+    )
     scanner = ProtocolScanner(src)
     scanner.scan("com.test")
     assert scanner.extra.get("mode_actions") == {3: "turn_left", 4: "turn_right"}
@@ -160,8 +198,12 @@ def test_mode_actions_extracted(tmp_path: Path) -> None:
 
 # ── field extraction ──────────────────────────────────────────────────────────
 
+
 def test_fields_extracted_for_literal_cmd(tmp_path: Path) -> None:
-    src = _make_sources(tmp_path, {"Api.java": """
+    src = _make_sources(
+        tmp_path,
+        {
+            "Api.java": """
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
         public static final ArrayList ROBOT_NO_RESPONSE_COMMAND_LIST =
@@ -172,7 +214,9 @@ def test_fields_extracted_for_literal_cmd(tmp_path: Path) -> None:
             jSONObject.put("ssid", ssid);
             jSONObject.put("wifi_pw", pw);
         }
-    """})
+    """
+        },
+    )
     scanner = ProtocolScanner(src)
     _, _, _, _, commands, _ = scanner.scan("com.test")
     connect = next(c for c in commands if c.cmd == "connectWifi")
@@ -183,14 +227,20 @@ def test_fields_extracted_for_literal_cmd(tmp_path: Path) -> None:
 
 # ── transport detection ───────────────────────────────────────────────────────
 
+
 def test_websocket_port_detected(tmp_path: Path) -> None:
-    src = _make_sources(tmp_path, {"WsClient.java": """
+    src = _make_sources(
+        tmp_path,
+        {
+            "WsClient.java": """
         public static final ArrayList ROBOT_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
         public static final ArrayList ROBOT_NO_RESPONSE_COMMAND_LIST =
             new ArrayList(Arrays.asList());
         new WebSocketClient(new URI("ws://192.168.1.1:8887"));
-    """})
+    """
+        },
+    )
     scanner = ProtocolScanner(src)
     transport, _, _, _, _, _ = scanner.scan("com.test")
     assert transport.type == TransportType.WEBSOCKET
@@ -199,9 +249,11 @@ def test_websocket_port_detected(tmp_path: Path) -> None:
 
 # ── snapshot round-trip ───────────────────────────────────────────────────────
 
+
 def test_bullb_r2d2_snapshot() -> None:
     """Integration smoke test: the committed snapshot has the expected shape."""
     from engine.snapshot.harness import load
+
     ir = load("bullb_r2d2")
     assert ir.transport.port == 8887
     assert ir.discovery.port == 8090

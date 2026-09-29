@@ -6,6 +6,7 @@ Stage B: BLE service UUID match against the HA Core manifest index.
 
 Both indices are fetched from GitHub and cached locally for one week.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -14,10 +15,9 @@ import logging
 import time
 import tomllib
 from pathlib import Path
+from typing import cast
 
 import aiohttp
-
-from typing import cast
 
 from ..ir.models import DuplicateCheckResult
 
@@ -59,7 +59,9 @@ async def check(
         if package_name.startswith(prefix):
             _LOGGER.info(
                 "Duplicate found via package name: %s → %s/%s",
-                package_name, location, name,
+                package_name,
+                location,
+                name,
             )
             return DuplicateCheckResult(
                 found=True,
@@ -73,9 +75,7 @@ async def check(
     app_label = package_name.split(".")[-1].lower()
     for comp in core_components:
         if comp == app_label or app_label.startswith(comp) or comp.startswith(app_label):
-            _LOGGER.info(
-                "Possible duplicate in HA Core: %s (app label: %s)", comp, app_label
-            )
+            _LOGGER.info("Possible duplicate in HA Core: %s (app label: %s)", comp, app_label)
             return DuplicateCheckResult(
                 found=True,
                 location="core",
@@ -91,7 +91,8 @@ async def check(
             if match:
                 _LOGGER.info(
                     "BLE service UUID %s matches HA Core integration: %s",
-                    uuid, match["name"],
+                    uuid,
+                    match["name"],
                 )
                 return DuplicateCheckResult(
                     found=True,
@@ -158,9 +159,7 @@ async def _fetch_ble_uuid_index(
         url = f"{base}/{name}/manifest.json"
         async with sem:
             try:
-                async with session.get(
-                    url, timeout=aiohttp.ClientTimeout(total=5)
-                ) as resp:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                     if resp.status != 200:
                         return
                     data = await resp.json(content_type=None)

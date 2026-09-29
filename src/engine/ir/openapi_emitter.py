@@ -14,6 +14,7 @@ nullable fields get nullable: true.
 required: false fields are omitted from the `required` list.
 Repeated payload shapes are extracted as $ref components.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -35,8 +36,7 @@ def emit(ir: ProtocolIR) -> dict[str, Any]:
             "title": f"{ir.app_name} Device API",
             "version": ir.version_name or "1.0.0",
             "description": (
-                f"Auto-generated from APK `{ir.package_name}` "
-                f"by HACS Integration Engine."
+                f"Auto-generated from APK `{ir.package_name}` by HACS Integration Engine."
             ),
         },
         "servers": _servers(ir),
@@ -50,6 +50,7 @@ def emit(ir: ProtocolIR) -> dict[str, Any]:
 
 
 # ── path builder ──────────────────────────────────────────────────────────────
+
 
 def _add_path(
     ep: Endpoint,
@@ -105,6 +106,7 @@ def _add_path(
 
 # ── field → JSON Schema ───────────────────────────────────────────────────────
 
+
 def _fields_to_schema(fields: list[FieldDef]) -> dict[str, Any]:
     properties: dict[str, Any] = {}
     required: list[str] = []
@@ -127,12 +129,12 @@ def _fields_to_schema(fields: list[FieldDef]) -> dict[str, Any]:
 
 
 _KIND_TO_OPENAPI: dict[FieldKind, dict[str, Any]] = {
-    FieldKind.STRING:  {"type": "string"},
+    FieldKind.STRING: {"type": "string"},
     FieldKind.INTEGER: {"type": "integer"},
-    FieldKind.NUMBER:  {"type": "number"},
+    FieldKind.NUMBER: {"type": "number"},
     FieldKind.BOOLEAN: {"type": "boolean"},
-    FieldKind.OBJECT:  {"type": "object"},
-    FieldKind.ARRAY:   {"type": "array", "items": {"type": "string"}},
+    FieldKind.OBJECT: {"type": "object"},
+    FieldKind.ARRAY: {"type": "array", "items": {"type": "string"}},
 }
 
 
@@ -143,6 +145,7 @@ def _field_schema(f: FieldDef) -> dict[str, Any]:
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _schema_name(cmd: str, suffix: str) -> str:
     """'powerControl' + 'Request' → 'PowerControlRequest'"""
@@ -180,7 +183,9 @@ def _servers(ir: ProtocolIR) -> list[dict[str, Any]]:
     else:
         url = f"tcp://{{host}}:{port or 0}"
 
-    return [{
-        "url": url,
-        "variables": {"host": {"default": "192.168.1.1", "description": "Device IP address"}},
-    }]
+    return [
+        {
+            "url": url,
+            "variables": {"host": {"default": "192.168.1.1", "description": "Device IP address"}},
+        }
+    ]

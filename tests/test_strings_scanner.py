@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: MIT
 """Tests for P5-6 strings.xml scanner and entity-section translation emission."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any
-
-import pytest
 
 from engine.emitters import context as ctx_mod
 from engine.emitters import hacs_emitter
@@ -28,16 +27,14 @@ from engine.ir.models import (
     TransportType,
 )
 
-
 # ── strings_scanner unit tests ────────────────────────────────────────────────
+
 
 def _write_strings_xml(tmp_path: Path, strings: dict[str, str]) -> Path:
     res_dir = tmp_path / "resources" / "res" / "values"
     res_dir.mkdir(parents=True)
     xml_path = res_dir / "strings.xml"
-    items = "\n".join(
-        f'    <string name="{k}">{v}</string>' for k, v in strings.items()
-    )
+    items = "\n".join(f'    <string name="{k}">{v}</string>' for k, v in strings.items())
     xml_path.write_text(
         f'<?xml version="1.0" encoding="utf-8"?>\n<resources>\n{items}\n</resources>\n'
     )
@@ -123,6 +120,7 @@ def test_scan_handles_malformed_xml(tmp_path: Path) -> None:
 
 # ── context builder tests ─────────────────────────────────────────────────────
 
+
 def _make_ir(**overrides: Any) -> ProtocolIR:
     defaults = dict(
         apk_path="/tmp/test.apk",
@@ -134,12 +132,18 @@ def _make_ir(**overrides: Any) -> ProtocolIR:
         discovery=DiscoveryMechanism(type=DiscoveryType.NONE),
         auth=AuthScheme(type=AuthType.NONE),
         # WS sensors come from state.fields; switches come from commands
-        state=StateSchema(fields=[
-            FieldDef(name="temperature", kind=FieldKind.NUMBER, entity_hint=EntityHint.SENSOR),
-        ]),
+        state=StateSchema(
+            fields=[
+                FieldDef(name="temperature", kind=FieldKind.NUMBER, entity_hint=EntityHint.SENSOR),
+            ]
+        ),
         commands=[
-            Endpoint(cmd="power", transport=TransportType.WEBSOCKET,
-                     direction=Direction.TO_DEVICE, entity_hint=EntityHint.SWITCH),
+            Endpoint(
+                cmd="power",
+                transport=TransportType.WEBSOCKET,
+                direction=Direction.TO_DEVICE,
+                entity_hint=EntityHint.SWITCH,
+            ),
         ],
         events=[],
         extra={},
@@ -151,8 +155,9 @@ def _make_ir(**overrides: Any) -> ProtocolIR:
 def test_context_has_device_errors_from_android_strings() -> None:
     ir = _make_ir(extra={"android_strings": {"error_connect": "Cannot connect to device"}})
     ctx = ctx_mod.build(ir)
-    assert any(e["key"] == "error_connect" and "connect" in e["msg"].lower()
-               for e in ctx["device_errors"])
+    assert any(
+        e["key"] == "error_connect" and "connect" in e["msg"].lower() for e in ctx["device_errors"]
+    )
 
 
 def test_context_device_errors_key_is_snake_case() -> None:
@@ -211,6 +216,7 @@ def test_context_entity_sections_empty_when_no_entities() -> None:
 
 
 # ── emission tests ────────────────────────────────────────────────────────────
+
 
 def _emit(tmp_path: Path, ir: ProtocolIR) -> Path:
     ctx = ctx_mod.build(ir)

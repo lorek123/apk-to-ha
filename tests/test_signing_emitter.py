@@ -1,21 +1,19 @@
 # SPDX-License-Identifier: MIT
 """Tests for P2-6 signing emitter."""
+
 from __future__ import annotations
 
 import base64
 import hashlib
 import hmac
-import textwrap
 from pathlib import Path
 from typing import Any
-
-import pytest
 
 from engine.extraction.signing_emitter import build
 from engine.ir.models import SigningComponent, SigningTrace
 
-
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _trace(
     algorithm: str = "HMAC-SHA256",
@@ -43,6 +41,7 @@ def _trace(
 
 
 # ── unit: build() ─────────────────────────────────────────────────────────────
+
 
 def test_build_returns_has_signing_true() -> None:
     ctx = build([_trace()])
@@ -138,9 +137,11 @@ def test_build_confidence_propagated() -> None:
 
 # ── integration: rendered signing.py is executable ────────────────────────────
 
+
 def _render_signing(ctx: dict[str, Any]) -> str:
     """Render signing.py.j2 and return the output string."""
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
+
     tmpl_dir = Path(__file__).parents[1] / "src" / "engine" / "templates" / "sdk"
     env = Environment(
         loader=FileSystemLoader(str(tmpl_dir)),
@@ -202,8 +203,10 @@ def test_rendered_signing_py_has_spdx_header() -> None:
 
 # ── integration: rendered test_signing.py is valid Python ─────────────────────
 
+
 def _render_test(ctx: dict[str, Any]) -> str:
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
+
     tmpl_dir = Path(__file__).parents[1] / "src" / "engine" / "templates" / "sdk"
     env = Environment(
         loader=FileSystemLoader(str(tmpl_dir)),
@@ -234,6 +237,7 @@ def test_rendered_test_signing_has_spdx() -> None:
 
 
 # ── sdk_emitter integration ───────────────────────────────────────────────────
+
 
 def test_sdk_emitter_creates_signing_py_when_has_signing(tmp_path: Path) -> None:
     from engine.emitters.sdk_emitter import emit

@@ -11,6 +11,7 @@ Fails gracefully: returns None if the package is not on the Play Store,
 the network is unavailable, or scraping fails for any reason. The pipeline
 continues without Play Store data.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -40,7 +41,7 @@ async def fetch(package_name: str) -> PlayStoreInfo | None:
 
 def _fetch_sync(package_name: str) -> PlayStoreInfo | None:
     """Blocking call to google-play-scraper. Run via asyncio.to_thread."""
-    from google_play_scraper import app, exceptions  # noqa: PLC0415
+    from google_play_scraper import app, exceptions
 
     try:
         data = app(package_name, lang="en", country="us")
@@ -67,7 +68,8 @@ def _clean(text: str | None) -> str:
         return ""
     import html
     import re
+
     text = html.unescape(text)
-    text = re.sub(r"<[^>]+>", " ", text)   # strip tags
-    text = re.sub(r"\s+", " ", text)         # collapse whitespace
+    text = re.sub(r"<[^>]+>", " ", text)  # strip tags
+    text = re.sub(r"\s+", " ", text)  # collapse whitespace
     return text.strip()

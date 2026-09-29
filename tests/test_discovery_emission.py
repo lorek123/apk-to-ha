@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: MIT
 """Tests for P5-7 discovery block emission in manifest.json and config_flow."""
+
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
-
-import pytest
 
 from engine.emitters import context as ctx_mod
 from engine.emitters import hacs_emitter
-from pathlib import Path
 from engine.ir.models import (
     AuthScheme,
     AuthType,
@@ -45,11 +44,14 @@ def _ctx(discovery: DiscoveryMechanism, **ir_overrides: Any) -> dict[str, Any]:
 
 # ── context builder ───────────────────────────────────────────────────────────
 
+
 def test_has_zeroconf_true_when_type_set() -> None:
-    ctx = _ctx(DiscoveryMechanism(
-        type=DiscoveryType.ZEROCONF,
-        service_type="_device._tcp.local.",
-    ))
+    ctx = _ctx(
+        DiscoveryMechanism(
+            type=DiscoveryType.ZEROCONF,
+            service_type="_device._tcp.local.",
+        )
+    )
     assert ctx["has_zeroconf"] is True
 
 
@@ -59,10 +61,12 @@ def test_has_zeroconf_false_when_none() -> None:
 
 
 def test_zeroconf_types_populated() -> None:
-    ctx = _ctx(DiscoveryMechanism(
-        type=DiscoveryType.ZEROCONF,
-        service_type="_lightbulb._tcp.local.",
-    ))
+    ctx = _ctx(
+        DiscoveryMechanism(
+            type=DiscoveryType.ZEROCONF,
+            service_type="_lightbulb._tcp.local.",
+        )
+    )
     assert "_lightbulb._tcp.local." in ctx["zeroconf_types"]
 
 
@@ -83,10 +87,12 @@ def test_dhcp_hostnames_from_udp_broadcast() -> None:
 
 
 def test_has_dhcp_from_hostname_pattern() -> None:
-    ctx = _ctx(DiscoveryMechanism(
-        type=DiscoveryType.ZEROCONF,
-        hostname_pattern="mydevice*",
-    ))
+    ctx = _ctx(
+        DiscoveryMechanism(
+            type=DiscoveryType.ZEROCONF,
+            hostname_pattern="mydevice*",
+        )
+    )
     assert ctx["has_dhcp"] is True
     assert "mydevice*" in ctx["dhcp_hostnames"]
 
@@ -99,6 +105,7 @@ def test_no_discovery_both_false() -> None:
 
 # ── manifest.json rendering ───────────────────────────────────────────────────
 
+
 def _render_manifest(tmp_path: Path, discovery: DiscoveryMechanism) -> dict[str, Any]:
     ctx = _ctx(discovery)
     hacs_emitter.emit(ctx, tmp_path)
@@ -109,10 +116,13 @@ def _render_manifest(tmp_path: Path, discovery: DiscoveryMechanism) -> dict[str,
 
 
 def test_manifest_zeroconf_block(tmp_path: Path) -> None:
-    manifest = _render_manifest(tmp_path, DiscoveryMechanism(
-        type=DiscoveryType.ZEROCONF,
-        service_type="_mydevice._tcp.local.",
-    ))
+    manifest = _render_manifest(
+        tmp_path,
+        DiscoveryMechanism(
+            type=DiscoveryType.ZEROCONF,
+            service_type="_mydevice._tcp.local.",
+        ),
+    )
     assert "zeroconf" in manifest
     assert any(e["type"] == "_mydevice._tcp.local." for e in manifest["zeroconf"])
 
@@ -123,10 +133,13 @@ def test_manifest_no_zeroconf_block_when_none(tmp_path: Path) -> None:
 
 
 def test_manifest_dhcp_block(tmp_path: Path) -> None:
-    manifest = _render_manifest(tmp_path, DiscoveryMechanism(
-        type=DiscoveryType.UDP_BROADCAST,
-        port=6445,
-    ))
+    manifest = _render_manifest(
+        tmp_path,
+        DiscoveryMechanism(
+            type=DiscoveryType.UDP_BROADCAST,
+            port=6445,
+        ),
+    )
     assert "dhcp" in manifest
     assert len(manifest["dhcp"]) > 0
     assert manifest["dhcp"][0]["hostname"].endswith("*")
@@ -138,15 +151,19 @@ def test_manifest_no_dhcp_when_none(tmp_path: Path) -> None:
 
 
 def test_manifest_is_valid_json(tmp_path: Path) -> None:
-    manifest = _render_manifest(tmp_path, DiscoveryMechanism(
-        type=DiscoveryType.ZEROCONF,
-        service_type="_device._tcp.local.",
-    ))
+    manifest = _render_manifest(
+        tmp_path,
+        DiscoveryMechanism(
+            type=DiscoveryType.ZEROCONF,
+            service_type="_device._tcp.local.",
+        ),
+    )
     assert isinstance(manifest, dict)
     assert manifest["config_flow"] is True
 
 
 # ── config_flow rendering ─────────────────────────────────────────────────────
+
 
 def _render_config_flow(tmp_path: Path, discovery: DiscoveryMechanism) -> str:
     ctx = _ctx(discovery)
@@ -156,26 +173,35 @@ def _render_config_flow(tmp_path: Path, discovery: DiscoveryMechanism) -> str:
 
 
 def test_config_flow_has_zeroconf_step(tmp_path: Path) -> None:
-    content = _render_config_flow(tmp_path, DiscoveryMechanism(
-        type=DiscoveryType.ZEROCONF,
-        service_type="_device._tcp.local.",
-    ))
+    content = _render_config_flow(
+        tmp_path,
+        DiscoveryMechanism(
+            type=DiscoveryType.ZEROCONF,
+            service_type="_device._tcp.local.",
+        ),
+    )
     assert "async_step_zeroconf" in content
 
 
 def test_config_flow_imports_zeroconf(tmp_path: Path) -> None:
-    content = _render_config_flow(tmp_path, DiscoveryMechanism(
-        type=DiscoveryType.ZEROCONF,
-        service_type="_device._tcp.local.",
-    ))
+    content = _render_config_flow(
+        tmp_path,
+        DiscoveryMechanism(
+            type=DiscoveryType.ZEROCONF,
+            service_type="_device._tcp.local.",
+        ),
+    )
     assert "from homeassistant.components import zeroconf" in content
 
 
 def test_config_flow_zeroconf_confirm_step(tmp_path: Path) -> None:
-    content = _render_config_flow(tmp_path, DiscoveryMechanism(
-        type=DiscoveryType.ZEROCONF,
-        service_type="_device._tcp.local.",
-    ))
+    content = _render_config_flow(
+        tmp_path,
+        DiscoveryMechanism(
+            type=DiscoveryType.ZEROCONF,
+            service_type="_device._tcp.local.",
+        ),
+    )
     assert "async_step_zeroconf_confirm" in content
 
 
@@ -186,18 +212,24 @@ def test_config_flow_no_zeroconf_when_none(tmp_path: Path) -> None:
 
 
 def test_config_flow_dhcp_step(tmp_path: Path) -> None:
-    content = _render_config_flow(tmp_path, DiscoveryMechanism(
-        type=DiscoveryType.UDP_BROADCAST,
-        port=6445,
-    ))
+    content = _render_config_flow(
+        tmp_path,
+        DiscoveryMechanism(
+            type=DiscoveryType.UDP_BROADCAST,
+            port=6445,
+        ),
+    )
     assert "async_step_dhcp" in content
 
 
 def test_config_flow_imports_dhcp(tmp_path: Path) -> None:
-    content = _render_config_flow(tmp_path, DiscoveryMechanism(
-        type=DiscoveryType.UDP_BROADCAST,
-        port=6445,
-    ))
+    content = _render_config_flow(
+        tmp_path,
+        DiscoveryMechanism(
+            type=DiscoveryType.UDP_BROADCAST,
+            port=6445,
+        ),
+    )
     assert "from homeassistant.components import dhcp" in content
 
 

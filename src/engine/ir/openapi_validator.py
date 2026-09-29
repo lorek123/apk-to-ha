@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """P3-3 — Validate an OpenAPI 3.0.3 document dict against the official schema."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -8,6 +9,7 @@ from typing import Any
 try:
     from openapi_spec_validator import validate as _ov_validate
     from openapi_spec_validator.validation.exceptions import OpenAPIValidationError
+
     _VALIDATOR_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _VALIDATOR_AVAILABLE = False
@@ -44,7 +46,7 @@ def validate(doc: dict[str, Any]) -> ValidationReport:
         _ov_validate(doc)
     except OpenAPIValidationError as exc:
         errors.append(str(exc))
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         errors.append(f"Unexpected validator error: {exc}")
 
     # ── additional linting rules ───────────────────────────────────────────────

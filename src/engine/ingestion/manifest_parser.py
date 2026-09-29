@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """P1-4 — AndroidManifest.xml parser."""
+
 from __future__ import annotations
 
 import logging
@@ -24,7 +25,7 @@ class ManifestInfo:
     services: list[str]
     receivers: list[str]
     providers: list[str]
-    has_nsd_manager: bool       # NsdManager → zeroconf/mDNS discovery
+    has_nsd_manager: bool  # NsdManager → zeroconf/mDNS discovery
     has_bluetooth: bool
     has_wifi: bool
     has_internet: bool
@@ -52,20 +53,23 @@ def parse(apk_out_dir: Path) -> ManifestInfo:
     min_sdk = int(sdk.get(a("minSdkVersion"), "0")) if sdk is not None else None
     target_sdk = int(sdk.get(a("targetSdkVersion"), "0")) if sdk is not None else None
 
-    permissions = [
-        el.get(a("name"), "")
-        for el in root.findall("uses-permission")
-    ]
+    permissions = [el.get(a("name"), "") for el in root.findall("uses-permission")]
 
     app = root.find("application")
     application_class = app.get(a("name")) if app is not None else None
-    activities = [el.get(a("name"), "") for el in (app.findall("activity") if app is not None else [])]
+    activities = [
+        el.get(a("name"), "") for el in (app.findall("activity") if app is not None else [])
+    ]
     services = [el.get(a("name"), "") for el in (app.findall("service") if app is not None else [])]
-    receivers = [el.get(a("name"), "") for el in (app.findall("receiver") if app is not None else [])]
-    providers = [el.get(a("name"), "") for el in (app.findall("provider") if app is not None else [])]
+    receivers = [
+        el.get(a("name"), "") for el in (app.findall("receiver") if app is not None else [])
+    ]
+    providers = [
+        el.get(a("name"), "") for el in (app.findall("provider") if app is not None else [])
+    ]
 
     launcher_activity: str | None = None
-    for act in (app.findall("activity") if app is not None else []):
+    for act in app.findall("activity") if app is not None else []:
         for intent in act.findall("intent-filter"):
             actions = [ac.get(a("name"), "") for ac in intent.findall("action")]
             if "android.intent.action.MAIN" in actions:
