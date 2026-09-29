@@ -19,6 +19,7 @@ from .dynamic import oracle as dynamic_oracle
 from .dynamic.ir_reconciler import ReconciliationReport
 from .emitters import context as emitter_context
 from .emitters import hacs_emitter, sdk_emitter
+from .extraction import confidence as extraction_confidence
 from .extraction import entity_classifier
 from .extraction.app_sources import is_third_party
 from .extraction.ble_scanner import BLEScanner
@@ -321,6 +322,16 @@ async def analyze(
     # ── P3-2: entity hint classification ─────────────────────────────────────
     ir = entity_classifier.classify(ir)
     log("P3", "entity_hints", "INFO", f"Entity hints: {_count_hints(ir)}")
+
+    # ── extraction confidence (after the oracle had its chance to confirm) ──
+    overall, notes = extraction_confidence.summarize(ir.commands + ir.events)
+    ir = ir.model_copy(
+        update={
+            "extraction_confidence": overall,
+            "extractor_notes": [*ir.extractor_notes, *notes],
+        }
+    )
+    log("P3", "confidence", "INFO", f"Extraction confidence {overall:.2f}", notes=notes)
 
     # ── F-2a: save snapshot ────────────────────────────────────────────────────
     snap_target = (

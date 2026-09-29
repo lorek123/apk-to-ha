@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..ir.models import Direction, Endpoint, FieldDef, FieldKind, TransportType
+from . import confidence
 from .app_sources import app_source_files
 
 _LOGGER = logging.getLogger(__name__)
@@ -154,6 +155,10 @@ class RetrofitScanner:
                     request_fields=req_fields,
                     response_fields=resp_fields,
                     source_class=ep.interface_name,
+                    # The method signature declares every parameter.
+                    confidence=confidence.score(
+                        confidence.NAME_ANNOTATION, confidence.FIELDS_TYPED
+                    ),
                 )
             )
         return result
