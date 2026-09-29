@@ -33,6 +33,8 @@ class ManifestInfo:
     application_class: str | None
     launcher_activity: str | None
     meta_data: dict[str, str] = field(default_factory=dict)
+    # <application android:label>, with @string/ references resolved (None if absent)
+    app_label: str | None = None
 
 
 def parse(apk_out_dir: Path) -> ManifestInfo:
@@ -103,7 +105,26 @@ def parse(apk_out_dir: Path) -> ManifestInfo:
         application_class=application_class,
         launcher_activity=launcher_activity,
         meta_data=meta_data,
+        app_label=_resolve_label(apk_out_dir, app.get(a("label")) if app is not None else None),
     )
+
+
+def _resolve_label(apk_out_dir: Path, label: str | None) -> str | None:
+    """Resolve an android:label value: a literal, or @string/name via res/values/strings.xml."""
+    if not label:
+        return None
+    if not label.startswith("@string/"):
+        return None if label.startswith("@") else label.strip() or None
+    name = label.removeprefix("@string/")
+    strings_xml = apk_out_dir / "resources" / "res" / "values" / "strings.xml"
+    if not strings_xml.exists():
+        return None
+    root = ET.parse(strings_xml).getroot()
+    for el in root.findall("string") if root is not None else []:
+        if el.get("name") == name:
+            text = "".join(el.itertext()).strip()
+            return text or None
+    return None
 
 
 def _source_references_nsd(apk_out_dir: Path) -> bool:
