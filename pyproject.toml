@@ -39,13 +39,6 @@ dependencies = [
 llm = [
     "anthropic>=0.40",
 ]
-dev = [
-    "ruff>=0.6",
-    "mypy>=1.11",
-    "pytest>=8.3",
-    "pytest-asyncio>=0.24",
-    "pytest-cov>=5.0",
-]
 
 [project.urls]
 Repository = "https://github.com/lorek123/apk-to-ha"
@@ -156,6 +149,11 @@ source = ["src"]
 
 [dependency-groups]
 dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
     "types-defusedxml>=0.7.0.20260504",
     "types-pyyaml>=6.0.12.20260518",
 ]
