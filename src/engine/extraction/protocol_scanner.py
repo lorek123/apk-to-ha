@@ -462,9 +462,7 @@ class ProtocolScanner:
                         transport=TransportType.WEBSOCKET,
                         direction=Direction.FROM_DEVICE,
                         awaits_response=False,
-                        confidence=confidence.score(
-                            confidence.NAME_LISTED, confidence.FIELDS_NONE
-                        ),
+                        confidence=confidence.score(confidence.NAME_LISTED, confidence.FIELDS_NONE),
                     )
                 )
 
