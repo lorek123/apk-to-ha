@@ -16,7 +16,11 @@ from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 {% if has_dhcp %}
 from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 {% endif %}
-from {{ sdk_package }} import {{ class_prefix }}Client, {{ class_prefix }}ConnectionError
+from {{ sdk_package }} import (
+    {{ class_prefix }}AuthError,
+    {{ class_prefix }}Client,
+    {{ class_prefix }}ConnectionError,
+)
 
 from .const import DEFAULT_PORT, DOMAIN
 
@@ -40,6 +44,8 @@ async def _validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str
     try:
         # Same identity the coordinator uses, so the device sees one paired client.
         await client.connect(device_uuid=await instance_id.async_get(hass))
+    except {{ class_prefix }}AuthError as exc:
+        raise InvalidAuth from exc
     except {{ class_prefix }}ConnectionError as exc:
         raise CannotConnect from exc
     finally:
@@ -50,6 +56,10 @@ async def _validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str
 
 class CannotConnect(Exception):
     """Error to indicate we cannot connect."""
+
+
+class InvalidAuth(Exception):
+    """Error to indicate the device rejected pairing."""
 
 
 class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -79,6 +89,8 @@ class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
                 info = await _validate_input(self.hass, user_input)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
+            except InvalidAuth:
+                errors["base"] = "invalid_auth"
             except Exception:
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
@@ -126,6 +138,8 @@ class {{ class_prefix }}ConfigFlow(ConfigFlow, domain=DOMAIN):
                 info = await _validate_input(self.hass, data)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
+            except InvalidAuth:
+                errors["base"] = "invalid_auth"
             except Exception:
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"

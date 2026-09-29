@@ -51,6 +51,9 @@ _JSON_NAME_RE = re.compile(
     re.DOTALL,
 )
 
+_EXTENDS_RE = re.compile(r"\bclass\s+\w+(?:<[^>]*>)?\s+extends\s+(\w+)")
+_MAX_INHERITANCE_DEPTH = 3
+
 # Collection wrappers that indicate ARRAY kind
 _COLLECTION_RE = re.compile(r"\b(?:List|ArrayList|LinkedList|Set|Collection|Array)\s*<")
 
@@ -81,6 +84,28 @@ def serialized_fields(
                     continue
             out.append((wire, m.group("type").strip(), m.group("field"), m.start()))
     return out
+
+
+def top_level_body(src: str, class_name: str) -> str:
+    """Text directly inside *class_name*'s braces (depth 1), without nested blocks.
+
+    Falls back to the whole source if the class declaration isn't found.
+    """
+    m = re.search(rf"\bclass\s+{re.escape(class_name)}\b[^{{]*\{{", src)
+    if m is None:
+        return src
+    out: list[str] = []
+    depth = 1
+    for ch in src[m.end() :]:
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                break
+        elif depth == 1:
+            out.append(ch)
+    return "".join(out)
 
 
 class PayloadResolver:
@@ -115,7 +140,7 @@ class PayloadResolver:
             is_collection=is_collection,
         )
 
-    def _extract_fields(self, type_name: str) -> list[FieldDef]:
+    def _extract_fields(self, type_name: str, depth: int = 0) -> list[FieldDef]:
         src_file = self._find_file(type_name)
         if src_file is None:
             _LOGGER.debug("PayloadResolver: class file not found for %s", type_name)
@@ -125,15 +150,18 @@ class PayloadResolver:
         except OSError:
             return []
 
+        # Only the class's own fields: nested classes (e.g. a list item type) and
+        # method bodies are other scopes and must not flatten into this payload.
+        body = top_level_body(src, type_name)
         fields: list[FieldDef] = []
         seen: set[str] = set()
 
-        for wire_name, java_type, java_field, offset in serialized_fields(src, self._constants):
+        for wire_name, java_type, java_field, offset in serialized_fields(body, self._constants):
             if wire_name in seen:
                 continue
             seen.add(wire_name)
 
-            nullable = bool(_NULLABLE_RE.search(src[max(0, offset - 50) : offset]))
+            nullable = bool(_NULLABLE_RE.search(body[max(0, offset - 50) : offset]))
             fields.append(
                 FieldDef(
                     name=java_field,
@@ -143,6 +171,13 @@ class PayloadResolver:
                     nullable=nullable,
                 )
             )
+
+        parent = _EXTENDS_RE.search(src[: src.find("{")] if "{" in src else src)
+        if parent and depth < _MAX_INHERITANCE_DEPTH:
+            for f in self._extract_fields(parent.group(1), depth + 1):
+                if f.serialized_name not in seen:
+                    seen.add(f.serialized_name or f.name)
+                    fields.append(f)
 
         if fields:
             _LOGGER.info(

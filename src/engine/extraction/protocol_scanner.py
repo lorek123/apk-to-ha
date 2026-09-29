@@ -67,6 +67,19 @@ _VIDEO_CLASS_KEYWORDS = frozenset({"video", "camera", "stream"})
 _VIDEO_PORT_RE = re.compile(
     r"\b(?:WEBSOCKET_PORT|VIDEO_PORT|STREAM_PORT|CAMERA_PORT)\s*=\s*(\d{4,5})\b"
 )
+# Request-builder methods: `RobotRequest getPairedList() { ... put("cmd", X) ... }`
+_METHOD_DECL_RE = re.compile(
+    r"^[ \t]*(?:(?:public|private|protected|static|final|synchronized)\s+)*"
+    r"[\w.<>\[\], ]+?\s+(\w+)\s*\([^)]*\)\s*(?:throws\s+[\w., ]+)?\{",
+    re.MULTILINE,
+)
+_CMD_PUT_RE = re.compile(r'\.put\(\s*"cmd"\s*,\s*(?:"([^"]+)"|([\w.]+))\s*\)')
+# Reply decoding: gson.fromJson(line, X.class) / convertTypeFromResponse(..., X.class)
+_RESPONSE_DECODE_RE = re.compile(r"(?:convertTypeFromResponse|fromJson)\([^;]*?\b(\w+)\.class\s*\)")
+_METHOD_CALL_RE = re.compile(r"\.(\w+)\s*\(")
+# How far back from a decode site to look for the request call it belongs to.
+_RESPONSE_LOOKBACK = 2000
+
 # Wire names of the message envelope shared by every response, not device state.
 _ENVELOPE_WIRE_NAMES = frozenset({"cmd", "seq", "resultCode", "result_code"})
 
@@ -270,6 +283,59 @@ class ProtocolScanner:
             _LOGGER.info("State schema: %d fields, push_cmd=%s", len(fields), push_cmd)
         return StateSchema(push_cmd=push_cmd, fields=fields)
 
+    # ── response schemas (request method → callback's decoded class) ────────────
+
+    def _request_methods(self) -> dict[str, str]:
+        """Method name → cmd for methods that build a request with put("cmd", ...)."""
+        methods: dict[str, str] = {}
+        for f in self._app_sources:
+            src = self._read(f)
+            if '"cmd"' not in src:
+                continue
+            decls = list(_METHOD_DECL_RE.finditer(src))
+            if not decls:
+                continue
+            ends = [d.start() for d in decls[1:]] + [len(src)]
+            for decl, end in zip(decls, ends, strict=True):
+                body = src[decl.end() : end]
+                put = _CMD_PUT_RE.search(body)
+                if put is None:
+                    continue
+                cmd = put.group(1) or self._str_constants.get(put.group(2).rsplit(".", 1)[-1])
+                if cmd:
+                    methods.setdefault(decl.group(1), cmd)
+        return methods
+
+    def _response_classes(self) -> dict[str, set[str]]:
+        """cmd → classes its replies are decoded into, from the nearest preceding request call."""
+        methods = self._request_methods()
+        found: dict[str, set[str]] = {}
+        if not methods:
+            return found
+        for f in self._app_sources:
+            src = self._read(f)
+            for m in _RESPONSE_DECODE_RE.finditer(src):
+                window = src[max(0, m.start() - _RESPONSE_LOOKBACK) : m.start()]
+                calls = [n for n in _METHOD_CALL_RE.findall(window) if n in methods]
+                if calls:
+                    found.setdefault(methods[calls[-1]], set()).add(m.group(1))
+        return found
+
+    def _attach_response_schemas(
+        self, endpoints_by_cmd: dict[str, Endpoint], resolver: PayloadResolver
+    ) -> None:
+        """Fill response_fields for commands whose reply class the app decodes."""
+        for cmd, classes in self._response_classes().items():
+            ep = endpoints_by_cmd.get(cmd)
+            if ep is None or ep.response_fields:
+                continue
+            # Several decode sites: the richest class is the most specific reply type.
+            best = max((resolver.resolve(c).fields for c in sorted(classes)), key=len, default=[])
+            fields = [f for f in best if f.serialized_name not in {"cmd", "seq"}]
+            if fields:
+                endpoints_by_cmd[cmd] = ep.model_copy(update={"response_fields": fields})
+                _LOGGER.info("Response schema for %s: %s", cmd, [f.serialized_name for f in fields])
+
     # ── endpoint extraction ───────────────────────────────────────────────────
 
     def _extract_endpoints(self) -> tuple[list[Endpoint], list[Endpoint]]:
@@ -314,6 +380,7 @@ class ProtocolScanner:
 
         # P2-2: enrich @Body / response types via PayloadResolver
         resolver = PayloadResolver(self._apk_out_dir, self._str_constants)
+        self._attach_response_schemas(endpoints_by_cmd, resolver)
         for key, ep in endpoints_by_cmd.items():
             enriched_req = list(ep.request_fields)
             enriched_resp = list(ep.response_fields)
