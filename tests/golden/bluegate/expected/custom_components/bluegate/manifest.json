@@ -1,0 +1,24 @@
+{
+  "domain": "bluegate",
+  "name": "BlueGate",
+  "bluetooth": [
+    {
+      "connectable": true,
+      "service_uuid": "6a7e6a7e-4929-42d0-0000-fcc5a35e13f1"
+    }
+  ],
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [
+    "bluetooth_adapters",
+    "diagnostics"
+  ],
+  "documentation": "https://github.com/lorek123/apk-to-ha",
+  "integration_type": "device",
+  "iot_class": "assumed_state",
+  "quality_scale": "platinum",
+  "requirements": [
+    "bluegate_sdk==0.1.0"
+  ],
+  "version": "0.1.0"
+}

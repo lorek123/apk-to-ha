@@ -1,0 +1,426 @@
+{
+  "apk_path": "inkcast.apk",
+  "package_name": "dev.inkcast.aos",
+  "app_name": "Inkcast",
+  "version_name": "0.0.1",
+  "framework": "native",
+  "transport": {
+    "type": "http_rest",
+    "port": null,
+    "host_source": "discovered",
+    "url_template": "ws://{host}",
+    "tls": false
+  },
+  "discovery": {
+    "type": "udp_broadcast",
+    "port": null,
+    "broadcast_cmd": null,
+    "service_type": null,
+    "hostname_pattern": null,
+    "response_fields": []
+  },
+  "auth": {
+    "type": "none",
+    "handshake_cmd": null,
+    "fields": [],
+    "description": null,
+    "challenge": null
+  },
+  "state": {
+    "push_cmd": null,
+    "poll_endpoint": "GET /api/status",
+    "poll_endpoints": [],
+    "fields": [
+      {
+        "name": "freeHeap",
+        "serialized_name": "freeHeap",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "ip",
+        "serialized_name": "ip",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      },
+      {
+        "name": "mode",
+        "serialized_name": "mode",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "rssi",
+        "serialized_name": "rssi",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "uptime",
+        "serialized_name": "uptime",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "version",
+        "serialized_name": "version",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      }
+    ]
+  },
+  "commands": [
+    {
+      "cmd": "GET /download",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "path",
+          "serialized_name": "path",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CrossPointNetworkSourceImpl",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "GET /api/files",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "path",
+          "serialized_name": "path",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CrossPointNetworkSourceImpl",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "GET /api/status",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "freeHeap",
+          "serialized_name": "freeHeap",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "ip",
+          "serialized_name": "ip",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "rssi",
+          "serialized_name": "rssi",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "uptime",
+          "serialized_name": "uptime",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "version",
+          "serialized_name": "version",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "CrossPointNetworkSourceImpl",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "GET /api/settings",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CrossPointNetworkSourceImpl",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /api/settings",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "body",
+          "serialized_name": null,
+          "kind": "object",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CrossPointNetworkSourceImpl",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /delete",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "path",
+          "serialized_name": "path",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "type",
+          "serialized_name": "type",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CrossPointNetworkSourceImpl",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /rename",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "path",
+          "serialized_name": "path",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "name",
+          "serialized_name": "name",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CrossPointNetworkSourceImpl",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /move",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "path",
+          "serialized_name": "path",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "dest",
+          "serialized_name": "dest",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CrossPointNetworkSourceImpl",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /mkdir",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "name",
+          "serialized_name": "name",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "path",
+          "serialized_name": "path",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CrossPointNetworkSourceImpl",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "button"
+    }
+  ],
+  "events": [],
+  "streaming": null,
+  "crypto": [],
+  "signing_traces": [],
+  "play_store": null,
+  "duplicate_check": {
+    "found": false,
+    "location": null,
+    "name": null,
+    "repo_url": null,
+    "coverage_estimate": "none"
+  },
+  "extraction_confidence": 0.83,
+  "extractor_notes": [],
+  "raw_permissions": [
+    "android.permission.INTERNET",
+    "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.ACCESS_WIFI_STATE",
+    "android.permission.CHANGE_NETWORK_STATE",
+    "android.permission.CHANGE_WIFI_STATE",
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_COARSE_LOCATION",
+    "android.permission.NEARBY_WIFI_DEVICES",
+    "dev.inkcast.aos.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "extra": {
+    "android_strings": {
+      "androidx_compose_foundation_autofill": "Autofill",
+      "default_error_message": "Invalid input",
+      "state_empty": "Empty",
+      "status_bar_notification_info_overflow": "999+"
+    }
+  }
+}

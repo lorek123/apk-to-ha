@@ -1,0 +1,480 @@
+{
+  "apk_path": "bluegate.apk",
+  "package_name": "org.cleverfox.bluegate",
+  "app_name": "BlueGate",
+  "version_name": "0.3",
+  "framework": "native",
+  "transport": {
+    "type": "ble",
+    "port": null,
+    "host_source": "manual",
+    "url_template": null,
+    "tls": false
+  },
+  "discovery": {
+    "type": "udp_broadcast",
+    "port": null,
+    "broadcast_cmd": null,
+    "service_type": null,
+    "hostname_pattern": null,
+    "response_fields": []
+  },
+  "auth": {
+    "type": "challenge_response",
+    "handshake_cmd": "authenticate",
+    "fields": [],
+    "description": "Read 'nonce', write the signed response to 'authenticate'",
+    "challenge": {
+      "challenge": "nonce",
+      "proof": "authenticate",
+      "ack": "authenticateAck",
+      "client_key": "clientKey",
+      "client_nonce": "clientNonce",
+      "client_nonce_length": 32,
+      "message": [
+        "challenge",
+        "client_nonce"
+      ],
+      "algorithm": "ecdsa-p256-sha256",
+      "signature_encoding": "raw_rs",
+      "public_key_encoding": "sec1_compressed",
+      "action": "action",
+      "primary_action": 1,
+      "probe_action": 128,
+      "implicit_action": 1
+    }
+  },
+  "state": {
+    "push_cmd": null,
+    "poll_endpoint": null,
+    "poll_endpoints": [],
+    "fields": []
+  },
+  "commands": [
+    {
+      "cmd": "authenticate",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00000101-0000-1000-8000-00805f9b34fb (write)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "clientKey",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00000102-0000-1000-8000-00805f9b34fb (write)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "clientNonce",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00000103-0000-1000-8000-00805f9b34fb (write)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "action",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00000106-0000-1000-8000-00805f9b34fb (write)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "managementAction",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00001100-0000-1000-8000-00805f9b34fb (write)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "managementKey",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00001101-0000-1000-8000-00805f9b34fb (read, write)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "managementParamId",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00001102-0000-1000-8000-00805f9b34fb (write)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "managementName",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00001104-0000-1000-8000-00805f9b34fb (read, write)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    }
+  ],
+  "events": [
+    {
+      "cmd": "nonce",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00000100-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "clientKeyAck",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00000104-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "authenticateAck",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00000105-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "payload",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00000107-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "permissions",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00000108-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "managementParamVal",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00001103-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "managementResult",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00001105-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "logIndex",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00001200-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "logEntry",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00001201-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "logCount",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00001202-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleManager",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    }
+  ],
+  "streaming": null,
+  "crypto": [
+    {
+      "algorithm": "SHA256WITHECDSA",
+      "call_site": "org.cleverfox.bluegate.Authenticator",
+      "context_snippet": "                byte[] bArrPlus = ArraysKt.plus(bArr2, bArr3);\n                Signature signature = Signature.getInstance(\"SHA256withECDSA\");\n                signature.initSign(this.this$0.keyPair.getPrivate());\n                signature.update(bArrPlus);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "SHA256WITHECDSA",
+      "call_site": "org.cleverfox.bluegate.AdminDashboardActivity$gattCallback$1",
+      "context_snippet": "            byte[] bArrPlus = ArraysKt.plus(bArr3, bArr4);\n            Signature signature = Signature.getInstance(\"SHA256withECDSA\");\n            KeyPair keyPair = this.this$0.keyPair;\n            if (keyPair == null) {",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "EC",
+      "call_site": "org.cleverfox.bluegate.KeyManager",
+      "context_snippet": "    private final KeyPair generateNewKeyPair(String alias) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {\n        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(\"EC\", \"AndroidKeyStore\");\n        Intrinsics.checkNotNullExpressionValue(keyPairGenerator, \"getInstance(...)\");\n        KeyGenParameterSpec keyGenParameterSpecBuild = new KeyGenParameterSpec.Builder(alias, 12).setAlgorithmParameterSpec(new ECGenParameterSpec(\"secp256r1\")).",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "SHA-256",
+      "call_site": "org.cleverfox.bluegate.KeyManager",
+      "context_snippet": "        Intrinsics.checkNotNullExpressionValue(keyPairGenerator, \"getInstance(...)\");\n        KeyGenParameterSpec keyGenParameterSpecBuild = new KeyGenParameterSpec.Builder(alias, 12).setAlgorithmParameterSpec(new ECGenParameterSpec(\"secp256r1\")).setDigests(\"SHA-256\").build();\n        Intrinsics.checkNotNullExpressionValue(keyGenParameterSpecBuild, \"build(...)\");\n        keyPairGenerator.initialize(keyGenParameterSpecBuild);",
+      "confidence": 1.0
+    }
+  ],
+  "signing_traces": [
+    {
+      "algorithm": "SHA256WITHECDSA",
+      "components": [
+        {
+          "kind": "nonce",
+          "variable_name": "nonce",
+          "value": null,
+          "confidence": 0.8
+        },
+        {
+          "kind": "nonce",
+          "variable_name": "clientNonce",
+          "value": null,
+          "confidence": 0.8
+        }
+      ],
+      "key_source": null,
+      "source_method": "org.cleverfox.bluegate.Authenticator.onCharacteristicWrite",
+      "confidence": 0.8,
+      "unresolved": []
+    },
+    {
+      "algorithm": "SHA256WITHECDSA",
+      "components": [],
+      "key_source": null,
+      "source_method": "org.cleverfox.bluegate.AdminDashboardActivity$gattCallback$1",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "EC",
+      "components": [],
+      "key_source": null,
+      "source_method": "org.cleverfox.bluegate.KeyManager",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "SHA-256",
+      "components": [],
+      "key_source": null,
+      "source_method": "org.cleverfox.bluegate.KeyManager",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    }
+  ],
+  "play_store": null,
+  "duplicate_check": {
+    "found": false,
+    "location": null,
+    "name": null,
+    "repo_url": null,
+    "coverage_estimate": "none"
+  },
+  "extraction_confidence": 0.7,
+  "extractor_notes": [],
+  "raw_permissions": [
+    "android.permission.BLUETOOTH",
+    "android.permission.BLUETOOTH_ADMIN",
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.BLUETOOTH_SCAN",
+    "android.permission.BLUETOOTH_CONNECT",
+    "org.cleverfox.bluegate.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "extra": {
+    "ble_service_uuids": [
+      "6a7e6a7e-4929-42d0-0000-fcc5a35e13f1"
+    ],
+    "ble_char_uuids": {
+      "nonce": "00000100-0000-1000-8000-00805f9b34fb",
+      "authenticate": "00000101-0000-1000-8000-00805f9b34fb",
+      "clientKey": "00000102-0000-1000-8000-00805f9b34fb",
+      "clientNonce": "00000103-0000-1000-8000-00805f9b34fb",
+      "clientKeyAck": "00000104-0000-1000-8000-00805f9b34fb",
+      "authenticateAck": "00000105-0000-1000-8000-00805f9b34fb",
+      "action": "00000106-0000-1000-8000-00805f9b34fb",
+      "payload": "00000107-0000-1000-8000-00805f9b34fb",
+      "permissions": "00000108-0000-1000-8000-00805f9b34fb",
+      "managementAction": "00001100-0000-1000-8000-00805f9b34fb",
+      "managementKey": "00001101-0000-1000-8000-00805f9b34fb",
+      "managementParamId": "00001102-0000-1000-8000-00805f9b34fb",
+      "managementParamVal": "00001103-0000-1000-8000-00805f9b34fb",
+      "managementName": "00001104-0000-1000-8000-00805f9b34fb",
+      "managementResult": "00001105-0000-1000-8000-00805f9b34fb",
+      "logIndex": "00001200-0000-1000-8000-00805f9b34fb",
+      "logEntry": "00001201-0000-1000-8000-00805f9b34fb",
+      "logCount": "00001202-0000-1000-8000-00805f9b34fb"
+    },
+    "ble_char_access": {
+      "nonce": [
+        "read"
+      ],
+      "authenticate": [
+        "write"
+      ],
+      "clientKey": [
+        "write"
+      ],
+      "clientNonce": [
+        "write"
+      ],
+      "clientKeyAck": [
+        "read"
+      ],
+      "authenticateAck": [
+        "read"
+      ],
+      "action": [
+        "write"
+      ],
+      "payload": [
+        "read"
+      ],
+      "permissions": [
+        "read"
+      ],
+      "managementAction": [
+        "write"
+      ],
+      "managementKey": [
+        "read",
+        "write"
+      ],
+      "managementParamId": [
+        "write"
+      ],
+      "managementParamVal": [
+        "read"
+      ],
+      "managementName": [
+        "read",
+        "write"
+      ],
+      "managementResult": [
+        "read"
+      ],
+      "logIndex": [
+        "read"
+      ],
+      "logEntry": [
+        "read"
+      ],
+      "logCount": [
+        "read"
+      ]
+    },
+    "android_strings": {
+      "error_a11y_label": "Error: invalid",
+      "error_icon_content_description": "Error",
+      "mtrl_checkbox_state_description_checked": "Checked",
+      "mtrl_checkbox_state_description_indeterminate": "Partially checked",
+      "mtrl_checkbox_state_description_unchecked": "Not checked",
+      "status_bar_notification_info_overflow": "999+"
+    }
+  }
+}

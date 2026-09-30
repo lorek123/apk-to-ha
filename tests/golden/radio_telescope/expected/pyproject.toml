@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+[project]
+name = "smart_radio_telescope_sdk"
+version = "0.1.0"
+description = "Auto-generated SDK for Smart Radio Telescope"
+requires-python = ">=3.12"
+dependencies = ["aiohttp>=3.10"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

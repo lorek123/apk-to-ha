@@ -1,0 +1,29 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Choose a BlueGate device",
+        "data": {"address": "Device"}
+      },
+      "enroll": {
+        "title": "Enrol Home Assistant on the device",
+        "description": "Home Assistant generated its own key for this device. In the {app} app, open the admin key management screen and add this public key:\n\n`{public_key}`\n\nFingerprint: `{fingerprint}`\n\nGrant only what Home Assistant needs: do **not** grant admin rights. Then submit to verify — nothing is actuated during the check.\n\nIf you remove this integration later, also remove this key in the app: Home Assistant can't revoke it on its own."
+      }
+    },
+    "error": {
+      "not_enrolled": "The device doesn't accept this key yet. Add the public key above in the app, then try again.",
+      "cannot_connect": "Failed to connect — make sure the device is powered and in Bluetooth range"
+    },
+    "abort": {
+      "already_configured": "This device is already configured",
+      "no_devices_found": "No devices found in Bluetooth range",
+      "reauth_successful": "The new key was enrolled successfully"
+    }
+  },
+  "entity": {
+    "button": {
+      "activate": {"name": "Activate"}
+    }
+  }
+}

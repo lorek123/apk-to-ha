@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+[project]
+name = "r2d2_sdk"
+version = "0.1.0"
+description = "Auto-generated SDK for Build Your Own R2-D2"
+requires-python = ">=3.12"
+dependencies = ["aiohttp>=3.10"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

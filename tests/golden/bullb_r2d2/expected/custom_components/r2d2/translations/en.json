@@ -1,0 +1,79 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Build Your Own R2-D2",
+        "description": "Remote control app for Build Your Own R2-D2",
+        "data": {
+          "host": "IP address or hostname",
+          "port": "Port (default 8887)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect — check the IP address and that the device is powered on",
+      "invalid_auth": "The device refused to pair with Home Assistant",
+      "unknown": "Unexpected error",
+      "alert_changed_name": "Name changed",
+      "alert_connection_no_wifi": "Please connect R2-D2 with WI-FI connection.",
+      "alert_connection_offline": "This R2-D2 is currently offline.",
+      "alert_connection_no_ip": "Cannot find IP address In R2-D2",
+      "error": "Error",
+      "error_client_not_exist": "Device not found, maybe already unpaired.",
+      "error_connection_error": "Connection error.",
+      "error_invalid_name": "The name should have at least 1 characters and at most 16 characters.",
+      "error_invalid_password": "Invalid Password.",
+      "error_invalid_wifi_info": "Your WI-FI SSID or password is invalid.",
+      "error_mcu_error": "R2-D2 Error Please restart",
+      "error_network_not_found": "Network not found",
+      "error_network_unauthorized": "Unauthorized",
+      "error_no_connection": "Cannot connect to DROID",
+      "error_no_response": "No response",
+      "error_no_uuid": "No UUID from client",
+      "error_robot_error": "Undefined Error",
+      "error_streaming_in_use": "Only one user can use video streaming at the same time.",
+      "error_type_convertion": "Type Convertion Error",
+      "error_unauthorized": "Not Authorized, Please connect R2-D2 in connection mode",
+      "error_unsupported_network": "Unsupported Network",
+      "network_error": "Network Error",
+      "server_error": "Server Error",
+      "status_socket_fail": "Fail to Connect",
+      "update_warning": "A new version is now available. Please update the app to latest version.",
+      "warning_connect_wifi": "Please connect your device with WI-FI.",
+      "warning_fail_connect_device": "Fail to connect the device",
+      "warning_wifi_freq_unmatch": "Please connect to a 2.4GZ Network"
+    },
+    "abort": {
+      "already_configured": "This device is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {"name": "Battery"},
+      "error": {"name": "Error"},
+      "projector": {"name": "Projector"}
+    },
+    "binary_sensor": {
+      "arm": {"name": "Arm"},
+      "charging": {"name": "Charging"},
+      "ap_mode": {"name": "Ap mode"},
+      "lightsaber": {"name": "Lightsaber"},
+      "lcd_l": {"name": "Lcd l"},
+      "lcd_s": {"name": "Lcd s"}
+    },
+    "switch": {
+      "power": {"name": "Power"},
+      "mute": {"name": "Mute"},
+      "face_detection": {"name": "Face detection"},
+      "voice_recognition": {"name": "Voice recognition"}
+    },
+    "button": {
+      "reset_mcu": {"name": "Reset mcu"},
+      "d_head_power": {"name": "D head power"},
+      "d_leg_power": {"name": "D leg power"}
+    },
+    "select": {
+      "mode": {"name": "Mode"}
+    }
+  }
+}

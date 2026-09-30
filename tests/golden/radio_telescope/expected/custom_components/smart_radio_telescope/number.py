@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: MIT
+"""Number platform for Smart Radio Telescope."""
+from __future__ import annotations
+
+from collections.abc import Awaitable, Callable
+
+from homeassistant.components.number import NumberEntity, NumberMode
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .coordinator import SmartRadioTelescopeCoordinator
+from .entity_base import SmartRadioTelescopeEntity
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    coordinator: SmartRadioTelescopeCoordinator = entry.runtime_data.coordinator
+    async_add_entities([
+        SmartRadioTelescopeNumber(
+            coordinator,
+            "adc_rate",
+            "adc_rate",
+            coordinator.client.set_adc_rate,
+            None,
+        ),
+    ])
+
+
+class SmartRadioTelescopeNumber(SmartRadioTelescopeEntity, NumberEntity):
+    """Numeric command. The range is HA's default: the protocol doesn't state one."""
+
+    _attr_mode = NumberMode.BOX
+    _attr_native_step = 1
+
+    def __init__(
+        self,
+        coordinator: SmartRadioTelescopeCoordinator,
+        key: str,
+        translation_key: str,
+        set_value: Callable[[int], Awaitable[None]],
+        state_attr: str | None,
+    ) -> None:
+        super().__init__(coordinator, key)
+        self._attr_translation_key = translation_key
+        self._set_value = set_value
+        self._state_attr = state_attr
+        self._attr_assumed_state = state_attr is None
+        self._optimistic: float | None = None
+
+    @property
+    def native_value(self) -> float | None:
+        if self._state_attr is None:
+            return self._optimistic
+        value = getattr(self.coordinator.data, self._state_attr, None)
+        return None if value is None else float(value)
+
+    async def async_set_native_value(self, value: float) -> None:
+        await self._set_value(int(value))
+        if self._state_attr is None:
+            self._optimistic = value
+            self.async_write_ha_state()

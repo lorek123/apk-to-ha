@@ -1,0 +1,139 @@
+# SPDX-License-Identifier: MIT
+"""Runtime tests for BlueGate: enrolment, key handling, authenticated action, reauth."""
+from __future__ import annotations
+
+import logging
+
+import pytest
+from bluegate_sdk import PRIMARY_ACTION, auth
+from custom_components.bluegate.const import CONF_PRIVATE_KEY, DOMAIN
+from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
+from homeassistant.const import ATTR_ENTITY_ID, CONF_ADDRESS
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.components.diagnostics import (
+    get_diagnostics_for_config_entry,
+)
+from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
+
+from .conftest import ADDRESS, FakeDevice
+
+
+async def _start_enrolment(hass: HomeAssistant) -> dict:
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
+    assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
+    return await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_ADDRESS: ADDRESS}
+    )
+
+
+async def _setup(hass: HomeAssistant, device: FakeDevice) -> MockConfigEntry:
+    pem = auth.generate_private_key()
+    device.enrolled.add(bytes.fromhex(auth.public_key_hex(pem)))
+    entry = MockConfigEntry(
+        domain=DOMAIN, unique_id=ADDRESS, data={CONF_ADDRESS: ADDRESS, CONF_PRIVATE_KEY: pem}
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    return entry
+
+
+async def test_enrolment_keeps_key_until_enrolled_and_never_actuates(
+    hass: HomeAssistant, device: FakeDevice, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    result = await _start_enrolment(hass)
+    assert result["step_id"] == "enroll"
+    public_key = result["description_placeholders"]["public_key"]
+    assert len(bytes.fromhex(public_key)) == 33
+
+    # Not enrolled yet: rejected, and the same key is offered again.
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["errors"] == {"base": "not_enrolled"}
+    assert result["description_placeholders"]["public_key"] == public_key
+
+    device.enrolled.add(bytes.fromhex(public_key))
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    pem = result["result"].data[CONF_PRIVATE_KEY]
+    assert auth.public_key_hex(pem) == public_key  # the entry holds the enrolled key
+    assert device.actions == []  # verification used the probe: nothing was actuated
+    assert pem not in caplog.text and "PRIVATE KEY" not in caplog.text
+
+
+async def test_cannot_connect(hass: HomeAssistant, device: FakeDevice) -> None:
+    device.reachable = False
+    result = await _start_enrolment(hass)
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+
+    assert result["errors"] == {"base": "cannot_connect"}
+
+
+async def test_button_runs_primary_action_authenticated(
+    hass: HomeAssistant, device: FakeDevice
+) -> None:
+    entry = await _setup(hass, device)
+    assert entry.state is ConfigEntryState.LOADED
+    entity_id = er.async_get(hass).async_get_entity_id(
+        "button", DOMAIN, f"{ADDRESS}_action_{PRIMARY_ACTION}"
+    )
+    assert entity_id is not None
+
+    await hass.services.async_call("button", "press", {ATTR_ENTITY_ID: entity_id}, blocking=True)
+    await hass.services.async_call("button", "press", {ATTR_ENTITY_ID: entity_id}, blocking=True)
+
+    assert device.actions == [PRIMARY_ACTION, PRIMARY_ACTION]
+    assert len(set(device.client_nonces)) == len(device.client_nonces)  # never reused
+
+
+async def test_revoked_key_starts_reauth_with_a_new_key(
+    hass: HomeAssistant, device: FakeDevice
+) -> None:
+    entry = await _setup(hass, device)
+    old_public = auth.public_key_hex(entry.data[CONF_PRIVATE_KEY])
+    device.enrolled.clear()  # the admin revoked Home Assistant's key
+    entity_id = er.async_get(hass).async_get_entity_id(
+        "button", DOMAIN, f"{ADDRESS}_action_{PRIMARY_ACTION}"
+    )
+
+    with pytest.raises(HomeAssistantError):
+        await hass.services.async_call(
+            "button", "press", {ATTR_ENTITY_ID: entity_id}, blocking=True
+        )
+    await hass.async_block_till_done()
+
+    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+    assert [f["context"]["source"] for f in flows] == ["reauth"]
+    result = await hass.config_entries.flow.async_configure(flows[0]["flow_id"])
+    new_public = result["description_placeholders"]["public_key"]
+    assert new_public != old_public  # a rejected key is never offered again
+
+    device.enrolled.add(bytes.fromhex(new_public))
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.ABORT and result["reason"] == "reauth_successful"
+    assert auth.public_key_hex(entry.data[CONF_PRIVATE_KEY]) == new_public
+    assert device.actions == []
+
+
+async def test_unload(hass: HomeAssistant, device: FakeDevice) -> None:
+    entry = await _setup(hass, device)
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_diagnostics_redact_private_key(
+    hass: HomeAssistant, device: FakeDevice, hass_client: ClientSessionGenerator
+) -> None:
+    entry = await _setup(hass, device)
+
+    diagnostics = await get_diagnostics_for_config_entry(hass, hass_client, entry)
+
+    assert diagnostics["entry"]["data"][CONF_PRIVATE_KEY] == "**REDACTED**"
+    assert entry.data[CONF_PRIVATE_KEY] not in str(diagnostics)

@@ -19,7 +19,7 @@ from .duplicate_check import checker as dup_checker
 from .dynamic import oracle as dynamic_oracle
 from .dynamic.ir_reconciler import ReconciliationReport
 from .emitters import context as emitter_context
-from .emitters import hacs_emitter, sdk_emitter
+from .emitters import emit_all
 from .extraction import challenge_profile, entity_classifier
 from .extraction import confidence as extraction_confidence
 from .extraction.app_sources import is_third_party
@@ -113,9 +113,7 @@ async def analyze(
         for cmd in ctx["unmapped_commands"]:
             log("P5", "entities", "WARNING", f"no entity for {cmd['cmd']}: {cmd['reason']}")
         run_out = _OUTPUT_DIR / apk_id
-        sdk_dir = sdk_emitter.emit(ctx, run_out)
-        hacs_dir = hacs_emitter.emit(ctx, run_out)
-        tests_dir = hacs_emitter.emit_tests(ctx, run_out)
+        sdk_dir, hacs_dir, tests_dir = emit_all(ctx, run_out)
         log("P4", "sdk_emit", "INFO", f"SDK emitted to {sdk_dir}")
         log("P5", "hacs_emit", "INFO", f"HACS integration emitted to {hacs_dir}")
         log(
