@@ -34,6 +34,7 @@ from ..ir.models import (
     TransportContract,
     TransportType,
 )
+from .app_sources import app_source_files
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,6 +59,15 @@ _VAR_FROM_GETCHAR_RE = re.compile(
 _WRITE_VAR_RE = re.compile(r"writeCharacteristic\s*\(\s*(\w+)\s*[,)]")
 _READ_VAR_RE = re.compile(r"readCharacteristic\s*\(\s*(\w+)\s*[,)]")
 _NOTIFY_VAR_RE = re.compile(r"setCharacteristicNotification\s*\(\s*(\w+)\s*[,)]")
+# Any GATT access call and its full argument list (for wrapper / getter forms).
+_GATT_CALL_RE = re.compile(
+    r"\b(writeCharacteristic|readCharacteristic|setCharacteristicNotification)\s*\(([^;]*)\)"
+)
+_GATT_CALL_KIND = {
+    "writeCharacteristic": "write",
+    "readCharacteristic": "read",
+    "setCharacteristicNotification": "notify",
+}
 
 # Inline patterns that capture through nested parens:
 #   gatt.writeCharacteristic(anything.getCharacteristic(CONST) ...)
@@ -100,25 +110,41 @@ class BLEScanner:
         list[Endpoint],
         list[Endpoint],
     ]:
-        java_files = list(self._root.rglob("*.java"))
-        if not java_files:
-            return _defaults()
-
-        chars: list[_CharInfo] = []
-        service_uuids: list[str] = []
-
+        sources = self._root / "sources"
+        java_files = (
+            app_source_files(sources, package_name)
+            if sources.exists()
+            else list(self._root.rglob("*.java"))
+        )
+        texts: dict[str, str] = {}
         for path in java_files:
             try:
                 text = path.read_text(errors="replace")
             except OSError:
                 continue
-            if not _HAS_BLE_RE.search(text):
-                continue
+            if _HAS_BLE_RE.search(text) or _UUID_INLINE_RE.search(text):
+                texts[path.stem] = text
+        if not texts:
+            return _defaults()
 
-            file_chars, file_services = _scan_file(text, path.stem)
-            chars.extend(file_chars)
-            service_uuids.extend(file_services)
+        # Pass 1: UUID constants from every file (a Kotlin companion object defines
+        # them in one class; other classes use them).
+        chars: list[_CharInfo] = []
+        service_uuids: list[str] = []
+        char_names: dict[str, str] = {}
+        all_text = "\n".join(texts.values())
+        for class_name, text in texts.items():
+            for const_name, uuid in _named_uuids(text).items():
+                if _is_service(const_name, all_text):
+                    service_uuids.append(uuid)
+                else:
+                    char_names[const_name] = uuid
+                    chars.append(_CharInfo(const_name, uuid, set(), class_name))
 
+        # Pass 2: how each characteristic is used, across all files.
+        access_map = _build_access_map(all_text, char_names)
+        for ch in chars:
+            ch.access = access_map.get(ch.uuid, {"read"})  # default: assume readable
         chars = _dedup(chars)
 
         if not chars:
@@ -148,7 +174,7 @@ class BLEScanner:
 
         transport = TransportContract(type=TransportType.BLE)
         discovery = DiscoveryMechanism(type=DiscoveryType.NONE)
-        auth = AuthScheme(type=AuthType.NONE)
+        auth = _detect_challenge_auth(commands, events)
         state = StateSchema()
         return transport, discovery, auth, state, commands, events
 
@@ -156,13 +182,49 @@ class BLEScanner:
 # ── file-level extraction ──────────────────────────────────────────────────────
 
 
+_CHALLENGE_NAME = re.compile(r"nonce|challenge", re.IGNORECASE)
+_PROOF_NAME = re.compile(r"auth|sign|proof|response", re.IGNORECASE)
+
+
+def _detect_challenge_auth(commands: list[Endpoint], events: list[Endpoint]) -> AuthScheme:
+    """A readable nonce/challenge plus a writable auth/signature → challenge-response."""
+    challenge = next((e.cmd for e in events if _CHALLENGE_NAME.search(e.cmd)), None)
+    proof = next(
+        (
+            c.cmd
+            for c in commands
+            if _PROOF_NAME.search(c.cmd) and not _CHALLENGE_NAME.search(c.cmd)
+        ),
+        None,
+    )
+    if challenge is None or proof is None:
+        return AuthScheme(type=AuthType.NONE)
+    return AuthScheme(
+        type=AuthType.CHALLENGE_RESPONSE,
+        handshake_cmd=proof,
+        description=f"Read '{challenge}', write the signed response to '{proof}'",
+    )
+
+
+def _named_uuids(text: str) -> dict[str, str]:
+    """const_name → uuid for UUID constants in *text*.
+
+    Kotlin companion objects decompile to a temporary plus an assignment:
+    ``UUID uuidFromString8 = UUID.fromString("…"); ACTION_UUID = uuidFromString8;``
+    — the constant's real name is the assignment target.
+    """
+    named: dict[str, str] = {}
+    for m in _UUID_CONST_RE.finditer(text):
+        name = m.group(1)
+        alias = re.search(rf"\b([A-Za-z_]\w*)\s*=\s*{re.escape(name)}\s*;", text[m.end() :])
+        named[alias.group(1) if alias else name] = m.group(2).lower()
+    return named
+
+
 def _scan_file(text: str, class_name: str) -> tuple[list[_CharInfo], list[str]]:
     """Return (characteristics, service_uuids) found in one Java file."""
     # Collect named UUID constants: const_name → uuid
-    named: dict[str, str] = {}
-    for m in _UUID_CONST_RE.finditer(text):
-        named[m.group(1)] = m.group(2).lower()
-
+    named = _named_uuids(text)
     if not named:
         return [], []
 
@@ -244,6 +306,15 @@ def _build_access_map(text: str, char_names: dict[str, str]) -> dict[str, set[st
     _record_inline(_WRITE_INLINE_RE, "write")
     _record_inline(_READ_INLINE_RE, "read")
     _record_inline(_NOTIFY_INLINE_RE, "notify")
+
+    # Wrappers and Kotlin getters: bleManager.writeCharacteristic(gatt,
+    # BleManager.INSTANCE.getACTION_UUID(), bytes) — the characteristic is any
+    # argument that names a known constant (directly or via its getter).
+    for m in _GATT_CALL_RE.finditer(text):
+        kind = _GATT_CALL_KIND[m.group(1)]
+        for const_name, uuid in char_names.items():
+            if re.search(rf"\b(?:get)?{re.escape(const_name)}\b", m.group(2)):
+                access_map.setdefault(uuid, set()).add(kind)
 
     return access_map
 

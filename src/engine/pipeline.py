@@ -35,7 +35,7 @@ from .extraction.strings_scanner import flutter_ui_strings
 from .extraction.strings_scanner import scan as strings_scan
 from .ingestion import classifier, decompiler, manifest_parser
 from .ingestion import play_store as play_store_fetcher
-from .ir.models import Framework, ProtocolIR
+from .ir.models import AuthType, Framework, ProtocolIR, TransportType
 from .snapshot import harness as snapshot_harness
 from .validation import (
     budget,
@@ -137,13 +137,17 @@ async def analyze(
 
         # ── P2-8: BLE endpoint augmentation ──────────────────────────────────
         ble = BLEScanner(out_dir)
-        ble_transport, _, _, _, ble_commands, ble_events = ble.scan(manifest.package_name)
+        ble_transport, _, ble_auth, _, ble_commands, ble_events = ble.scan(manifest.package_name)
         if ble_commands or ble_events:
+            # BLE is the transport when the socket/HTTP scan found nothing of its own
+            # (its transport is then only a default guess).
+            if not (commands or events):
+                transport = ble_transport
+            if auth.type == AuthType.NONE:
+                auth = ble_auth
             commands = commands + ble_commands
             events = events + ble_events
             extra_ctx = {**extra_ctx, **ble.extra}
-            if not (transport.type.value != "ble") or not commands:
-                transport = ble_transport
             log(
                 "P2",
                 "ble_scan",
@@ -348,13 +352,12 @@ async def analyze(
     ir = ir.model_copy(update={"extra": {**ir.extra, "_snapshot_dir": str(snap_dir)}})
 
     # ── P4/P5: emit SDK + HACS integration ────────────────────────────────────
-    extracted = bool(ir.commands or ir.events or ir.state.fields)
-    if emit and not extracted:
-        # An integration with no commands, events or state is not a partial result,
-        # it's broken output (and fails V-3 at import). Say so instead.
-        log("P5", "emit", "ERROR", "Nothing extracted (no commands/events/state) — not emitting")
-        ir = ir.model_copy(update={"extra": {**ir.extra, "_status": "nothing-extracted"}})
-    if emit and extracted:
+    blocker = _emit_blocker(ir) if emit else None
+    if blocker:
+        status, why = blocker
+        log("P5", "emit", "ERROR", f"{why} — not emitting")
+        ir = ir.model_copy(update={"extra": {**ir.extra, "_status": status}})
+    if emit and not blocker:
         ctx = emitter_context.build(ir)
         for cmd in ctx["unmapped_commands"]:
             log("P5", "entities", "WARNING", f"no entity for {cmd['cmd']}: {cmd['reason']}")
@@ -588,6 +591,35 @@ def _brand_strings(out_dir: Path, framework: Framework) -> list[str]:
     if framework == Framework.FLUTTER:
         strings += flutter_ui_strings(out_dir)
     return strings
+
+
+# Transports the SDK/HACS templates can generate a working client for.
+_EMITTABLE_TRANSPORTS = frozenset(
+    {TransportType.WEBSOCKET, TransportType.BLE, TransportType.HTTP_REST}
+)
+
+
+def _emit_blocker(ir: ProtocolIR) -> tuple[str, str] | None:
+    """(status, reason) when emitting would produce a broken integration, else None."""
+    if not (ir.commands or ir.events or ir.state.fields):
+        # Not a partial result: an empty integration fails V-3 at import.
+        return "nothing-extracted", "Nothing extracted (no commands/events/state)"
+    if ir.auth.type == AuthType.CHALLENGE_RESPONSE:
+        # The device would reject every command the integration sends.
+        return (
+            "unsupported-auth",
+            f"Auth '{ir.auth.type.value}' is not supported by the templates yet "
+            f"({ir.auth.description})",
+        )
+    if ir.transport.type == TransportType.HTTP_REST and not ir.state.poll_endpoint:
+        # The HTTP templates poll a state endpoint; without one there's nothing to show.
+        return "unsupported-transport", "HTTP device without a state endpoint to poll"
+    if ir.transport.type not in _EMITTABLE_TRANSPORTS:
+        return (
+            "unsupported-transport",
+            f"Transport '{ir.transport.type.value}' has no client template yet",
+        )
+    return None
 
 
 RunStatus = Literal["pass", "fail", "needs-human-review", "incomplete"]

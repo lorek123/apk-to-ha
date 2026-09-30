@@ -34,6 +34,9 @@ class AuthType(str, Enum):
     HANDSHAKE = "handshake"  # custom JSON handshake (e.g. grantAccess)
     API_KEY = "api_key"
     OAUTH2 = "oauth2"
+    # Device sends a nonce; the client proves itself by signing it with a key the
+    # device knows (e.g. SHA256withECDSA over BLE). Needs key enrolment.
+    CHALLENGE_RESPONSE = "challenge_response"
     NONE = "none"
 
 
@@ -122,6 +125,7 @@ class StateSchema(BaseModel):
     """Schema of the device's reported state (from gin / polling response)."""
 
     push_cmd: str | None = None  # e.g. "gin" for push-based
+    poll_endpoint: str | None = None  # e.g. "GET /status" for poll-based HTTP devices
     fields: list[FieldDef] = Field(default_factory=list)
 
 

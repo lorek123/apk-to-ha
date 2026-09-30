@@ -9,7 +9,11 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
+{% if transport == "http_rest" %}
+from homeassistant.helpers import aiohttp_client
+{% else %}
 from homeassistant.helpers import aiohttp_client, instance_id
+{% endif %}
 {% if has_zeroconf %}
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 {% endif %}
@@ -35,15 +39,23 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 
 async def _validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
+{% if transport == "http_rest" %}
+    """Fetch the device's state once to verify it answers."""
+{% else %}
     """Pair with {{ auth_cmd }} and wait for a state push to verify the device."""
+{% endif %}
     client = {{ class_prefix }}Client(
         host=data[CONF_HOST],
         port=data.get(CONF_PORT, DEFAULT_PORT),
         session=aiohttp_client.async_get_clientsession(hass),
     )
     try:
+{% if transport == "http_rest" %}
+        await client.get_state()
+{% else %}
         # Same identity the coordinator uses, so the device sees one paired client.
         await client.connect(device_uuid=await instance_id.async_get(hass))
+{% endif %}
     except {{ class_prefix }}AuthError as exc:
         raise InvalidAuth from exc
     except {{ class_prefix }}ConnectionError as exc:

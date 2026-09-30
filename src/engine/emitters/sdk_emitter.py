@@ -27,10 +27,12 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     )
 
     _render(env, ctx, pkg_dir, "__init__.py.j2", "__init__.py")
-    _render(env, ctx, pkg_dir, "client.py.j2", "client.py")
+    client = "client_http.py.j2" if ctx.get("transport") == "http_rest" else "client.py.j2"
+    _render(env, ctx, pkg_dir, client, "client.py")
     _render(env, ctx, pkg_dir, "models.py.j2", "models.py")
     _render(env, ctx, pkg_dir, "const.py.j2", "const.py")
-    _render(env, ctx, pkg_dir, "discovery.py.j2", "discovery.py")
+    if ctx.get("has_udp_discovery"):
+        _render(env, ctx, pkg_dir, "discovery.py.j2", "discovery.py")
     _render(env, ctx, out_root, "pyproject.toml.j2", "pyproject.toml")
 
     # P2-6: emit signing helper + test when a high-confidence trace exists

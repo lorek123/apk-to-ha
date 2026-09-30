@@ -33,8 +33,11 @@ from ..ir.models import (
 from . import confidence
 from .app_sources import app_source_files
 from .discovery_scanner import scan as discovery_scan
+from .okhttp_scanner import json_map_state
+from .okhttp_scanner import scan as okhttp_scan
 from .payload_resolver import PayloadResolver, serialized_fields
 from .retrofit_scanner import RetrofitScanner
+from .volley_scanner import scan as volley_scan
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,6 +88,9 @@ _RESPONSE_LOOKBACK = 2000
 # depth, or the next put("cmd", ...) (another command built in the same method).
 _METHOD_END_RE = re.compile(r"\breturn\b|\n    \}|\.put\(\s*\"cmd\"")
 
+# GET endpoints that return device state, for poll-based HTTP devices.
+_POLL_PATH = re.compile(r"/(?:status|state)(?:$|[/?])", re.IGNORECASE)
+
 # Wire names of the message envelope shared by every response, not device state.
 _ENVELOPE_WIRE_NAMES = frozenset({"cmd", "seq", "resultCode", "result_code"})
 
@@ -132,9 +138,34 @@ class ProtocolScanner:
         commands, events = self._extract_endpoints()
         self._extract_mode_actions()
         self._detect_streaming()
+        state = self._fill_http_state(state, commands)
+        # The transport is how commands are sent: a WebSocket used only for telemetry
+        # doesn't make an HTTP-controlled device a WebSocket one.
+        cmd_transports = {c.transport for c in commands}
+        if len(cmd_transports) == 1 and transport.type not in cmd_transports:
+            transport = transport.model_copy(update={"type": cmd_transports.pop(), "port": None})
         state, commands = self._attach_mode_enum(state, commands)
 
         return transport, discovery, auth, state, commands, events
+
+    def _fill_http_state(self, state: StateSchema, commands: list[Endpoint]) -> StateSchema:
+        """HTTP devices: hand-parsed status keys, and the GET endpoint that serves them."""
+        if not state.fields:
+            fields = json_map_state(self._apk_out_dir, self._app_package)
+            if fields:
+                _LOGGER.info("State schema (hand-parsed JSON): %s", [f.name for f in fields])
+                state = state.model_copy(update={"fields": fields})
+        if state.fields and state.poll_endpoint is None:
+            poll = next(
+                (
+                    c.cmd
+                    for c in sorted(commands, key=lambda c: c.cmd)
+                    if c.cmd.startswith("GET ") and _POLL_PATH.search(c.cmd)
+                ),
+                None,
+            )
+            state = state.model_copy(update={"poll_endpoint": poll})
+        return state
 
     def _attach_mode_enum(
         self, state: StateSchema, commands: list[Endpoint]
@@ -402,6 +433,12 @@ class ProtocolScanner:
                         ),
                     )
 
+        # P2-1b/c: Volley and OkHttp requests (first-party call sites)
+        for ep in volley_scan(self._apk_out_dir, self._app_package) + okhttp_scan(
+            self._apk_out_dir, self._app_package
+        ):
+            endpoints_by_cmd.setdefault(ep.cmd, ep)
+
         # P2-1: merge richer RetrofitScanner results (set by _detect_transport)
         for ep in self._retrofit_endpoints:
             if ep.cmd not in endpoints_by_cmd:
@@ -443,7 +480,9 @@ class ProtocolScanner:
         events: list[Endpoint] = []
 
         for ep in endpoints_by_cmd.values():
-            if ep.cmd in event_cmd_names:
+            if ep.direction == Direction.FROM_DEVICE:
+                events.append(ep)  # streams (WS /ws/status) found by the HTTP scanners
+            elif ep.cmd in event_cmd_names:
                 events.append(
                     ep.model_copy(
                         update={"direction": Direction.FROM_DEVICE, "awaits_response": False}
