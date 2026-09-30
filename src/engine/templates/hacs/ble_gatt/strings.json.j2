@@ -1,0 +1,40 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Choose a {{ name }} device",
+        "data": {"address": "Device"},
+        "data_description": {"address": "The {{ name }} in Bluetooth range to add"}
+      },
+      "bluetooth_confirm": {
+        "description": "Set up {name}?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect — make sure the device is powered on and in Bluetooth range"
+    },
+    "abort": {
+      "already_configured": "This device is already configured",
+      "no_devices_found": "No {{ name }} devices found in Bluetooth range",
+      "not_supported": "This Bluetooth device is not a {{ name }}"
+    }
+  },
+  "entity": {
+{% set sections = [("fan", gatt.fans), ("switch", gatt.switches), ("sensor", gatt.sensors), ("binary_sensor", gatt.binary_sensors)] | selectattr(1) | list %}
+{% for platform, items in sections %}
+    "{{ platform }}": {
+{% for e in items %}
+      "{{ e.key }}": {"name": {{ e.name | tojson }}}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    }{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  },
+  "exceptions": {
+    "not_in_range": {"message": "{address} is not in range of any Bluetooth adapter"},
+    "cannot_connect": {"message": "Cannot reach the device: {error}"},
+    "write_failed": {"message": "The device didn't accept the change: {error}"}
+  }
+}

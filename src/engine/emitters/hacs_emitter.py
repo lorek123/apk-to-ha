@@ -25,6 +25,16 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
     to probe or uses a transport the mock device can't speak (BLE).
     """
     ctx = {"actions": [], **ctx}  # contexts built before P5 actions existed
+    if ctx.get("has_gatt"):
+        tests_dir = out_root / "tests"
+        tests_dir.mkdir(parents=True, exist_ok=True)
+        env = _env(_TESTS_TEMPLATES_DIR)
+        _render(env, ctx, out_root, "pytest.ini.j2", "pytest.ini")
+        _render(env, ctx, tests_dir, "__init__.py.j2", "__init__.py")
+        _render(env, ctx, tests_dir, "conftest_ble_gatt.py.j2", "conftest.py")
+        _render(env, ctx, tests_dir, "test_integration_ble_gatt.py.j2", "test_integration.py")
+        _fix_imports(tests_dir, select="I001,F401")
+        return tests_dir
     if ctx.get("has_challenge_auth"):
         tests_dir = out_root / "tests"
         tests_dir.mkdir(parents=True, exist_ok=True)
@@ -175,6 +185,8 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     (domain_dir / "translations").mkdir(exist_ok=True)
     if ctx.get("has_challenge_auth"):
         return _emit_ble_auth(ctx, out_root, domain_dir)
+    if ctx.get("has_gatt"):
+        return _emit_ble_gatt(ctx, out_root, domain_dir)
 
     env = Environment(
         loader=FileSystemLoader(str(_TEMPLATES_DIR)),
@@ -244,6 +256,22 @@ def _merge_strings(path: Path, sections: dict[str, Any]) -> None:
     for key, value in sections.items():
         data[key] = {**data.get(key, {}), **value}
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+
+def _emit_ble_gatt(ctx: dict[str, Any], out_root: Path, domain_dir: Path) -> Path:
+    """Plain GATT device: Bluetooth discovery, polled state, fan/switch controls."""
+    env = _env(_TEMPLATES_DIR / "ble_gatt")
+    files = ["manifest.json", "__init__.py", "const.py", "config_flow.py", "coordinator.py"]
+    files += ["entity_base.py", "diagnostics.py", *(f"{p}.py" for p in ctx["gatt"]["platforms"])]
+    for name in files:
+        _render(env, ctx, domain_dir, f"{name}.j2", name)
+    _render(env, ctx, domain_dir, "strings.json.j2", "strings.json")
+    _render(env, ctx, domain_dir / "translations", "strings.json.j2", "en.json")
+    sort_manifest(domain_dir / "manifest.json")
+    _render(_env(_TEMPLATES_DIR), ctx, out_root, "hacs.json.j2", "hacs.json")
+    _fix_imports(domain_dir)
+    _LOGGER.info("HACS integration (BLE GATT) emitted to %s", domain_dir)
+    return domain_dir
 
 
 def _emit_ble_auth(ctx: dict[str, Any], out_root: Path, domain_dir: Path) -> Path:

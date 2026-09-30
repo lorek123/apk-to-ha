@@ -28,6 +28,7 @@ class DiscoveryType(str, Enum):
     UDP_BROADCAST = "udp_broadcast"
     ZEROCONF = "zeroconf"
     STATIC_IP = "static_ip"
+    BLUETOOTH = "bluetooth"  # BLE advertisements (HA bluetooth matchers)
     NONE = "none"
 
 
@@ -115,6 +116,7 @@ class DiscoveryMechanism(BaseModel):
     broadcast_cmd: str | None = None  # JSON cmd value in broadcast packet
     service_type: str | None = None  # mDNS/zeroconf service type e.g. "_device._tcp.local."
     hostname_pattern: str | None = None  # DHCP hostname glob e.g. "mydevice*"
+    local_name: str | None = None  # BLE: advertised-name substring the app filters on
     response_fields: list[FieldDef] = Field(default_factory=list)
 
 

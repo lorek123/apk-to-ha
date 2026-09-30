@@ -1,0 +1,472 @@
+{
+  "apk_path": "biolite_firepit.apk",
+  "package_name": "com.biolite.firepit",
+  "app_name": "Firepit",
+  "version_name": "5.0",
+  "framework": "native",
+  "transport": {
+    "type": "ble",
+    "port": null,
+    "host_source": "manual",
+    "url_template": null,
+    "tls": false
+  },
+  "discovery": {
+    "type": "bluetooth",
+    "port": null,
+    "broadcast_cmd": null,
+    "service_type": null,
+    "hostname_pattern": null,
+    "local_name": "FirePit",
+    "response_fields": []
+  },
+  "auth": {
+    "type": "none",
+    "handshake_cmd": null,
+    "fields": [],
+    "description": null,
+    "challenge": null
+  },
+  "state": {
+    "push_cmd": null,
+    "poll_endpoint": null,
+    "poll_endpoints": [],
+    "fields": []
+  },
+  "commands": [
+    {
+      "cmd": "fanSpeed",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "value",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "BLE characteristic b0631206-46bf-3186-e045-f2204b379011 (read, write)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "chargingStatus",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "value",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": [
+            0,
+            1
+          ],
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "BLE characteristic 2ff4e772-d34f-5894-4f40-1addf9b6030b (read, write)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "switch"
+    }
+  ],
+  "events": [
+    {
+      "cmd": "manufacturerName",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00002a29-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "serialNumber",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00002a24-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "systemId",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00002a23-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "batteryLevel",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 00002a19-0000-1000-8000-00805f9b34fb (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "usbOutputControl",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 6b2951c8-d59a-8cb3-e740-c36047217ff7 (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "ledStatus",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 941e24c9-bc8a-c781-1a46-1cf77ae4a31e (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "batteryPercent",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 0f2ccedc-bd65-42a5-a144-321e257c3483 (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "batteryCurrent",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 1173bff9-0e3a-9887-3549-810ddff0eab2 (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "temperature",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 20c5de4b-8013-f0ab-fc4e-55b8b83875aa (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "otaControlPoint",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic e3dd50bf-f7a7-4e99-838e-570a086c666b (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "otaUpdateData",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 92e86c7a-d961-4091-b74f-2409e72efe36 (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "otaAppInformation",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "BLE characteristic 347f7608-2e2d-47eb-913b-75d4edc4de3b (read)",
+      "source_class": "BleConstants",
+      "document": null,
+      "confidence": 0.7,
+      "entity_hint": "sensor"
+    }
+  ],
+  "streaming": null,
+  "crypto": [
+    {
+      "algorithm": "MD5",
+      "call_site": "com.airbnb.lottie.network.NetworkCache",
+      "context_snippet": "        try {\n            byte[] bArrDigest = MessageDigest.getInstance(\"MD5\").digest(str.getBytes());\n            StringBuilder sb = new StringBuilder();\n            for (byte b : bArrDigest) {",
+      "confidence": 1.0
+    }
+  ],
+  "signing_traces": [
+    {
+      "algorithm": "MD5",
+      "components": [],
+      "key_source": null,
+      "source_method": "com.airbnb.lottie.network.NetworkCache",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    }
+  ],
+  "play_store": {
+    "title": "BioLite FirePit",
+    "description": "The BioLite FirePit app allows you to control your flames right from your cozy spot next to the fire. Adjust fan settings and get real-time feedback on your battery life so you know exactly how long you have left on your burn.",
+    "summary": "Control your FirePit or FirePit+ through bluetooth",
+    "category": "Lifestyle",
+    "developer": "BioLite",
+    "developer_id": "BioLite",
+    "rating": 2.375,
+    "installs": "1,000+",
+    "play_store_url": "https://play.google.com/store/apps/details?id=com.biolite.firepit"
+  },
+  "duplicate_check": {
+    "found": false,
+    "location": null,
+    "name": null,
+    "repo_url": null,
+    "coverage_estimate": "none"
+  },
+  "extraction_confidence": 0.7,
+  "extractor_notes": [],
+  "raw_permissions": [
+    "android.permission.BLUETOOTH",
+    "android.permission.BLUETOOTH_ADMIN",
+    "android.permission.BLUETOOTH_CONNECT",
+    "android.permission.BLUETOOTH_SCAN",
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_COARSE_LOCATION",
+    "com.biolite.firepit.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "extra": {
+    "ble_service_uuids": [
+      "0000180a-0000-1000-8000-00805f9b34fb",
+      "0000180f-0000-1000-8000-00805f9b34fb",
+      "ea4b0ed1-e88c-938c-4a47-2f15c2002ffd",
+      "9e5d1e47-5c13-43a0-8635-82ad38a1386f"
+    ],
+    "ble_service_names": {
+      "0000180a-0000-1000-8000-00805f9b34fb": "DEVICE_INFORMATION_SERVICE_UUID",
+      "0000180f-0000-1000-8000-00805f9b34fb": "BATTERY_SERVICE_UUID",
+      "ea4b0ed1-e88c-938c-4a47-2f15c2002ffd": "VENDOR_SPECIFIC_SERVICE_UUID",
+      "9e5d1e47-5c13-43a0-8635-82ad38a1386f": "OTA_SERVICE_UUID"
+    },
+    "ble_char_uuids": {
+      "manufacturerName": "00002a29-0000-1000-8000-00805f9b34fb",
+      "serialNumber": "00002a24-0000-1000-8000-00805f9b34fb",
+      "systemId": "00002a23-0000-1000-8000-00805f9b34fb",
+      "batteryLevel": "00002a19-0000-1000-8000-00805f9b34fb",
+      "fanSpeed": "b0631206-46bf-3186-e045-f2204b379011",
+      "usbOutputControl": "6b2951c8-d59a-8cb3-e740-c36047217ff7",
+      "chargingStatus": "2ff4e772-d34f-5894-4f40-1addf9b6030b",
+      "ledStatus": "941e24c9-bc8a-c781-1a46-1cf77ae4a31e",
+      "batteryPercent": "0f2ccedc-bd65-42a5-a144-321e257c3483",
+      "batteryCurrent": "1173bff9-0e3a-9887-3549-810ddff0eab2",
+      "temperature": "20c5de4b-8013-f0ab-fc4e-55b8b83875aa",
+      "otaControlPoint": "e3dd50bf-f7a7-4e99-838e-570a086c666b",
+      "otaUpdateData": "92e86c7a-d961-4091-b74f-2409e72efe36",
+      "otaAppInformation": "347f7608-2e2d-47eb-913b-75d4edc4de3b"
+    },
+    "ble_char_access": {
+      "manufacturerName": [
+        "read"
+      ],
+      "serialNumber": [
+        "read"
+      ],
+      "systemId": [
+        "read"
+      ],
+      "batteryLevel": [
+        "read"
+      ],
+      "fanSpeed": [
+        "read",
+        "write"
+      ],
+      "usbOutputControl": [
+        "read"
+      ],
+      "chargingStatus": [
+        "read",
+        "write"
+      ],
+      "ledStatus": [
+        "read"
+      ],
+      "batteryPercent": [
+        "read"
+      ],
+      "batteryCurrent": [
+        "read"
+      ],
+      "temperature": [
+        "read"
+      ],
+      "otaControlPoint": [
+        "read"
+      ],
+      "otaUpdateData": [
+        "read"
+      ],
+      "otaAppInformation": [
+        "read"
+      ]
+    },
+    "ble_gatt": {
+      "manufacturerName": {
+        "decode": "utf8",
+        "writer": null,
+        "write_encoding": null,
+        "values": []
+      },
+      "batteryLevel": {
+        "decode": "int8",
+        "writer": null,
+        "write_encoding": null,
+        "values": []
+      },
+      "fanSpeed": {
+        "decode": "int8",
+        "writer": "writeFanSpeedToFirepit",
+        "write_encoding": "uint8",
+        "values": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "usbOutputControl": {
+        "decode": "bool",
+        "writer": null,
+        "write_encoding": null,
+        "values": []
+      },
+      "chargingStatus": {
+        "decode": "int8",
+        "writer": "writeUsbChargeOut",
+        "write_encoding": "uint8",
+        "values": [
+          0,
+          1
+        ]
+      },
+      "ledStatus": {
+        "decode": "int8",
+        "writer": null,
+        "write_encoding": null,
+        "values": []
+      },
+      "batteryCurrent": {
+        "decode": "int16le",
+        "writer": null,
+        "write_encoding": null,
+        "values": []
+      },
+      "temperature": {
+        "decode": "int8",
+        "writer": null,
+        "write_encoding": null,
+        "values": []
+      },
+      "otaControlPoint": {
+        "decode": "utf8",
+        "writer": null,
+        "write_encoding": null,
+        "values": []
+      },
+      "otaUpdateData": {
+        "decode": "utf8",
+        "writer": null,
+        "write_encoding": null,
+        "values": []
+      }
+    },
+    "android_strings": {
+      "connected": "Connected",
+      "connected_image": "connected Image",
+      "connecting": "Connecting…",
+      "disconnect_this_firepit": "DISCONNECT THIS FIREPIT",
+      "disconnected": "Disconnected",
+      "error_a11y_label": "Error: invalid",
+      "error_icon_content_description": "Error",
+      "mtrl_checkbox_state_description_checked": "Checked",
+      "mtrl_checkbox_state_description_indeterminate": "Partially checked",
+      "mtrl_checkbox_state_description_unchecked": "Not checked",
+      "no_firepit_found_desc": "Still having problems? See",
+      "no_firepit_found_desc_pre": "Ensure your FirePit is on for initial pairing and that your device’s Bluetooth is active.",
+      "no_firepit_found_desc_troubleshoot": "troubleshooting tips.",
+      "no_firepits_found": "No FirePits Found",
+      "offline_search_for_firepit": "OFFLINE - SEARCH FOR FIREPIT",
+      "status_bar_notification_info_overflow": "999+",
+      "successfully_connected": "Successfully Connected",
+      "temperature_alert": "TEMPERATURE ALERT"
+    }
+  }
+}

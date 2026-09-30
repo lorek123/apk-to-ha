@@ -1,0 +1,45 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Choose a Firepit device",
+        "data": {"address": "Device"},
+        "data_description": {"address": "The Firepit in Bluetooth range to add"}
+      },
+      "bluetooth_confirm": {
+        "description": "Set up {name}?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect — make sure the device is powered on and in Bluetooth range"
+    },
+    "abort": {
+      "already_configured": "This device is already configured",
+      "no_devices_found": "No Firepit devices found in Bluetooth range",
+      "not_supported": "This Bluetooth device is not a Firepit"
+    }
+  },
+  "entity": {
+    "fan": {
+      "fan_speed": {"name": "Fan speed"}
+    },
+    "switch": {
+      "usb_charge_out": {"name": "USB charge out"}
+    },
+    "sensor": {
+      "battery_level": {"name": "Battery level"},
+      "led_status": {"name": "LED status"},
+      "battery_current": {"name": "Battery current"},
+      "temperature": {"name": "Temperature"}
+    },
+    "binary_sensor": {
+      "usb_output_control": {"name": "USB output control"}
+    }
+  },
+  "exceptions": {
+    "not_in_range": {"message": "{address} is not in range of any Bluetooth adapter"},
+    "cannot_connect": {"message": "Cannot reach the device: {error}"},
+    "write_failed": {"message": "The device didn't accept the change: {error}"}
+  }
+}

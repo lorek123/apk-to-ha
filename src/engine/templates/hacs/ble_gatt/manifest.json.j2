@@ -1,0 +1,26 @@
+{
+  "domain": "{{ domain }}",
+  "name": {{ name | tojson }},
+  "bluetooth": [
+{% set matchers = [] %}
+{% if gatt.local_name %}
+{% set _ = matchers.append({"connectable": true, "local_name": gatt.local_name ~ "*"}) %}
+{% endif %}
+{% for u in gatt.service_uuids %}
+{% set _ = matchers.append({"connectable": true, "service_uuid": u}) %}
+{% endfor %}
+{% for m in matchers %}
+    {{ m | tojson }}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  ],
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["bluetooth_adapters"],
+  "documentation": "https://github.com/lorek123/apk-to-ha",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "quality_scale": "platinum",
+  "requirements": ["{{ sdk_package }}=={{ integration_version }}"],
+  "version": "{{ integration_version }}"
+}

@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: MIT
+"""Fan platform for {{ name }}: the app's speed levels as percentages."""
+from __future__ import annotations
+
+import math
+from typing import Any
+
+from homeassistant.components.fan import FanEntity, FanEntityFeature
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util.percentage import (
+    percentage_to_ranged_value,
+    ranged_value_to_percentage,
+)
+
+from . import {{ class_prefix }}ConfigEntry
+from .coordinator import {{ class_prefix }}Coordinator
+from .entity_base import {{ class_prefix }}Entity
+
+PARALLEL_UPDATES = 1
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: {{ class_prefix }}ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    async_add_entities([
+{% for f in gatt.fans %}
+        {{ class_prefix }}Fan(
+            coordinator, "{{ f.key }}", {{ f.speed_count }}, coordinator.client.set_{{ f.key }}
+        ),
+{% endfor %}
+    ])
+
+
+class {{ class_prefix }}Fan({{ class_prefix }}Entity, FanEntity):
+    _attr_supported_features = (
+        FanEntityFeature.SET_SPEED | FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF
+    )
+
+    def __init__(
+        self,
+        coordinator: {{ class_prefix }}Coordinator,
+        key: str,
+        levels: int,
+        set_level: Any,
+    ) -> None:
+        super().__init__(coordinator, key)
+        self._attr_translation_key = key
+        self._attr_speed_count = levels
+        self._range = (1, levels)
+        self._set_level = set_level
+        self._last_on_level = 1  # the app's lowest speed
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        if isinstance(self.value, int) and self.value > 0:
+            self._last_on_level = self.value  # turn_on resumes at this speed
+        super()._handle_coordinator_update()
+
+    @property
+    def percentage(self) -> int | None:
+        level = self.value
+        if level is None:
+            return None
+        return ranged_value_to_percentage(self._range, level) if level > 0 else 0
+
+    @property
+    def is_on(self) -> bool | None:
+        level = self.value
+        return None if level is None else level > 0
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        level = math.ceil(percentage_to_ranged_value(self._range, percentage)) if percentage else 0
+        await self._send(self._set_level(level), level)
+
+    async def async_turn_on(
+        self, percentage: int | None = None, preset_mode: str | None = None, **kwargs: Any
+    ) -> None:
+        if percentage is not None:
+            await self.async_set_percentage(percentage)
+            return
+        await self._send(self._set_level(self._last_on_level), self._last_on_level)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self._send(self._set_level(0), 0)

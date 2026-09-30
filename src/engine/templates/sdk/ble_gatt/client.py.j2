@@ -1,0 +1,159 @@
+# SPDX-License-Identifier: MIT
+"""BLE client for {{ name }}: reads its state and writes its controls over GATT.
+
+The characteristics, their encodings and the values written come from the
+{{ name }} app. Each operation opens a connection and closes it again.
+"""
+from __future__ import annotations
+
+import asyncio
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from bleak.backends.device import BLEDevice
+from bleak.exc import BleakError
+from bleak_retry_connector import BleakClientWithServiceCache, establish_connection
+
+_LOGGER = logging.getLogger(__name__)
+
+# The app lists devices whose advertised name contains this.
+LOCAL_NAME: str | None = {{ gatt.local_name | tojson }}
+SERVICE_UUIDS: list[str] = {{ gatt.service_uuids | tojson }}
+
+{% for e in gatt.state %}
+{{ e.const }} = "{{ e.uuid }}"
+{% endfor %}
+{% for field, uuid in gatt.device_info.items() %}
+{{ field | upper }}_UUID = "{{ uuid }}"
+{% endfor %}
+
+# State key → (characteristic, encoding), all read on every refresh.
+STATE: dict[str, tuple[str, str]] = {
+{% for e in gatt.state %}
+    "{{ e.key }}": ({{ e.const }}, "{{ e.decode }}"),
+{% endfor %}
+}
+DEVICE_INFO: dict[str, str] = {
+{% for field in gatt.device_info %}
+    "{{ field }}": {{ field | upper }}_UUID,
+{% endfor %}
+}
+{% for f in gatt.fans %}
+{{ f.key | upper }}_LEVELS = {{ f.speed_count }}  # 0 = off .. {{ f.speed_count }} = full
+{% endfor %}
+
+OPERATION_TIMEOUT = 30.0
+
+type Value = int | bool | str
+
+
+class {{ class_prefix }}ConnectionError(Exception):
+    """The device couldn't be reached or broke off the exchange."""
+
+
+def matches(name: str | None, service_uuids: list[str]) -> bool:
+    """Whether an advertisement is a {{ name }} (the app's own filter)."""
+    if LOCAL_NAME and name and LOCAL_NAME in name:
+        return True
+    return any(uuid in service_uuids for uuid in SERVICE_UUIDS)
+
+
+def decode(encoding: str, data: bytes) -> Value:
+    """A characteristic value, decoded the way the app decodes it."""
+    if encoding == "bool":
+        return bool(data) and data[0] != 0
+    if encoding == "utf8":
+        return data.decode("utf-8", "replace").strip("\x00 ")
+    signed = encoding.startswith("int")
+    size = 2 if encoding.endswith("16le") else 1
+    if len(data) < size:
+        raise ValueError(f"{len(data)} bytes, expected {size}")
+    return int.from_bytes(data[:size], "little", signed=signed)
+
+
+class {{ class_prefix }}Client:
+    """One {{ name }}; safe to share, operations are serialised."""
+
+    def __init__(self, ble_device: BLEDevice) -> None:
+        self._device = ble_device
+        self._lock = asyncio.Lock()
+
+    @property
+    def address(self) -> str:
+        return self._device.address
+
+    def set_ble_device(self, ble_device: BLEDevice) -> None:
+        """Use the freshest BLEDevice (the best adapter/path) from advertisements."""
+        self._device = ble_device
+
+    async def read_state(self) -> dict[str, Value | None]:
+        """Every state value; None for one this firmware doesn't have or sent garbled."""
+        async with self._connected() as client:
+            state: dict[str, Value | None] = {}
+            for key, (uuid, encoding) in STATE.items():
+                state[key] = await self._read(client, uuid, encoding)
+            return state
+
+    async def read_device_info(self) -> dict[str, str]:
+        """Device Information strings (manufacturer, model, ...) the device offers."""
+        async with self._connected() as client:
+            info: dict[str, str] = {}
+            for field, uuid in DEVICE_INFO.items():
+                value = await self._read(client, uuid, "utf8")
+                if isinstance(value, str) and value:
+                    info[field] = value
+            return info
+{% for f in gatt.fans %}
+
+    async def set_{{ f.key }}(self, level: int) -> None:
+        """0 = off, 1..{{ f.speed_count }} = speed (as the app's buttons send it)."""
+        if not 0 <= level <= {{ f.key | upper }}_LEVELS:
+            raise ValueError(f"level {level} outside 0..{{ f.speed_count }}")
+        await self._write({{ f.const }}, bytes([level]))
+{% endfor %}
+{% for s in gatt.switches %}
+
+    async def set_{{ s.key }}(self, on: bool) -> None:
+        await self._write({{ s.const }}, bytes([1 if on else 0]))
+{% endfor %}
+
+    async def _write(self, uuid: str, data: bytes) -> None:
+        async with self._connected() as client:
+            try:
+                await client.write_gatt_char(uuid, data, response=True)
+            except BleakError as exc:
+                raise {{ class_prefix }}ConnectionError(f"Write to {uuid} failed: {exc}") from exc
+
+    async def _read(
+        self, client: BleakClientWithServiceCache, uuid: str, encoding: str
+    ) -> Value | None:
+        try:
+            data = bytes(await client.read_gatt_char(uuid))
+        except BleakError as exc:
+            if not client.is_connected:
+                raise {{ class_prefix }}ConnectionError(f"Lost {self.address}") from exc
+            _LOGGER.debug("%s: %s unavailable: %s", self.address, uuid, exc)
+            return None
+        try:
+            return decode(encoding, data)
+        except ValueError as exc:
+            _LOGGER.debug("%s: %s undecodable: %s", self.address, uuid, exc)
+            return None
+
+    @asynccontextmanager
+    async def _connected(self) -> AsyncIterator[BleakClientWithServiceCache]:
+        """Lock, connect (with retries), always disconnect; a timeout bounds it all."""
+        async with self._lock:
+            try:
+                async with asyncio.timeout(OPERATION_TIMEOUT):
+                    device = self._device
+                    client = await establish_connection(
+                        BleakClientWithServiceCache, device, device.name or device.address
+                    )
+                    try:
+                        yield client
+                    finally:
+                        await client.disconnect()
+            except (BleakError, TimeoutError) as exc:
+                raise {{ class_prefix }}ConnectionError(f"{self.address}: {exc!r}") from exc

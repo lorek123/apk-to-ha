@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: MIT
+"""Binary sensor platform for {{ name }}."""
+from __future__ import annotations
+
+from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from . import {{ class_prefix }}ConfigEntry
+from .coordinator import {{ class_prefix }}Coordinator
+from .entity_base import {{ class_prefix }}Entity
+
+PARALLEL_UPDATES = 0
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: {{ class_prefix }}ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    async_add_entities([
+{% for b in gatt.binary_sensors %}
+        {{ class_prefix }}BinarySensor(coordinator, "{{ b.key }}"),
+{% endfor %}
+    ])
+
+
+class {{ class_prefix }}BinarySensor({{ class_prefix }}Entity, BinarySensorEntity):
+    def __init__(self, coordinator: {{ class_prefix }}Coordinator, key: str) -> None:
+        super().__init__(coordinator, key)
+        self._attr_translation_key = key
+
+    @property
+    def is_on(self) -> bool | None:
+        value = self.value
+        return None if value is None else bool(value)

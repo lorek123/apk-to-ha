@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: MIT
+"""Sensor platform for {{ name }}."""
+from __future__ import annotations
+
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from . import {{ class_prefix }}ConfigEntry
+from .coordinator import {{ class_prefix }}Coordinator
+from .entity_base import {{ class_prefix }}Entity
+
+PARALLEL_UPDATES = 0
+
+SENSORS: tuple[SensorEntityDescription, ...] = (
+{% for s in gatt.sensors %}
+    SensorEntityDescription(
+        key="{{ s.key }}",
+        translation_key="{{ s.key }}",
+{% if s.device_class %}
+        device_class=SensorDeviceClass.{{ s.device_class | upper }},
+{% endif %}
+{% if s.unit %}
+        native_unit_of_measurement="{{ s.unit }}",
+{% endif %}
+{% if s.state_class %}
+        state_class=SensorStateClass.{{ s.state_class | upper }},
+{% endif %}
+    ),
+{% endfor %}
+)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: {{ class_prefix }}ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    async_add_entities({{ class_prefix }}Sensor(coordinator, d) for d in SENSORS)
+
+
+class {{ class_prefix }}Sensor({{ class_prefix }}Entity, SensorEntity):
+    def __init__(
+        self, coordinator: {{ class_prefix }}Coordinator, description: SensorEntityDescription
+    ) -> None:
+        super().__init__(coordinator, description.key)
+        self.entity_description = description
+
+    @property
+    def native_value(self) -> int | None:
+        value = self.value
+        return value if isinstance(value, int) else None
