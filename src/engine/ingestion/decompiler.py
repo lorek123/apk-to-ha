@@ -13,11 +13,14 @@ _LOGGER = logging.getLogger(__name__)
 JADX_TIMEOUT = 300  # seconds; large APKs can take a while
 
 
-async def decompile(apk_path: Path, out_dir: Path) -> Path:
+async def decompile(apks: Path | list[Path], out_dir: Path) -> Path:
     """Run jadx CLI, return the output directory.
 
+    *apks* is one APK or a split set (base first): jadx merges them into one tree.
     Idempotent: skips decompilation if out_dir already contains sources/.
     """
+    inputs = [apks] if isinstance(apks, Path) else apks
+    apk_path = inputs[0]
     if await asyncio.to_thread(_has_java_sources, out_dir):
         _LOGGER.debug("Skipping decompilation, %s already populated", out_dir)
         return out_dir
@@ -33,9 +36,9 @@ async def decompile(apk_path: Path, out_dir: Path) -> Path:
         "--show-bad-code",
         "-d",
         str(out_dir),
-        str(apk_path),
+        *(str(p) for p in inputs),
     ]
-    _LOGGER.info("Decompiling %s → %s", apk_path.name, out_dir)
+    _LOGGER.info("Decompiling %s (+%d splits) → %s", apk_path.name, len(inputs) - 1, out_dir)
     proc = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,

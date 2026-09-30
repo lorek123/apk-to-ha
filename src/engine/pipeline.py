@@ -35,7 +35,7 @@ from .extraction.signing_tracer import trace as signing_trace
 from .extraction.strings_scanner import all_values as all_string_values
 from .extraction.strings_scanner import flutter_ui_strings
 from .extraction.strings_scanner import scan as strings_scan
-from .ingestion import classifier, decompiler, manifest_parser
+from .ingestion import bundle, classifier, decompiler, manifest_parser
 from .ingestion import play_store as play_store_fetcher
 from .ir.models import AuthType, Framework, ProtocolIR, TransportType
 from .snapshot import harness as snapshot_harness
@@ -53,6 +53,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _RUNS_DIR = Path(__file__).parents[2] / "runs"
 _CACHE_DIR = Path(__file__).parents[2] / ".cache" / "jadx"
+_BUNDLE_DIR = Path(__file__).parents[2] / ".cache" / "bundles"  # unpacked split APKs
 _OUTPUT_DIR = Path(__file__).parents[2] / "sdk_output"
 _CHECKPOINT_DIR = Path(__file__).parents[2] / ".cache" / "checkpoints"
 # Code whose changes make a checkpointed IR stale (emission and validation don't).
@@ -348,10 +349,21 @@ async def _extract(
     """P1 → P3 and the snapshot: everything up to emission (what a checkpoint saves)."""
     log("P1", "start", "INFO", f"Analyzing {apk_path.name}", apk_id=apk_id)
 
+    # ── P1-0: split-APK bundles (XAPK/APKS/APKM) → base + splits ──────────────
+    apks = await asyncio.to_thread(bundle.apk_set, apk_path, _BUNDLE_DIR / apk_id)
+    if len(apks) > 1:
+        log(
+            "P1",
+            "bundle",
+            "INFO",
+            f"Bundle: base {apks[0].name} + {len(apks) - 1} split(s)",
+            splits=[p.name for p in apks[1:]],
+        )
+
     # ── P1: decompile ──────────────────────────────────────────────────────────
     out_dir = _CACHE_DIR / apk_id
     t0 = time.time()
-    await decompiler.decompile(apk_path, out_dir)
+    await decompiler.decompile(apks, out_dir)
     log(
         "P1",
         "decompile",
@@ -582,7 +594,7 @@ async def _extract(
 
     # ── P2-7: dynamic oracle (redroid + Frida) ────────────────────────────────
     if dynamic:
-        oracle_report = await dynamic_oracle.run(apk_path, ir)
+        oracle_report = await dynamic_oracle.run(apks, ir)
     else:
         log("P2", "oracle", "WARNING", "Oracle disabled (--no-dynamic): IR is static-only")
         oracle_report = ReconciliationReport()

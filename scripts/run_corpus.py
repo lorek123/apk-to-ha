@@ -42,8 +42,14 @@ _CACHE = _ROOT / "fixtures" / "_cache"
 
 
 def _apk_path(entry: dict[str, Any]) -> Path:
-    local = entry.get("local_path")
-    return _ROOT / local if local else _CACHE / f"{entry['id']}.apk"
+    local: str | None = entry.get("local_path")
+    if local:
+        return _ROOT / local
+    # download_fixtures keeps a bundle's extension (.xapk/.apks/.apkm)
+    for suffix in (".apk", ".xapk", ".apks", ".apkm"):
+        if (path := _CACHE / f"{entry['id']}{suffix}").exists():
+            return path
+    return _CACHE / f"{entry['id']}.apk"
 
 
 async def _run_one(

@@ -59,13 +59,13 @@ def _should_skip(ir: ProtocolIR) -> bool:
 
 
 async def run(
-    apk_path: Path,
+    apk_path: Path | list[Path],
     ir: ProtocolIR,
     package_name: str | None = None,
     capture_seconds: int = _CAPTURE_SECONDS,
     force: bool = False,
 ) -> ReconciliationReport:
-    """Run the oracle against *apk_path* and return a ReconciliationReport.
+    """Run the oracle against *apk_path* (an APK or a split set, base first).
 
     If *force* is False and static confidence is already ≥ 0.9, returns an
     empty report (confidence_boost=0) without launching the container.
