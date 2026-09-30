@@ -1,0 +1,19 @@
+{
+  "domain": "{{ domain }}",
+  "name": {{ name | tojson }},
+  "bluetooth": [
+{% for u in challenge.service_uuids %}
+    {"connectable": true, "service_uuid": "{{ u }}"}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  ],
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["bluetooth_adapters", "diagnostics"],
+  "documentation": "https://github.com/lorek123/apk-to-ha",
+  "integration_type": "device",
+  "iot_class": "assumed_state",
+  "quality_scale": "platinum",
+  "requirements": ["{{ sdk_package }}=={{ integration_version }}"],
+  "version": "{{ integration_version }}"
+}

@@ -19,8 +19,8 @@ from .dynamic import oracle as dynamic_oracle
 from .dynamic.ir_reconciler import ReconciliationReport
 from .emitters import context as emitter_context
 from .emitters import hacs_emitter, sdk_emitter
+from .extraction import challenge_profile, entity_classifier
 from .extraction import confidence as extraction_confidence
-from .extraction import entity_classifier
 from .extraction.app_sources import is_third_party
 from .extraction.ble_scanner import BLEScanner
 from .extraction.crypto_scanner import scan as crypto_scan
@@ -291,6 +291,29 @@ async def analyze(
         )
 
     ir = ir.model_copy(update={"signing_traces": traces})
+
+    # ── P2-8b: challenge-response profile (BLE devices that verify signatures) ─
+    if ir.auth.challenge is not None:
+        launcher = (manifest.launcher_activity or "").rsplit(".", 1)[-1]
+        profile = challenge_profile.build(
+            ir.auth.challenge.challenge,
+            ir.auth.challenge.proof,
+            ir.commands,
+            ir.events,
+            ir.crypto,
+            ir.signing_traces,
+            out_dir,
+            manifest.package_name,
+            launcher,
+        )
+        ir = ir.model_copy(update={"auth": ir.auth.model_copy(update={"challenge": profile})})
+        log(
+            "P2",
+            "challenge",
+            "INFO" if not profile.missing else "WARNING",
+            f"Challenge-response: {profile.algorithm}, signs {profile.message}, "
+            f"missing={profile.missing}",
+        )
 
     # ── P2-7: dynamic oracle (redroid + Frida) ────────────────────────────────
     if dynamic:
@@ -604,12 +627,12 @@ def _emit_blocker(ir: ProtocolIR) -> tuple[str, str] | None:
     if not (ir.commands or ir.events or ir.state.fields):
         # Not a partial result: an empty integration fails V-3 at import.
         return "nothing-extracted", "Nothing extracted (no commands/events/state)"
-    if ir.auth.type == AuthType.CHALLENGE_RESPONSE:
-        # The device would reject every command the integration sends.
+    if ir.auth.type == AuthType.CHALLENGE_RESPONSE and emitter_context.challenge_ctx(ir) is None:
+        # Without a complete profile the device would reject every command we send.
+        missing = ir.auth.challenge.missing if ir.auth.challenge else ["profile"]
         return (
             "unsupported-auth",
-            f"Auth '{ir.auth.type.value}' is not supported by the templates yet "
-            f"({ir.auth.description})",
+            f"Challenge-response profile incomplete (missing: {', '.join(missing)})",
         )
     if ir.transport.type == TransportType.HTTP_REST and not ir.state.poll_endpoint:
         # The HTTP templates poll a state endpoint; without one there's nothing to show.

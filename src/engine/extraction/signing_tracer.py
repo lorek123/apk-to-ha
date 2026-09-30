@@ -31,6 +31,7 @@ from pydantic import BaseModel
 
 from ..ir.models import CryptoUsage, SigningComponent, SigningTrace
 from .java_code_graph import JavaCodeGraph
+from .volley_scanner import split_args
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -312,6 +313,9 @@ def _resolve_variable(
     )
 
 
+_BYTES_CONCAT = re.compile(r"^(?:ArraysKt\.plus|Bytes\.concat|ArrayUtils\.addAll)\s*\(")
+
+
 def _resolve_rhs(
     rhs: str,
     var_name: str,
@@ -328,6 +332,34 @@ def _resolve_rhs(
 
     if " + " in rhs:
         return _parse_concat(rhs, method_src, class_src, sources_dir, graph, depth)
+
+    # Byte-array concatenation: Kotlin ArraysKt.plus(a, b), Guava Bytes.concat(a, b, c)
+    byte_concat = _BYTES_CONCAT.match(rhs)
+    if byte_concat and depth < 8:
+        joined: list[SigningComponent] = []
+        unresolved: list[str] = []
+        for part in split_args(rhs, byte_concat.end()):
+            if _is_simple_name(part):
+                c, u = _resolve_variable(part, method_src, class_src, sources_dir, graph, depth + 1)
+            else:
+                c, u = _resolve_rhs(
+                    part, part, method_src, class_src, sources_dir, graph, depth + 1
+                )
+            joined.extend(c)
+            unresolved.extend(u)
+        return joined, unresolved
+
+    # A field of the enclosing object (this.nonce): name it by the field.
+    field = re.fullmatch(r"this\.(\w+)", rhs)
+    if field:
+        kind = _classify_name(field.group(1))
+        return [
+            SigningComponent(
+                kind=kind,
+                variable_name=field.group(1),
+                confidence=0.8 if kind != "unknown" else 0.5,
+            )
+        ], []
 
     if "new StringBuilder" in rhs or "new StringBuffer" in rhs:
         comps = _parse_stringbuilder(var_name, method_src)

@@ -155,7 +155,10 @@ def test_check_fails_plt004_missing_aiohttp_client(tmp_path: Path) -> None:
     d = _make_integration(
         tmp_path,
         **{
-            "__init__.py": "# SPDX-License-Identifier: MIT\nentry.runtime_data = None\n",
+            # Talks HTTP (aiohttp) but never takes HA's shared session.
+            "__init__.py": (
+                "# SPDX-License-Identifier: MIT\nimport aiohttp\nentry.runtime_data = None\n"
+            ),
             "config_flow.py": (
                 "# SPDX-License-Identifier: MIT\n"
                 "async def async_step_user(self, user_input=None):\n"
@@ -246,3 +249,45 @@ def test_check_tolerates_missing_optional_files(tmp_path: Path) -> None:
     (d / "translations" / "en.json").write_text("{}")
     report = check(d)
     assert isinstance(report.passed, bool)
+
+
+def test_plt004_fails_on_direct_client_session(tmp_path: Path) -> None:
+    d = _make_integration(
+        tmp_path,
+        **{
+            "__init__.py": (
+                "# SPDX-License-Identifier: MIT\n"
+                "entry.runtime_data = None\n"
+                "session = aiohttp.ClientSession()\n"
+            )
+        },
+    )
+
+    assert "PLT-004" in {r.rule.id for r in check(d).errors}
+
+
+def test_http_and_coordinator_rules_not_applicable_to_ble_only(tmp_path: Path) -> None:
+    d = _make_integration(
+        tmp_path,
+        **{
+            "__init__.py": "# SPDX-License-Identifier: MIT\nentry.runtime_data = client\n",
+            "button.py": (
+                "# SPDX-License-Identifier: MIT\n"
+                "class GateButton(ButtonEntity):\n"
+                "    _attr_has_entity_name = True\n"
+                "    def __init__(self):\n"
+                "        self._attr_unique_id = 'x'\n"
+                "        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, 'x')})\n"
+            ),
+        },
+    )
+    (d / "coordinator.py").unlink(missing_ok=True)
+    (d / "entity_base.py").unlink(missing_ok=True)
+
+    results = {r.rule.id: r for r in check(d).results}
+
+    for rule_id in ("PLT-004", "PLT-005"):
+        assert results[rule_id].passed and results[rule_id].detail.startswith("n/a"), rule_id
+    # entity rules are checked on the entity itself when there's no entity_base
+    for rule_id in ("PLT-001", "PLT-002", "PLT-006"):
+        assert results[rule_id].passed, (rule_id, results[rule_id].detail)

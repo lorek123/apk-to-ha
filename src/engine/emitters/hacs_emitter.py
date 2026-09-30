@@ -22,6 +22,17 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
     Returns the tests dir, or None when the integration has no push-state entity
     to probe or uses a transport the mock device can't speak (BLE).
     """
+    if ctx.get("has_challenge_auth"):
+        tests_dir = out_root / "tests"
+        tests_dir.mkdir(parents=True, exist_ok=True)
+        env = _env(_TESTS_TEMPLATES_DIR)
+        _render(env, ctx, out_root, "pytest.ini.j2", "pytest.ini")
+        _render(env, ctx, tests_dir, "__init__.py.j2", "__init__.py")
+        _render(env, ctx, tests_dir, "conftest_ble_auth.py.j2", "conftest.py")
+        _render(env, ctx, tests_dir, "test_integration_ble_auth.py.j2", "test_integration.py")
+        _fix_imports(tests_dir, select="I001,F401")
+        return tests_dir
+
     probe = _test_probe(ctx)
     if probe is None or ctx.get("has_ble"):
         _LOGGER.info("No runtime tests emitted for %s (no probe entity or BLE)", ctx["domain"])
@@ -120,6 +131,8 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     domain_dir = out_root / "custom_components" / str(ctx["domain"])
     domain_dir.mkdir(parents=True, exist_ok=True)
     (domain_dir / "translations").mkdir(exist_ok=True)
+    if ctx.get("has_challenge_auth"):
+        return _emit_ble_auth(ctx, out_root, domain_dir)
 
     env = Environment(
         loader=FileSystemLoader(str(_TEMPLATES_DIR)),
@@ -167,6 +180,37 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     _fix_imports(domain_dir)
     _LOGGER.info("HACS integration emitted to %s", domain_dir)
     return domain_dir
+
+
+def _emit_ble_auth(ctx: dict[str, Any], out_root: Path, domain_dir: Path) -> Path:
+    """BLE device with challenge-response auth: enrolment flow + authenticated button."""
+    env = _env(_TEMPLATES_DIR / "ble_auth")
+    for template, target in [
+        ("manifest.json.j2", domain_dir / "manifest.json"),
+        ("__init__.py.j2", domain_dir / "__init__.py"),
+        ("const.py.j2", domain_dir / "const.py"),
+        ("config_flow.py.j2", domain_dir / "config_flow.py"),
+        ("button.py.j2", domain_dir / "button.py"),
+        ("diagnostics.py.j2", domain_dir / "diagnostics.py"),
+        ("strings.json.j2", domain_dir / "strings.json"),
+        ("strings.json.j2", domain_dir / "translations" / "en.json"),
+    ]:
+        _render(env, ctx, target.parent, template, target.name)
+    sort_manifest(domain_dir / "manifest.json")
+    _render(_env(_TEMPLATES_DIR), ctx, out_root, "hacs.json.j2", "hacs.json")
+    _fix_imports(domain_dir)
+    _LOGGER.info("HACS integration (BLE challenge-response) emitted to %s", domain_dir)
+    return domain_dir
+
+
+def _env(templates: Path) -> Environment:
+    return Environment(
+        loader=FileSystemLoader(str(templates)),
+        undefined=StrictUndefined,
+        trim_blocks=True,
+        lstrip_blocks=True,
+        keep_trailing_newline=True,
+    )
 
 
 def sort_manifest(path: Path) -> bool:
