@@ -1,0 +1,92 @@
+# SPDX-License-Identifier: MIT
+"""Fixtures for Build Your Own R2-D2 runtime tests: a mock device speaking the extracted protocol."""
+from __future__ import annotations
+
+import json
+from collections.abc import AsyncIterator
+from typing import Any
+
+import pytest
+from aiohttp import WSMsgType, web
+
+AUTH_CMD = "grantAccess"
+STATE_CMD = "gin"
+# Status field of the grantAccess reply, when the protocol has one.
+AUTH_RESULT_FIELD: str | None = None
+INITIAL_STATE: dict[str, Any] = json.loads("{\"battery\": 1}")
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
+    """Make custom_components/ loadable in every test."""
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_sockets(socket_enabled: None) -> None:
+    """The mock device is a real server on 127.0.0.1 (the sandbox runs with no network)."""
+
+
+class MockDevice:
+    """WebSocket server on 127.0.0.1 that pairs via AUTH_CMD and pushes STATE_CMD."""
+
+    def __init__(self) -> None:
+        self.state: dict[str, Any] = dict(INITIAL_STATE)
+        self.received: list[dict[str, Any]] = []
+        self.auth_result = 0  # non-zero: refuse pairing (needs AUTH_RESULT_FIELD)
+        self.port = 0
+        self._clients: set[web.WebSocketResponse] = set()
+        self._runner: web.AppRunner | None = None
+
+    @property
+    def connected_clients(self) -> int:
+        return len(self._clients)
+
+    async def start(self, port: int = 0) -> None:
+        app = web.Application()
+        app.router.add_get("/", self._handle)
+        self._runner = web.AppRunner(app)
+        await self._runner.setup()
+        site = web.TCPSite(self._runner, "127.0.0.1", port, reuse_address=True)
+        await site.start()
+        self.port = self._runner.addresses[0][1]
+
+    async def stop(self) -> None:
+        for ws in list(self._clients):
+            await ws.close()
+        if self._runner is not None:
+            await self._runner.cleanup()
+            self._runner = None
+
+    async def push(self, **changes: Any) -> None:
+        self.state.update(changes)
+        for ws in list(self._clients):
+            await ws.send_str(json.dumps({"cmd": STATE_CMD, **self.state}))
+
+    async def _handle(self, request: web.Request) -> web.WebSocketResponse:
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+        self._clients.add(ws)
+        try:
+            async for msg in ws:
+                if msg.type is not WSMsgType.TEXT:
+                    continue
+                data = json.loads(msg.data)
+                self.received.append(data)
+                if data.get("cmd") == AUTH_CMD:
+                    if AUTH_RESULT_FIELD is not None:
+                        reply = {"cmd": AUTH_CMD, AUTH_RESULT_FIELD: self.auth_result}
+                        await ws.send_str(json.dumps(reply))
+                        if self.auth_result:
+                            continue
+                    await ws.send_str(json.dumps({"cmd": STATE_CMD, **self.state}))
+        finally:
+            self._clients.discard(ws)
+        return ws
+
+
+@pytest.fixture
+async def mock_device() -> AsyncIterator[MockDevice]:
+    device = MockDevice()
+    await device.start()
+    yield device
+    await device.stop()

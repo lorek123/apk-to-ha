@@ -1,0 +1,14 @@
+{
+  "domain": "r2d2",
+  "name": "Build Your Own R2-D2",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/lorek123/apk-to-ha",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "quality_scale": "platinum",
+  "requirements": [
+    "r2d2_sdk==0.1.0"
+  ],
+  "version": "0.1.0"
+}

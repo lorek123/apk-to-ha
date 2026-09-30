@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: MIT
+"""DataUpdateCoordinator for Build Your Own R2-D2."""
+from __future__ import annotations
+
+import logging
+from datetime import timedelta
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import instance_id
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from r2d2_sdk import R2D2Client, R2D2ConnectionError, RobotState
+
+from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
+
+# While disconnected, the coordinator retries the connection at this interval.
+RECONNECT_INTERVAL = timedelta(seconds=30)
+
+
+class R2D2Coordinator(DataUpdateCoordinator[RobotState]):
+    """Owns the push connection to Build Your Own R2-D2.
+
+    Connected: update_interval is None and state arrives via gin pushes.
+    Disconnected: entities go unavailable and the coordinator's own scheduled
+    refresh retries the connection every RECONNECT_INTERVAL until it succeeds.
+    """
+
+    config_entry: ConfigEntry
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        client: R2D2Client,
+    ) -> None:
+        super().__init__(
+            hass, _LOGGER, config_entry=entry, name=DOMAIN, update_interval=None
+        )
+        self.client = client
+        # Register before connecting so the first push is never missed.
+        client.on_state_update(self._handle_push)
+        client.on_disconnect(self._handle_disconnect)
+
+    async def _async_setup(self) -> None:
+        """Connect once during the first refresh; fail setup if the device is unreachable."""
+        try:
+            await self._async_connect()
+        except R2D2ConnectionError as exc:
+            raise ConfigEntryNotReady(str(exc)) from exc
+
+    async def _async_connect(self) -> RobotState:
+        # One stable pairing identity per Home Assistant installation.
+        return await self.client.connect(
+            device_uuid=await instance_id.async_get(self.hass),
+            device_name="Home Assistant",
+        )
+
+    async def _async_update_data(self) -> RobotState:
+        """Return the pushed state, reconnecting first if the connection dropped."""
+        if not self.client.connected:
+            try:
+                state = await self._async_connect()
+            except R2D2ConnectionError as exc:
+                raise UpdateFailed(str(exc)) from exc
+            _LOGGER.info("Reconnected to %s", self.client.host)
+            self.update_interval = None
+            return state
+        return self.client.state
+
+    @callback
+    def _handle_push(self, state: RobotState) -> None:
+        """Called by the SDK when a gin message arrives."""
+        self.async_set_updated_data(state)
+
+    @callback
+    def _handle_disconnect(self) -> None:
+        """Mark entities unavailable and let the scheduled refresh reconnect."""
+        _LOGGER.warning("Lost connection to %s; retrying every %s", self.client.host, RECONNECT_INTERVAL)
+        self.update_interval = RECONNECT_INTERVAL
+        self.async_set_update_error(ConnectionError(f"Lost connection to {self.client.host}"))
+        self.config_entry.async_create_background_task(
+            self.hass, self.async_request_refresh(), f"{DOMAIN}_reconnect"
+        )

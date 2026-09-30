@@ -34,6 +34,9 @@ sandbox-build: ## Build the sandbox image only (no test run)
 fixtures:      ## Download APKs listed in fixtures/sources.yaml to fixtures/_cache/
 	uv run python scripts/download_fixtures.py
 
+golden:        ## Rewrite tests/golden/*/expected/ after an intended emitter change
+	uv run python scripts/update_golden.py
+
 corpus:        ## Run the pipeline over every cached fixture and check verdicts
 	uv run python scripts/run_corpus.py
 

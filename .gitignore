@@ -27,15 +27,20 @@ htmlcov/
 *.swo
 
 # Engine-specific
-.cache/                     # JADX decompile cache, HA Core clone, duplicate-check cache
-runs/                       # F-6 run telemetry (local only)
-fixtures/_cache/            # F-2a APK download cache (never commit)
-fixtures/_cache/**          # belt and suspenders
-.claude/settings.local.json # actual MCP config (the .example is committed)
+# (gitignore has no trailing comments: a "# ..." after a pattern is part of it)
+# JADX decompile cache, HA Core clone, duplicate-check cache, IR checkpoints
+.cache/
+# F-6 run telemetry (local only)
+runs/
+# F-2a APK download cache (never commit)
+fixtures/_cache/
+fixtures/_cache/**
+# actual MCP config (the .example is committed)
+.claude/settings.local.json
 
-# Generated artifacts during local testing
+# Generated artifacts during local testing (tests/golden/ is committed on purpose)
 sdk_output/
-custom_components/
+/custom_components/
 *.apk
 *.dex
 *.jar

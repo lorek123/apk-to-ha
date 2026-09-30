@@ -1,0 +1,2305 @@
+{
+  "apk_path": "nova_unraid.apk",
+  "package_name": "io.github.nofuturekid.nova",
+  "app_name": "NOVA",
+  "version_name": "0.1.40",
+  "framework": "native",
+  "transport": {
+    "type": "graphql",
+    "port": null,
+    "host_source": "manual",
+    "url_template": null,
+    "tls": false
+  },
+  "discovery": {
+    "type": "none",
+    "port": null,
+    "broadcast_cmd": null,
+    "service_type": null,
+    "hostname_pattern": null,
+    "response_fields": []
+  },
+  "auth": {
+    "type": "api_key",
+    "handshake_cmd": null,
+    "fields": [
+      {
+        "name": "x-api-key",
+        "serialized_name": "x-api-key",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      }
+    ],
+    "description": "API key sent in the 'x-api-key' header",
+    "challenge": null
+  },
+  "state": {
+    "push_cmd": null,
+    "poll_endpoint": null,
+    "poll_endpoints": [
+      "QUERY GetArray",
+      "QUERY GetServerInfo",
+      "QUERY GetDisplay",
+      "QUERY GetMetrics",
+      "QUERY GetNotificationList"
+    ],
+    "fields": [
+      {
+        "name": "array_capacity_kilobytes_free",
+        "serialized_name": "array.capacity.kilobytes.free",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "array_capacity_kilobytes_total",
+        "serialized_name": "array.capacity.kilobytes.total",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "array_capacity_kilobytes_used",
+        "serialized_name": "array.capacity.kilobytes.used",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "array_parity_check_status_errors",
+        "serialized_name": "array.parityCheckStatus.errors",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "array_parity_check_status_paused",
+        "serialized_name": "array.parityCheckStatus.paused",
+        "kind": "boolean",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "array_parity_check_status_progress",
+        "serialized_name": "array.parityCheckStatus.progress",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "array_parity_check_status_running",
+        "serialized_name": "array.parityCheckStatus.running",
+        "kind": "boolean",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "array_parity_check_status_speed",
+        "serialized_name": "array.parityCheckStatus.speed",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "array_state",
+        "serialized_name": "array.state",
+        "kind": "enum",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "info_cpu_brand",
+        "serialized_name": "info.cpu.brand",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "info_cpu_cores",
+        "serialized_name": "info.cpu.cores",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "info_cpu_speedmax",
+        "serialized_name": "info.cpu.speedmax",
+        "kind": "number",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "info_cpu_threads",
+        "serialized_name": "info.cpu.threads",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "info_os_hostname",
+        "serialized_name": "info.os.hostname",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "info_os_kernel",
+        "serialized_name": "info.os.kernel",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "info_os_uptime",
+        "serialized_name": "info.os.uptime",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "info_versions_core_kernel",
+        "serialized_name": "info.versions.core.kernel",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "info_versions_core_unraid",
+        "serialized_name": "info.versions.core.unraid",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "display_critical",
+        "serialized_name": "display.critical",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "display_hot",
+        "serialized_name": "display.hot",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "display_max",
+        "serialized_name": "display.max",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "display_warning",
+        "serialized_name": "display.warning",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "metrics_cpu_percent_total",
+        "serialized_name": "metrics.cpu.percentTotal",
+        "kind": "number",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "metrics_memory_buffcache",
+        "serialized_name": "metrics.memory.buffcache",
+        "kind": "integer",
+        "required": true,
+        "nullable": true,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "metrics_memory_total",
+        "serialized_name": "metrics.memory.total",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "metrics_memory_used",
+        "serialized_name": "metrics.memory.used",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "notifications_overview_unread_alert",
+        "serialized_name": "notifications.overview.unread.alert",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "notifications_overview_unread_info",
+        "serialized_name": "notifications.overview.unread.info",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "notifications_overview_unread_total",
+        "serialized_name": "notifications.overview.unread.total",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "notifications_overview_unread_warning",
+        "serialized_name": "notifications.overview.unread.warning",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      }
+    ]
+  },
+  "commands": [
+    {
+      "cmd": "QUERY GetNotificationList",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "notifications_archived",
+          "serialized_name": "notifications.archived",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "notifications_overview_unread_alert",
+          "serialized_name": "notifications.overview.unread.alert",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "notifications_overview_unread_info",
+          "serialized_name": "notifications.overview.unread.info",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "notifications_overview_unread_total",
+          "serialized_name": "notifications.overview.unread.total",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "notifications_overview_unread_warning",
+          "serialized_name": "notifications.overview.unread.warning",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "notifications_unread",
+          "serialized_name": "notifications.unread",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetNotificationListQuery",
+      "document": "query GetNotificationList { notifications { overview { unread { info warning alert total } } unread: list(filter: { type: UNREAD offset: 0 limit: 200 } ) { __typename ...NotificationFields } archived: list(filter: { type: ARCHIVE offset: 0 limit: 200 } ) { __typename ...NotificationFields } } }  fragment NotificationFields on Notification { id title subject description importance link type timestamp formattedTimestamp }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION UpdateContainer",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "UpdateContainerMutation",
+      "document": "mutation UpdateContainer($id: PrefixedID!) { docker { updateContainer(id: $id) { id state } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION RebootVm",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RebootVmMutation",
+      "document": "mutation RebootVm($id: PrefixedID!) { vm { reboot(id: $id) } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetPluginOperations",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "plugin_install_operations",
+          "serialized_name": "pluginInstallOperations",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetPluginOperationsQuery",
+      "document": "query GetPluginOperations { pluginInstallOperations { id url name status createdAt finishedAt output } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION ArchiveNotification",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "ArchiveNotificationMutation",
+      "document": "mutation ArchiveNotification($id: PrefixedID!) { archiveNotification(id: $id) { id } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION PauseContainer",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "PauseContainerMutation",
+      "document": "mutation PauseContainer($id: PrefixedID!) { docker { pause(id: $id) { id state } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetNotifications",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "notifications_overview_unread_alert",
+          "serialized_name": "notifications.overview.unread.alert",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "notifications_overview_unread_info",
+          "serialized_name": "notifications.overview.unread.info",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "notifications_overview_unread_total",
+          "serialized_name": "notifications.overview.unread.total",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "notifications_overview_unread_warning",
+          "serialized_name": "notifications.overview.unread.warning",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "notifications_warnings_and_alerts",
+          "serialized_name": "notifications.warningsAndAlerts",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetNotificationsQuery",
+      "document": "query GetNotifications { notifications { overview { unread { info warning alert total } } warningsAndAlerts { id title subject description importance timestamp } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION PauseVm",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "PauseVmMutation",
+      "document": "mutation PauseVm($id: PrefixedID!) { vm { pause(id: $id) } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetNetworkThroughput",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "metrics_network_interfaces",
+          "serialized_name": "metrics.network.interfaces",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetNetworkThroughputQuery",
+      "document": "query GetNetworkThroughput { metrics { network { interfaces { iface rxBytesPerSec txBytesPerSec } } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetArray",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "array_caches",
+          "serialized_name": "array.caches",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_capacity_kilobytes_free",
+          "serialized_name": "array.capacity.kilobytes.free",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_capacity_kilobytes_total",
+          "serialized_name": "array.capacity.kilobytes.total",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_capacity_kilobytes_used",
+          "serialized_name": "array.capacity.kilobytes.used",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_disks",
+          "serialized_name": "array.disks",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_parities",
+          "serialized_name": "array.parities",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_parity_check_status_errors",
+          "serialized_name": "array.parityCheckStatus.errors",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_parity_check_status_paused",
+          "serialized_name": "array.parityCheckStatus.paused",
+          "kind": "boolean",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_parity_check_status_progress",
+          "serialized_name": "array.parityCheckStatus.progress",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_parity_check_status_running",
+          "serialized_name": "array.parityCheckStatus.running",
+          "kind": "boolean",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_parity_check_status_speed",
+          "serialized_name": "array.parityCheckStatus.speed",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "array_state",
+          "serialized_name": "array.state",
+          "kind": "enum",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetArrayQuery",
+      "document": "query GetArray { array { state capacity { kilobytes { total used free } } parities { id name device size status temp type isSpinning rotational numErrors warning critical } disks { id name device size status temp fsSize fsFree fsUsed type isSpinning rotational numErrors warning critical } caches { id name device size status temp fsSize fsFree fsUsed type isSpinning rotational numErrors warning critical } parityCheckStatus { progress speed errors running paused } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION StopArray",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "StopArrayMutation",
+      "document": "mutation StopArray { array { setState(input: { desiredState: STOP } ) { state } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION ResumeParityCheck",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "ResumeParityCheckMutation",
+      "document": "mutation ResumeParityCheck { parityCheck { resume } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION StopVm",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "StopVmMutation",
+      "document": "mutation StopVm($id: PrefixedID!) { vm { stop(id: $id) } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION DeleteNotification",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "type",
+          "serialized_name": "type",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DeleteNotificationMutation",
+      "document": "mutation DeleteNotification($id: PrefixedID!, $type: NotificationType!) { deleteNotification(id: $id, type: $type) { unread { warning alert } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetDisplay",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "display_critical",
+          "serialized_name": "display.critical",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "display_hot",
+          "serialized_name": "display.hot",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "display_max",
+          "serialized_name": "display.max",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "display_warning",
+          "serialized_name": "display.warning",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetDisplayQuery",
+      "document": "query GetDisplay { display { hot max warning critical } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION UnreadNotification",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "UnreadNotificationMutation",
+      "document": "mutation UnreadNotification($id: PrefixedID!) { unreadNotification(id: $id) { id } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION StartContainer",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "StartContainerMutation",
+      "document": "mutation StartContainer($id: PrefixedID!) { docker { start(id: $id) { id state } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetServerInfo",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "info_cpu_brand",
+          "serialized_name": "info.cpu.brand",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_cpu_cores",
+          "serialized_name": "info.cpu.cores",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_cpu_speedmax",
+          "serialized_name": "info.cpu.speedmax",
+          "kind": "number",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_cpu_threads",
+          "serialized_name": "info.cpu.threads",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_memory_layout",
+          "serialized_name": "info.memory.layout",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_os_hostname",
+          "serialized_name": "info.os.hostname",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_os_kernel",
+          "serialized_name": "info.os.kernel",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_os_uptime",
+          "serialized_name": "info.os.uptime",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_versions_core_kernel",
+          "serialized_name": "info.versions.core.kernel",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_versions_core_unraid",
+          "serialized_name": "info.versions.core.unraid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetServerInfoQuery",
+      "document": "query GetServerInfo { info { cpu { brand cores threads speedmax } memory { layout { size } } os { hostname kernel uptime } versions { core { unraid kernel } } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetDockerContainers",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "docker_containers",
+          "serialized_name": "docker.containers",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetDockerContainersQuery",
+      "document": "query GetDockerContainers { docker { containers { id names image state status autoStart iconUrl isUpdateAvailable isRebuildReady webUiUrl ports { privatePort publicPort type } mounts networkSettings } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION StartArray",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "StartArrayMutation",
+      "document": "mutation StartArray { array { setState(input: { desiredState: START } ) { state } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION StartVm",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "StartVmMutation",
+      "document": "mutation StartVm($id: PrefixedID!) { vm { start(id: $id) } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION StartParityCheck",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "correct",
+          "serialized_name": "correct",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "StartParityCheckMutation",
+      "document": "mutation StartParityCheck($correct: Boolean!) { parityCheck { start(correct: $correct) } }",
+      "confidence": 0.95,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "QUERY Ping",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "__typename",
+          "serialized_name": "__typename",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "PingQuery",
+      "document": "query Ping { __typename }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION ArchiveAllNotifications",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "ArchiveAllNotificationsMutation",
+      "document": "mutation ArchiveAllNotifications { archiveAll { unread { warning alert } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION RecalculateNotificationOverview",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RecalculateNotificationOverviewMutation",
+      "document": "mutation RecalculateNotificationOverview { recalculateOverview { unread { warning alert } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetInstalledUnraidPlugins",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "installed_unraid_plugins",
+          "serialized_name": "installedUnraidPlugins",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetInstalledUnraidPluginsQuery",
+      "document": "query GetInstalledUnraidPlugins { installedUnraidPlugins }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION ForceStopVm",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "ForceStopVmMutation",
+      "document": "mutation ForceStopVm($id: PrefixedID!) { vm { forceStop(id: $id) } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetPlugins",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "plugins",
+          "serialized_name": "plugins",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetPluginsQuery",
+      "document": "query GetPlugins { plugins { name version hasApiModule hasCliModule } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY FetchContainerLogs",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "tail",
+          "serialized_name": "tail",
+          "kind": "integer",
+          "required": false,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [
+        {
+          "name": "docker_logs_cursor",
+          "serialized_name": "docker.logs.cursor",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "docker_logs_lines",
+          "serialized_name": "docker.logs.lines",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "FetchContainerLogsQuery",
+      "document": "query FetchContainerLogs($id: PrefixedID!, $tail: Int) { docker { logs(id: $id, tail: $tail) { lines { timestamp message } cursor } } }",
+      "confidence": 0.95,
+      "entity_hint": "number"
+    },
+    {
+      "cmd": "QUERY GetNetworkInterfaces",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "info_devices_network",
+          "serialized_name": "info.devices.network",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_network_interfaces",
+          "serialized_name": "info.networkInterfaces",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "info_primary_network_name",
+          "serialized_name": "info.primaryNetwork.name",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetNetworkInterfacesQuery",
+      "document": "query GetNetworkInterfaces { info { networkInterfaces { name description macAddress status protocol ipAddress netmask gateway useDhcp ipv6Address ipv6Netmask ipv6Gateway useDhcp6 } primaryNetwork { name } devices { network { iface model vendor mac virtual speed dhcp } } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION ResumeVm",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "ResumeVmMutation",
+      "document": "mutation ResumeVm($id: PrefixedID!) { vm { resume(id: $id) } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION StopContainer",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "StopContainerMutation",
+      "document": "mutation StopContainer($id: PrefixedID!) { docker { stop(id: $id) { id state } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION CancelParityCheck",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CancelParityCheckMutation",
+      "document": "mutation CancelParityCheck { parityCheck { cancel } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION DeleteArchivedNotifications",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DeleteArchivedNotificationsMutation",
+      "document": "mutation DeleteArchivedNotifications { deleteArchivedNotifications { unread { info warning alert total } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION UnpauseContainer",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "UnpauseContainerMutation",
+      "document": "mutation UnpauseContainer($id: PrefixedID!) { docker { unpause(id: $id) { id state } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION PauseParityCheck",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "PauseParityCheckMutation",
+      "document": "mutation PauseParityCheck { parityCheck { pause } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION UpdateAllContainers",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "UpdateAllContainersMutation",
+      "document": "mutation UpdateAllContainers { docker { updateAllContainers { id state } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "MUTATION ResetVm",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "id",
+          "serialized_name": "id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "ResetVmMutation",
+      "document": "mutation ResetVm($id: PrefixedID!) { vm { reset(id: $id) } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetVms",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "vms_domains",
+          "serialized_name": "vms.domains",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetVmsQuery",
+      "document": "query GetVms { vms { domains { id name state } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "QUERY GetMetrics",
+      "transport": "graphql",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "metrics_cpu_percent_total",
+          "serialized_name": "metrics.cpu.percentTotal",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "metrics_memory_buffcache",
+          "serialized_name": "metrics.memory.buffcache",
+          "kind": "integer",
+          "required": true,
+          "nullable": true,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "metrics_memory_total",
+          "serialized_name": "metrics.memory.total",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "metrics_memory_used",
+          "serialized_name": "metrics.memory.used",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "metrics_temperature_sensors",
+          "serialized_name": "metrics.temperature.sensors",
+          "kind": "array",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "description": null,
+      "source_class": "GetMetricsQuery",
+      "document": "query GetMetrics { metrics { cpu { percentTotal } memory { total used buffcache } temperature { sensors { name type current { value unit status } warning critical } } } }",
+      "confidence": 0.95,
+      "entity_hint": "button"
+    }
+  ],
+  "events": [
+    {
+      "cmd": "SUBSCRIPTION SystemMetricsTemperature",
+      "transport": "graphql",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "SystemMetricsTemperatureSubscription",
+      "document": "subscription SystemMetricsTemperature { systemMetricsTemperature { sensors { name type current { value unit status } warning critical } } }",
+      "confidence": 0.95,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "SUBSCRIPTION DockerContainerStats",
+      "transport": "graphql",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DockerContainerStatsSubscription",
+      "document": "subscription DockerContainerStats { dockerContainerStats { id cpuPercent memUsage memPercent netIO blockIO } }",
+      "confidence": 0.95,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "SUBSCRIPTION SystemMetricsMemory",
+      "transport": "graphql",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "SystemMetricsMemorySubscription",
+      "document": "subscription SystemMetricsMemory { systemMetricsMemory { total used buffcache } }",
+      "confidence": 0.95,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "SUBSCRIPTION SystemMetricsCpu",
+      "transport": "graphql",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "SystemMetricsCpuSubscription",
+      "document": "subscription SystemMetricsCpu { systemMetricsCpu { percentTotal } }",
+      "confidence": 0.95,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "SUBSCRIPTION SystemMetricsNetwork",
+      "transport": "graphql",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "SystemMetricsNetworkSubscription",
+      "document": "subscription SystemMetricsNetwork { systemMetricsNetwork { interfaces { iface rxBytesPerSec txBytesPerSec } } }",
+      "confidence": 0.95,
+      "entity_hint": "sensor"
+    }
+  ],
+  "streaming": null,
+  "crypto": [
+    {
+      "algorithm": "unknown",
+      "call_site": "p000.ob2",
+      "context_snippet": "import javax.crypto",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "p000.wj3",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "p000.AbstractC0149e1",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "AESCMAC",
+      "call_site": "p000.n50",
+      "context_snippet": "            }\n            Mac.getInstance(\"AESCMAC\", providerM6283J);\n            return new a31(16, nb2Var, new dd2(((C0028ar) ja1Var.f5357g).m298b(), providerM6283J));\n        } catch (GeneralSecurityException unused) {",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "p000.co2",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "AES/GCM/NOPADDING",
+      "call_site": "p000.C0122db",
+      "context_snippet": "                byte[] bArr3 = new byte[bArr.length + 28];\n                Cipher cipher = Cipher.getInstance(\"AES/GCM/NoPadding\");\n                cipher.init(1, (SecretKey) obj);\n                cipher.updateAAD(bArr2);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "p000.v51",
+      "context_snippet": "        KeyGenParameterSpec keyGenParameterSpecBuild = new KeyGenParameterSpec.Builder(str, 3).setKeySize(256).setBlockModes(\"GCM\").setEncryptionPaddings(\"NoPadding\").build();\n        KeyGenerator keyGenerator = KeyGenerator.getInstance(\"AES\", \"AndroidKeyStore\");\n        keyGenerator.init(keyGenParameterSpecBuild);\n        keyGenerator.generateKey();",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "p000.C0043b5",
+      "context_snippet": "        zg3.m6705a(bArr.length);\n        this.f675a = new SecretKeySpec(bArr, \"AES\");\n        int blockSize = ((Cipher) f674d.get()).getBlockSize();\n        this.f677c = blockSize;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "SHA-256",
+      "call_site": "p000.pj1",
+      "context_snippet": "        x509Certificate.getClass();\n        byte[] bArrDigest = MessageDigest.getInstance(\"SHA-256\").digest(x509Certificate.getEncoded());\n        bArrDigest.getClass();\n        String strM4598q0 = AbstractC0665rj.m4598q0(bArrDigest, \":\", new eo2(28), 30);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "p000.nb2",
+      "context_snippet": "        zg3.m6705a(bArr.length);\n        SecretKeySpec secretKeySpec = new SecretKeySpec(bArr, \"AES\");\n        this.f7377f = secretKeySpec;\n        if (!zw1.m6803a(1)) {",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "CHACHA20-POLY1305",
+      "call_site": "p000.kn3",
+      "context_snippet": "        byte[] bArr4 = C0896xs.f13667d;\n        Cipher cipher = Cipher.getInstance(\"ChaCha20-Poly1305\", this.f6075c);\n        cipher.init(1, secretKeySpec, ivParameterSpec);\n        if (bArr2.length != 0) {",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "HMAC",
+      "call_site": "p000.sk0",
+      "context_snippet": "                C0043b5 c0043b5 = new C0043b5(bArrM298b2, c0909y4.f13837c);\n                C0657rb c0657rb = new C0657rb(\"HMAC\" + c0909y4.f13840f, new SecretKeySpec(((C0028ar) c0687s4.f10039e.f5357g).m298b(), \"HMAC\"));\n                int i = c0909y4.f13838d;\n                return new kj0(c0043b5, new pb2(c0657rb, i), i, c0687s4.f10040f.m298b());",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "SHA-256",
+      "call_site": "p000.fw0",
+      "context_snippet": "        super(c0135dn);\n        MessageDigest messageDigest = MessageDigest.getInstance(\"SHA-256\");\n        messageDigest.getClass();\n        this.f3410g = messageDigest;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "p000.C0301i5",
+      "context_snippet": "        zg3.m6705a(bArr.length);\n        this.f4610c = new SecretKeySpec(bArr, \"AES\");\n        this.f4609b = n50.m3777t(C0464m4.m3566V(C0501n4.m3729b(bArr.length), new ja1(16, C0028ar.m297a(bArr))));\n        this.f4608a = bArr2;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "CHACHA20",
+      "call_site": "p000.C0896xs",
+      "context_snippet": "        }\n        this.f13670a = new SecretKeySpec(bArr, \"ChaCha20\");\n        this.f13671b = bArr2;\n        this.f13672c = provider;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "CHACHA20-POLY1305",
+      "call_site": "p000.C0896xs",
+      "context_snippet": "        IvParameterSpec ivParameterSpec = new IvParameterSpec(bArrM3412a);\n        Cipher cipher = Cipher.getInstance(\"ChaCha20-Poly1305\", this.f13672c);\n        cipher.init(1, this.f13670a, ivParameterSpec);\n        if (bArr2.length != 0) {",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES/CTR/NOPADDING",
+      "call_site": "p000.C0006a5",
+      "context_snippet": "                try {\n                    return (Cipher) pj0.f8661b.f8663a.m3994a(\"AES/CTR/NoPadding\");\n                } catch (GeneralSecurityException e) {\n                    throw new IllegalStateException(e);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES/GCM/NOPADDING",
+      "call_site": "p000.C0006a5",
+      "context_snippet": "                try {\n                    return (Cipher) pj0.f8661b.f8663a.m3994a(\"AES/GCM/NoPadding\");\n                } catch (GeneralSecurityException e3) {\n                    throw new IllegalStateException(e3);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES/ECB/NOPADDING",
+      "call_site": "p000.C0006a5",
+      "context_snippet": "                try {\n                    return (Cipher) pj0.f8661b.f8663a.m3994a(\"AES/ECB/NoPadding\");\n                } catch (GeneralSecurityException e5) {\n                    throw new IllegalStateException(e5);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AESCMAC",
+      "call_site": "p000.dd2",
+      "context_snippet": "        }\n        Mac mac = Mac.getInstance(\"AESCMAC\", (Provider) this.f1878h);\n        mac.init((SecretKeySpec) this.f1877g);\n        byte[] bArrDoFinal = mac.doFinal(bArr);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "p000.dd2",
+      "context_snippet": "        if (zw1.m6803a(1)) {\n            this.f1877g = new SecretKeySpec(bArr, \"AES\");\n            this.f1878h = provider;\n        } else {",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "p000.C0725t5",
+      "context_snippet": "        zg3.m6705a(bArr.length);\n        this.f10629c = new SecretKeySpec(bArr, \"AES\");\n        this.f10628b = c0028ar.m298b();\n    }",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "p000.q60",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "p000.C0154e6",
+      "context_snippet": "        zg3.m6705a(bArr.length);\n        this.f2341b = new SecretKeySpec(bArr, \"AES\");\n        this.f2340a = sk0Var;\n    }",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "HMAC-SHA1",
+      "call_site": "p000.C0657rb",
+      "context_snippet": "        switch (str) {\n            case \"HMACSHA1\":\n                this.f9535g = 20;\n                break;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "HMAC-SHA256",
+      "call_site": "p000.C0657rb",
+      "context_snippet": "                break;\n            case \"HMACSHA256\":\n                this.f9535g = 32;\n                break;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "HMAC-SHA512",
+      "call_site": "p000.C0657rb",
+      "context_snippet": "                break;\n            case \"HMACSHA512\":\n                this.f9535g = 64;\n                break;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "p000.AbstractC0762u5",
+      "context_snippet": "import javax.crypto",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "p000.C0968zq",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "HMAC",
+      "call_site": "p000.pb2",
+      "context_snippet": "    public pb2(bx0 bx0Var) {\n        this.f8551a = new C0657rb(\"HMAC\" + bx0Var.f1119c.f4480d, new SecretKeySpec(((C0028ar) bx0Var.f1120d.f5357g).m298b(), \"HMAC\"));\n        hx0 hx0Var = bx0Var.f1119c;\n        this.f8552b = hx0Var.f4478b;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AESCMAC",
+      "call_site": "p000.C0527nu",
+      "context_snippet": "        try {\n            Mac.getInstance(\"AESCMAC\", provider);\n            c0115d4.f1754e.m298b();\n            new SecretKeySpec(((C0028ar) c0115d4.f1753d.f5357g).m298b(), \"AES\");",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "p000.C0527nu",
+      "context_snippet": "            c0115d4.f1754e.m298b();\n            new SecretKeySpec(((C0028ar) c0115d4.f1753d.f5357g).m298b(), \"AES\");\n            return c0527nu;\n        } catch (NoSuchAlgorithmException e) {",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "p000.an3",
+      "context_snippet": "        zg3.m6705a(32);\n        SecretKeySpec secretKeySpec = new SecretKeySpec(bArrM281c, \"AES\");\n        byte[] bArr3 = this.f470a;\n        int length = bArr3.length + i + bArrCopyOfRange.length;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "p000.kj0",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    }
+  ],
+  "signing_traces": [
+    {
+      "algorithm": "AESCMAC",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.n50",
+      "confidence": 0.1,
+      "unresolved": [
+        "doFinal/update input not found"
+      ]
+    },
+    {
+      "algorithm": "AES/GCM/NOPADDING",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr, 0, bArr.length, bArr3, 12",
+          "value": null,
+          "confidence": 0.2
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.C0122db.mo279a",
+      "confidence": 0.12,
+      "unresolved": [
+        "bArr, 0, bArr.length, bArr3, 12"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.v51",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr, i, i2, bArr2, i3",
+          "value": null,
+          "confidence": 0.2
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.C0043b5.m419a",
+      "confidence": 0.12,
+      "unresolved": [
+        "bArr, i, i2, bArr2, i3"
+      ]
+    },
+    {
+      "algorithm": "SHA-256",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.pj1",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.nb2",
+      "confidence": 0.1,
+      "unresolved": [
+        "doFinal/update input not found"
+      ]
+    },
+    {
+      "algorithm": "CHACHA20-POLY1305",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr, 0, bArr.length, bArrCopyOf, bArr5.length",
+          "value": null,
+          "confidence": 0.2
+        },
+        {
+          "kind": "literal",
+          "variable_name": "24",
+          "value": "24",
+          "confidence": 1.0
+        }
+      ],
+      "key_source": "AbstractC0251gt.m2205a(this.f6073a",
+      "source_method": "p000.kn3.mo279a",
+      "confidence": 0.16,
+      "unresolved": [
+        "bArr, 0, bArr.length, bArrCopyOf, bArr5.length"
+      ]
+    },
+    {
+      "algorithm": "HMAC",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.sk0",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "SHA-256",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "yn2Var.f14246a, yn2Var.f14247b, iMin",
+          "value": null,
+          "confidence": 0.2
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.fw0.mo400G",
+      "confidence": 0.12,
+      "unresolved": [
+        "yn2Var.f14246a, yn2Var.f14247b, iMin"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr, 0, bArr.length, bArrCopyOf, bArr3.length",
+          "value": null,
+          "confidence": 0.2
+        },
+        {
+          "kind": "unknown",
+          "variable_name": "f4611d",
+          "value": null,
+          "confidence": 0.5
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.C0301i5.mo279a",
+      "confidence": 0.16,
+      "unresolved": [
+        "bArr, 0, bArr.length, bArrCopyOf, bArr3.length"
+      ]
+    },
+    {
+      "algorithm": "CHACHA20",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.C0896xs",
+      "confidence": 0.1,
+      "unresolved": [
+        "doFinal/update input not found"
+      ]
+    },
+    {
+      "algorithm": "CHACHA20-POLY1305",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.C0896xs",
+      "confidence": 0.1,
+      "unresolved": [
+        "doFinal/update input not found"
+      ]
+    },
+    {
+      "algorithm": "AES/CTR/NOPADDING",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.C0006a5",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "AES/GCM/NOPADDING",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.C0006a5",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "AES/ECB/NOPADDING",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.C0006a5",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "AESCMAC",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.dd2.mo41n",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.dd2.mo41n",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr, 0, bArr.length, bArrCopyOf, bArr3.length",
+          "value": null,
+          "confidence": 0.2
+        },
+        {
+          "kind": "literal",
+          "variable_name": "12",
+          "value": "12",
+          "confidence": 1.0
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.C0725t5.mo279a",
+      "confidence": 0.16,
+      "unresolved": [
+        "bArr, 0, bArr.length, bArrCopyOf, bArr3.length"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr2, 0, bArr2.length",
+          "value": null,
+          "confidence": 0.2
+        }
+      ],
+      "key_source": "f2337f",
+      "source_method": "p000.C0154e6.m1471c",
+      "confidence": 0.12,
+      "unresolved": [
+        "bArr2, 0, bArr2.length"
+      ]
+    },
+    {
+      "algorithm": "HMAC-SHA1",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.C0657rb.mo41n",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "HMAC-SHA256",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.C0657rb.mo41n",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "HMAC-SHA512",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "p000.C0657rb.mo41n",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "HMAC",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.pb2",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "AESCMAC",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.C0527nu",
+      "confidence": 0.1,
+      "unresolved": [
+        "doFinal/update input not found"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [],
+      "key_source": null,
+      "source_method": "p000.C0527nu",
+      "confidence": 0.1,
+      "unresolved": [
+        "doFinal/update input not found"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr, 0, bArr.length, bArr4, length",
+          "value": null,
+          "confidence": 0.2
+        }
+      ],
+      "key_source": "bArrM281c",
+      "source_method": "p000.an3.mo279a",
+      "confidence": 0.12,
+      "unresolved": [
+        "bArr, 0, bArr.length, bArr4, length"
+      ]
+    }
+  ],
+  "play_store": null,
+  "duplicate_check": {
+    "found": false,
+    "location": null,
+    "name": null,
+    "repo_url": null,
+    "coverage_estimate": "none"
+  },
+  "extraction_confidence": 0.95,
+  "extractor_notes": [],
+  "raw_permissions": [
+    "android.permission.INTERNET",
+    "android.permission.ACCESS_NETWORK_STATE",
+    "io.github.nofuturekid.nova.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "extra": {
+    "graphql_path": "/graphql",
+    "android_strings": {
+      "androidx_compose_foundation_autofill": "Autofill",
+      "default_error_message": "Invalid input",
+      "state_empty": "Empty"
+    }
+  }
+}

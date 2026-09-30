@@ -1,0 +1,1209 @@
+{
+  "apk_path": "bullb_r2d2.apk",
+  "package_name": "com.bullb.r2d2",
+  "app_name": "Build Your Own R2-D2_1.1.31_release_APKPure",
+  "version_name": "1.1.31_release",
+  "framework": "native",
+  "transport": {
+    "type": "websocket",
+    "port": 8887,
+    "host_source": "discovered",
+    "url_template": "ws://{host}:8887",
+    "tls": false
+  },
+  "discovery": {
+    "type": "udp_broadcast",
+    "port": 8090,
+    "broadcast_cmd": "updBroadcast",
+    "service_type": null,
+    "hostname_pattern": null,
+    "response_fields": []
+  },
+  "auth": {
+    "type": "handshake",
+    "handshake_cmd": "grantAccess",
+    "fields": [
+      {
+        "name": "uuid",
+        "serialized_name": "uuid",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      },
+      {
+        "name": "device_name",
+        "serialized_name": "device_name",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      }
+    ],
+    "description": "Send grantAccess on WebSocket open; robot responds with state + resultCode",
+    "challenge": null
+  },
+  "state": {
+    "push_cmd": "gin",
+    "poll_endpoint": null,
+    "poll_endpoints": [],
+    "fields": [
+      {
+        "name": "arm",
+        "serialized_name": "arm",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "battery",
+        "serialized_name": "battery",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "charging",
+        "serialized_name": "charging",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "error",
+        "serialized_name": "error",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "f43ip",
+        "serialized_name": "ip",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      },
+      {
+        "name": "isAPMode",
+        "serialized_name": "ap_mode",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "lightsaber",
+        "serialized_name": "lightsaber",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "longLCD",
+        "serialized_name": "lcd_l",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "mode",
+        "serialized_name": "mode",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "name",
+        "serialized_name": "name",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      },
+      {
+        "name": "projector",
+        "serialized_name": "projector",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "selfUpdate",
+        "serialized_name": "self_update",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      },
+      {
+        "name": "shortLCD",
+        "serialized_name": "lcd_s",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "ssid",
+        "serialized_name": "ssid",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      },
+      {
+        "name": "timestamp",
+        "serialized_name": "timestamp",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      },
+      {
+        "name": "updateDownloadProgress",
+        "serialized_name": "update_dl_progress",
+        "kind": "integer",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      },
+      {
+        "name": "uuid",
+        "serialized_name": "uuid",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": null
+      }
+    ]
+  },
+  "commands": [
+    {
+      "cmd": "play_sound",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "interrupt",
+          "serialized_name": "interrupt",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "sound_id",
+          "serialized_name": "sound_id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "SoundRecyclerViewAdapter",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "number"
+    },
+    {
+      "cmd": "move-head",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "angle",
+          "serialized_name": "angle",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DebugActivity",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "mode",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "mode",
+          "serialized_name": "mode",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "interrupt",
+          "serialized_name": "interrupt",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "sound_id",
+          "serialized_name": "sound_id",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "CustomActionDetailActivity",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "select"
+    },
+    {
+      "cmd": "reset_mcu",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DebugActivity",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "d-head-power",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DebugActivity",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "d-leg-power",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "DebugActivity",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "self_update",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "url",
+          "serialized_name": "url",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "SettingRecyclerViewAdapter",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "grantAccess",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "uuid",
+          "serialized_name": "uuid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "device_name",
+          "serialized_name": "device_name",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "new_name",
+          "serialized_name": "new_name",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "change_name",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "new_name",
+          "serialized_name": "new_name",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "paired_list",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "uuid",
+          "serialized_name": "uuid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "unpair",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "uuid",
+          "serialized_name": "uuid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "getWifiList",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "ssid",
+          "serialized_name": "ssid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "wifi_pw",
+          "serialized_name": "wifi_pw",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "connectWifi",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "ssid",
+          "serialized_name": "ssid",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "wifi_pw",
+          "serialized_name": "wifi_pw",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "power",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "mute",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "face_detection",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "voice_recognition",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "head-shift",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "angle",
+          "serialized_name": "angle",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "interrupt",
+          "serialized_name": "interrupt",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "FunctionRecyclerViewAdapter",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "number"
+    },
+    {
+      "cmd": "move",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "angle",
+          "serialized_name": "angle",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "enable",
+          "serialized_name": "enable",
+          "kind": "boolean",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "NormalControlActivity",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "head-dir",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "dir",
+          "serialized_name": "dir",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "NormalControlActivity",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "user_control",
+      "transport": "websocket",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "NormalControlActivity",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "button"
+    }
+  ],
+  "events": [
+    {
+      "cmd": "gin",
+      "transport": "websocket",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "updBroadcast",
+      "transport": "websocket",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "streaming",
+      "transport": "websocket",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "RobotApi",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    }
+  ],
+  "streaming": null,
+  "crypto": [
+    {
+      "algorithm": "unknown",
+      "call_site": "androidx.core.hardware.fingerprint.FingerprintManagerCompat",
+      "context_snippet": "import javax.crypto",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "MD5",
+      "call_site": "org.jcodec.common.tools.MD5",
+      "context_snippet": "        try {\n            return MessageDigest.getInstance(\"MD5\");\n        } catch (NoSuchAlgorithmException e) {\n            throw new RuntimeException(e);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "SHA-1",
+      "call_site": "org.java_websocket.drafts.Draft_10",
+      "context_snippet": "        try {\n            return Base64.encodeBytes(MessageDigest.getInstance(\"SHA1\").digest((str.trim() + \"258EAFA5-E914-47DA-95CA-C5AB0DC85B11\").getBytes()));\n        } catch (NoSuchAlgorithmException e) {\n            throw new RuntimeException(e);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "MD5",
+      "call_site": "org.java_websocket.drafts.Draft_76",
+      "context_snippet": "        try {\n            return MessageDigest.getInstance(\"MD5\").digest(new byte[]{part[0], part[1], part[2], part[3], part2[0], part2[1], part2[2], part2[3], bArr[0], bArr[1], bArr[2], bArr[3], bArr[4], bArr[5], bArr[6], bArr[7]});\n        } catch (NoSuchAlgorithmException e) {\n            throw new RuntimeException(e);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.signature.MediaStoreSignature",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.signature.EmptySignature",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.signature.ObjectKey",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.MultiTransformation",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.Option",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.Key",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.Options",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.UnitTransformation",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.engine.ResourceCacheKey",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.engine.DataCacheKey",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.engine.EngineKey",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.model.GlideUrl",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "SHA-256",
+      "call_site": "com.bumptech.glide.load.engine.cache.SafeKeyGenerator",
+      "context_snippet": "            try {\n                return new PoolableDigestContainer(MessageDigest.getInstance(\"SHA-256\"));\n            } catch (NoSuchAlgorithmException e) {\n                throw new RuntimeException(e);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.engine.prefill.BitmapPreFillRunner",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.gif.GifDrawableTransformation",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.bitmap.BitmapDrawableTransformation",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.bitmap.FitCenter",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.bitmap.CenterCrop",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.bitmap.CircleCrop",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.bitmap.RoundedCorners",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.bitmap.VideoBitmapDecoder",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.bitmap.DrawableTransformation",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.bumptech.glide.load.resource.bitmap.CenterInside",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "SHA-1",
+      "call_site": "com.koushikdutta.async.http.WebSocketImpl",
+      "context_snippet": "        try {\n            MessageDigest messageDigest = MessageDigest.getInstance(\"SHA-1\");\n            messageDigest.update(str.getBytes(\"iso-8859-1\"), 0, str.length());\n            return Base64.encodeToString(messageDigest.digest(), 2);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "MD5",
+      "call_site": "com.koushikdutta.async.util.FileCache",
+      "context_snippet": "public class FileCache {\n    private static String hashAlgorithm = \"MD5\";\n    static MessageDigest messageDigest;\n    File directory;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "MD5",
+      "call_site": "com.koushikdutta.async.http.spdy.ByteString",
+      "context_snippet": "        try {\n            return String.format(Locale.ENGLISH, \"ByteString[size=%s md5=%s]\", Integer.valueOf(this.data.length), m22of(MessageDigest.getInstance(\"MD5\").digest(this.data)).hex());\n        } catch (NoSuchAlgorithmException unused) {\n            throw new AssertionError();",
+      "confidence": 1.0
+    }
+  ],
+  "signing_traces": [
+    {
+      "algorithm": "MD5",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "org.jcodec.common.tools.MD5.md5sumBytes",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "SHA-1",
+      "components": [],
+      "key_source": null,
+      "source_method": "org.java_websocket.drafts.Draft_10",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "MD5",
+      "components": [],
+      "key_source": null,
+      "source_method": "org.java_websocket.drafts.Draft_76",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "SHA-256",
+      "components": [],
+      "key_source": null,
+      "source_method": "com.bumptech.glide.load.engine.cache.SafeKeyGenerator",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "SHA-1",
+      "components": [],
+      "key_source": null,
+      "source_method": "com.koushikdutta.async.http.WebSocketImpl",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "MD5",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "obj.toString()",
+          "value": null,
+          "confidence": 0.2
+        }
+      ],
+      "key_source": null,
+      "source_method": "com.koushikdutta.async.util.FileCache.toKeyString",
+      "confidence": 0.12,
+      "unresolved": [
+        "obj.toString()"
+      ]
+    },
+    {
+      "algorithm": "MD5",
+      "components": [],
+      "key_source": null,
+      "source_method": "com.koushikdutta.async.http.spdy.ByteString",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    }
+  ],
+  "play_store": {
+    "title": "Build Your Own R2-D2",
+    "description": "- Use with Build Your Own R2-D2 to control his functions and see his camera view. This app works with DeAgostini's Build Your Own R2-D2 and gives access to the droid's advanced functions. It will only operate when your R2-D2 has been fully assembled and powered up. Once the app is installed on your smartphone, you have two ways to pair it with R2-D2. You can either connect it directly to his internal router (Direct mode), or connect both devices via a local Wifi network (Local mode). To go into Local mode, you teach R2-D2 the Wifi connection of the area he is in using a unique QR code, which he will read using his camera. In either connection mode, you have a choice of Video or Normal Control: - When Video Control is on, your smartphone screen displays the view from R2-D2's camera, which will change as you drive him around or turn his head. A set of remote controls are superimposed at the bottom. You can capture still pictures or video from his point of view, storing the images in a Gallery within the app or copying them to the library on your phone. You also have a scrollable menu of automatic routines, which include being able to set him exploring his surroundings in an autonomous Patrol mode, turning on his lights and sounds, ejecting a lightsaber, and displaying video clips from his projector. - When Normal Control is on, your smartphone operates like a conventional remote control, so you can watch as you direct R2-D2 around his environment. You also have access to the same automatic routines as in Video Control. - An additional Settings control enables you to turn on voice control so that R2-D2 will respond to a range of spoken commands. Turning on facial recognition allows him to pick out a human face from the background and turn to follow it. You can also turn R2-D2's sound effects on or off.",
+    "summary": "Remote control app for Build Your Own R2-D2",
+    "category": "Entertainment",
+    "developer": "De Agostini Publishing S.p.A.",
+    "developer_id": "De+Agostini+Publishing+S.p.A.",
+    "rating": 3.368421,
+    "installs": "50,000+",
+    "play_store_url": "https://play.google.com/store/apps/details?id=com.bullb.r2d2"
+  },
+  "duplicate_check": {
+    "found": false,
+    "location": null,
+    "name": null,
+    "repo_url": null,
+    "coverage_estimate": "none"
+  },
+  "extraction_confidence": 1.0,
+  "extractor_notes": [],
+  "raw_permissions": [
+    "android.permission.ACCESS_WIFI_STATE",
+    "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_COARSE_LOCATION",
+    "android.permission.CHANGE_WIFI_STATE",
+    "android.permission.INTERNET",
+    "android.permission.READ_PHONE_STATE",
+    "android.permission.READ_EXTERNAL_STORAGE",
+    "android.permission.READ_MEDIA_IMAGES",
+    "android.permission.READ_MEDIA_VIDEO",
+    "android.permission.READ_MEDIA_AUDIO",
+    "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+    "android.permission.WRITE_EXTERNAL_STORAGE"
+  ],
+  "extra": {
+    "mode_actions": {
+      "3": "turn_left",
+      "4": "turn_right",
+      "2": "turn_around",
+      "5": "go_forward",
+      "15": "shake_head",
+      "12": "walk_circle",
+      "10": "dance",
+      "6": "lightsaber",
+      "16": "arm",
+      "17": "short_lcd",
+      "18": "long_lcd",
+      "9": "patrol",
+      "19": "projector1",
+      "20": "projector2",
+      "0": "play"
+    },
+    "android_strings": {
+      "Connect": "Connect",
+      "alert.changed.name": "Name changed",
+      "alert.connection.no_wifi": "Please connect R2-D2 with WI-FI connection.",
+      "alert.connection.offline": "This R2-D2 is currently offline.",
+      "alert.connection_no_ip": "Cannot find IP address In R2-D2",
+      "already_connected": "Already Connected",
+      "connect_local_wifi_des": "Connect Local WI-FI To R2-D2",
+      "connect_r2d2": "Connect R2-D2",
+      "connect_robot_page_title": "Connection Page",
+      "connect_to": "Connect to",
+      "connect_to_wifi": "Connect to WI-FI",
+      "connecting_title": "Connecting...",
+      "error": "Error",
+      "error.client_not_exist": "Device not found, maybe already unpaired.",
+      "error.connection_error": "Connection error.",
+      "error.invalid.name": "The name should have at least 1 characters and at most 16 characters.",
+      "error.invalid.password": "Invalid Password.",
+      "error.invalid.wifi_info": "Your WI-FI SSID or password is invalid.",
+      "error.mcu_error": "R2-D2 Error Please restart",
+      "error.network.not_found": "Network not found",
+      "error.network.unauthorized": "Unauthorized",
+      "error.no_connection": "Cannot connect to DROID",
+      "error.no_response": "No response",
+      "error.no_uuid": "No UUID from client",
+      "error.robot_error": "Undefined Error",
+      "error.streaming_in_use": "Only one user can use video streaming at the same time.",
+      "error.type_convertion": "Type Convertion Error",
+      "error.unauthorized": "Not Authorized, Please connect R2-D2 in connection mode",
+      "error.unsupported_network": "Unsupported Network",
+      "network_error": "Network Error",
+      "no_paired_robot_found": "You have no paired Droid",
+      "not_connected": "Not Connected",
+      "paired_device.seperate_title": "Paired Droid",
+      "paired_r2d2": "Paired Devices",
+      "retry": "Retry",
+      "server_error": "Server Error",
+      "setting_paired_devices": "Paired Device",
+      "status.connected": "Connected",
+      "status.socket.authenticating": "Authenticating",
+      "status.socket.connected": "Connected",
+      "status.socket.connecting": "Connecting",
+      "status.socket.disconnected": "Disconnected",
+      "status.socket.fail": "Fail to Connect",
+      "status.socket.reconnecting": "Reconnecting...",
+      "status.socket.unauthorized": "Unauthorized",
+      "status.unauthorized": "Unauthorized",
+      "status_bar_notification_info_overflow": "999+",
+      "title_activity_connect_in_ap": "ConnectInApActivity",
+      "title_activity_connect_robot_wifi": "ConnectRobotWifiActivity",
+      "unpair": "Unpair",
+      "update_warning": "A new version is now available. Please update the app to latest version.",
+      "warning.connect_wifi": "Please connect your device with WI-FI.",
+      "warning.fail.connect_device": "Fail to connect the device",
+      "warning.wifi_freq_unmatch": "Please connect to a 2.4GZ Network"
+    }
+  }
+}

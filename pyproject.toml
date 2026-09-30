@@ -57,7 +57,7 @@ packages = ["src/engine"]
 [tool.ruff]
 line-length = 100
 target-version = "py314"
-extend-exclude = [".cache", ".claude", "runs", "sdk_output", "fixtures/_cache"]
+extend-exclude = [".cache", ".claude", "runs", "sdk_output", "fixtures/_cache", "tests/golden"]
 
 [tool.ruff.lint]
 select = [
@@ -93,7 +93,7 @@ plugins = ["pydantic.mypy"]
 mypy_path = ["src"]
 explicit_package_bases = true
 files = ["src", "tests"]
-exclude = ["^sdk_output/", "^runs/", "^\\.cache/", "^\\.claude/"]
+exclude = ["^sdk_output/", "^runs/", "^\\.cache/", "^\\.claude/", "^tests/golden/"]
 
 [[tool.mypy.overrides]]
 module = ["bleak.*"]
@@ -134,7 +134,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-addopts = "-ra --strict-markers --strict-config"
+addopts = "-ra --strict-markers --strict-config --ignore=tests/golden"
 asyncio_mode = "auto"
 filterwarnings = [
     "error",

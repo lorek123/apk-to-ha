@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Smart Radio Telescope",
+        "data": {
+          "host": "IP address or hostname",
+          "port": "Port (default 8887)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect — check the IP address and that the device is powered on",
+      "invalid_auth": "The device refused to pair with Home Assistant",
+      "unknown": "Unexpected error",
+      "default_error_message": "Invalid input"
+    },
+    "abort": {
+      "already_configured": "This device is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "az": {"name": "Az"},
+      "el": {"name": "El"},
+      "pol": {"name": "Pol"},
+      "temp_c": {"name": "Temp c"},
+      "adc_v": {"name": "Adc v"}
+    },
+    "binary_sensor": {
+      "moving": {"name": "Moving"},
+      "homed": {"name": "Homed"},
+      "fault": {"name": "Fault"}
+    },
+    "button": {
+      "shutdown": {"name": "Shutdown"},
+      "home": {"name": "Home"},
+      "stop": {"name": "Stop"},
+      "sleep": {"name": "Sleep"},
+      "wake": {"name": "Wake"}
+    },
+    "number": {
+      "adc_rate": {"name": "Adc rate"}
+    }
+  }
+}

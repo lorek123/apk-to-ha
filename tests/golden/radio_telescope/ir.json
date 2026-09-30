@@ -1,0 +1,557 @@
+{
+  "apk_path": "radio_telescope.apk",
+  "package_name": "eu.radio_science_institute.smart_radio_telescope",
+  "app_name": "Smart Radio Telescope",
+  "version_name": "1.0",
+  "framework": "native",
+  "transport": {
+    "type": "http_rest",
+    "port": null,
+    "host_source": "discovered",
+    "url_template": "ws://{host}",
+    "tls": false
+  },
+  "discovery": {
+    "type": "udp_broadcast",
+    "port": null,
+    "broadcast_cmd": null,
+    "service_type": null,
+    "hostname_pattern": null,
+    "response_fields": []
+  },
+  "auth": {
+    "type": "none",
+    "handshake_cmd": null,
+    "fields": [],
+    "description": null,
+    "challenge": null
+  },
+  "state": {
+    "push_cmd": null,
+    "poll_endpoint": "GET /status",
+    "poll_endpoints": [],
+    "fields": [
+      {
+        "name": "az",
+        "serialized_name": "az",
+        "kind": "number",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "el",
+        "serialized_name": "el",
+        "kind": "number",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "pol",
+        "serialized_name": "pol",
+        "kind": "number",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "moving",
+        "serialized_name": "moving",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "homed",
+        "serialized_name": "homed",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "fault",
+        "serialized_name": "fault",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor"
+      },
+      {
+        "name": "temp_c",
+        "serialized_name": "temp_c",
+        "kind": "number",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      },
+      {
+        "name": "adc_v",
+        "serialized_name": "adc_v",
+        "kind": "number",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor"
+      }
+    ]
+  },
+  "commands": [
+    {
+      "cmd": "GET /status",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "GET /system",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /shutdown",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /goto",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "az",
+          "serialized_name": "az",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "el",
+          "serialized_name": "el",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "pol",
+          "serialized_name": "pol",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "number"
+    },
+    {
+      "cmd": "POST /goto/radec",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "ra_deg",
+          "serialized_name": "ra_deg",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "dec_deg",
+          "serialized_name": "dec_deg",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "lat",
+          "serialized_name": "lat",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "lon",
+          "serialized_name": "lon",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "number"
+    },
+    {
+      "cmd": "POST /home",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /home/{axis}",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /stop",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /sleep",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /wake",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "button"
+    },
+    {
+      "cmd": "POST /move",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "axis",
+          "serialized_name": "axis",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "degrees",
+          "serialized_name": "degrees",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "number"
+    },
+    {
+      "cmd": "POST /jog",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "az_dps",
+          "serialized_name": "az_dps",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "el_dps",
+          "serialized_name": "el_dps",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "number"
+    },
+    {
+      "cmd": "POST /adc_rate",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "hz",
+          "serialized_name": "hz",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "number"
+    },
+    {
+      "cmd": "POST /scan",
+      "transport": "http_rest",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "sweep",
+          "serialized_name": "sweep",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "pattern",
+          "serialized_name": "pattern",
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "s0",
+          "serialized_name": "s0",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "s1",
+          "serialized_name": "s1",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "t0",
+          "serialized_name": "t0",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "t1",
+          "serialized_name": "t1",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "speed",
+          "serialized_name": "speed",
+          "kind": "number",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        },
+        {
+          "name": "rows",
+          "serialized_name": "rows",
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null
+        }
+      ],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeApi",
+      "document": null,
+      "confidence": 0.85,
+      "entity_hint": "number"
+    }
+  ],
+  "events": [
+    {
+      "cmd": "WS /ws/status",
+      "transport": "websocket",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeWebSocket",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "WS /ws/events",
+      "transport": "websocket",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": null,
+      "source_class": "TelescopeWebSocket",
+      "document": null,
+      "confidence": 0.77,
+      "entity_hint": "sensor"
+    }
+  ],
+  "streaming": null,
+  "crypto": [],
+  "signing_traces": [],
+  "play_store": null,
+  "duplicate_check": {
+    "found": false,
+    "location": null,
+    "name": null,
+    "repo_url": null,
+    "coverage_estimate": "none"
+  },
+  "extraction_confidence": 0.8,
+  "extractor_notes": [],
+  "raw_permissions": [
+    "android.permission.INTERNET",
+    "eu.radio_science_institute.smart_radio_telescope.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "extra": {
+    "android_strings": {
+      "default_error_message": "Invalid input",
+      "status_bar_notification_info_overflow": "999+"
+    }
+  }
+}

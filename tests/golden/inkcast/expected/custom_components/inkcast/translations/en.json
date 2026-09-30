@@ -1,0 +1,31 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Inkcast",
+        "data": {
+          "host": "IP address or hostname",
+          "port": "Port (default 8887)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect — check the IP address and that the device is powered on",
+      "invalid_auth": "The device refused to pair with Home Assistant",
+      "unknown": "Unexpected error",
+      "default_error_message": "Invalid input"
+    },
+    "abort": {
+      "already_configured": "This device is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "freeheap": {"name": "Freeheap"},
+      "mode": {"name": "Mode"},
+      "rssi": {"name": "Rssi"},
+      "uptime": {"name": "Uptime"},
+      "version": {"name": "Version"}
+    }
+  }
+}

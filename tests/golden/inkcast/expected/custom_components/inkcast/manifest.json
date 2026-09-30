@@ -1,0 +1,14 @@
+{
+  "domain": "inkcast",
+  "name": "Inkcast",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/lorek123/apk-to-ha",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "quality_scale": "platinum",
+  "requirements": [
+    "inkcast_sdk==0.1.0"
+  ],
+  "version": "0.1.0"
+}
