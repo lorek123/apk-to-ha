@@ -42,6 +42,21 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
         _LOGGER.info("SDK (BLE challenge-response) emitted to %s", pkg_dir)
         return pkg_dir
 
+    if ctx.get("has_gatt"):
+        # Plain GATT device: a Bleak client that reads state and writes controls.
+        gatt_env = Environment(
+            loader=FileSystemLoader(str(_TEMPLATES_DIR / "ble_gatt")),
+            undefined=StrictUndefined,
+            trim_blocks=True,
+            lstrip_blocks=True,
+            keep_trailing_newline=True,
+        )
+        for name in ("__init__.py", "client.py"):
+            _render(gatt_env, ctx, pkg_dir, f"{name}.j2", name)
+        _render(gatt_env, ctx, out_root, "pyproject.toml.j2", "pyproject.toml")
+        _LOGGER.info("SDK (BLE GATT) emitted to %s", pkg_dir)
+        return pkg_dir
+
     _render(env, ctx, pkg_dir, "__init__.py.j2", "__init__.py")
     client = {
         "http_rest": "client_http.py.j2",

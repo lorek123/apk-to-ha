@@ -7,6 +7,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import shutil
 import time
 import uuid
 from collections.abc import Callable
@@ -113,6 +114,8 @@ async def analyze(
         for cmd in ctx["unmapped_commands"]:
             log("P5", "entities", "WARNING", f"no entity for {cmd['cmd']}: {cmd['reason']}")
         run_out = _OUTPUT_DIR / apk_id
+        # Start from nothing: files left by an earlier run would be validated too.
+        await asyncio.to_thread(shutil.rmtree, run_out, ignore_errors=True)
         sdk_dir, hacs_dir, tests_dir = emit_all(ctx, run_out)
         log("P4", "sdk_emit", "INFO", f"SDK emitted to {sdk_dir}")
         log("P5", "hacs_emit", "INFO", f"HACS integration emitted to {hacs_dir}")
@@ -396,12 +399,15 @@ async def _extract(
 
         # ── P2-8: BLE endpoint augmentation ──────────────────────────────────
         ble = BLEScanner(out_dir)
-        ble_transport, _, ble_auth, _, ble_commands, ble_events = ble.scan(manifest.package_name)
+        ble_transport, ble_discovery, ble_auth, _, ble_commands, ble_events = ble.scan(
+            manifest.package_name
+        )
         if ble_commands or ble_events:
             # BLE is the transport when the socket/HTTP scan found nothing of its own
             # (its transport is then only a default guess).
             if not (commands or events):
                 transport = ble_transport
+                discovery = ble_discovery  # socket-style discovery means nothing here
             if auth.type == AuthType.NONE:
                 auth = ble_auth
             commands = commands + ble_commands

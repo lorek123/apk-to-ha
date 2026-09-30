@@ -22,6 +22,7 @@ from ..ir.models import (
     TransportType,
 )
 from . import actions as actions_mod
+from . import gatt as gatt_mod
 
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
 
@@ -422,6 +423,9 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         entity_sections["camera"] = {"stream": {"name": "Camera"}}
 
     challenge = challenge_ctx(ir)
+    gatt = gatt_mod.build(ir, domain)
+    if gatt:
+        unmapped += gatt["unmapped"]
     ps = ir.play_store
     return {
         # identifiers
@@ -457,6 +461,9 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         # BLE devices that verify signed challenges (None unless the profile is complete).
         "challenge": challenge,
         "has_challenge_auth": challenge is not None,
+        # BLE devices without authentication: GATT reads and one-byte writes.
+        "gatt": gatt,
+        "has_gatt": gatt is not None,
         # Poll-based HTTP devices: the GET that returns state ("GET /status").
         "poll_method": ir.state.poll_endpoint.split(" ", 1)[0] if ir.state.poll_endpoint else None,
         "poll_path": ir.state.poll_endpoint.split(" ", 1)[1] if ir.state.poll_endpoint else None,

@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+[project]
+name = "firepit_sdk"
+version = "0.1.0"
+description = "Auto-generated SDK for Firepit"
+requires-python = ">=3.12"
+dependencies = ["bleak>=0.22", "bleak-retry-connector>=3.5"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

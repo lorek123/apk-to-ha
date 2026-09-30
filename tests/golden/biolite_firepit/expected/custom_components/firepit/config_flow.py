@@ -1,0 +1,98 @@
+# SPDX-License-Identifier: MIT
+"""Config flow for Firepit: Bluetooth discovery or pick from devices in range."""
+from __future__ import annotations
+
+from typing import Any
+
+import voluptuous as vol
+from firepit_sdk import FirepitClient, FirepitConnectionError, matches
+from homeassistant.components import bluetooth
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.const import CONF_ADDRESS
+
+from .const import DOMAIN
+
+
+class FirepitConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Every device is checked with a real read before its entry is created."""
+
+    VERSION = 1
+
+    def __init__(self) -> None:
+        self._discovery: bluetooth.BluetoothServiceInfoBleak | None = None
+        self._discovered: dict[str, bluetooth.BluetoothServiceInfoBleak] = {}
+
+    async def async_step_bluetooth(
+        self, discovery_info: bluetooth.BluetoothServiceInfoBleak
+    ) -> ConfigFlowResult:
+        await self.async_set_unique_id(discovery_info.address)
+        self._abort_if_unique_id_configured()
+        if not matches(discovery_info.name, discovery_info.service_uuids):
+            return self.async_abort(reason="not_supported")
+        self._discovery = discovery_info
+        self.context["title_placeholders"] = {"name": _title(discovery_info)}
+        return await self.async_step_bluetooth_confirm()
+
+    async def async_step_bluetooth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        assert self._discovery is not None
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if await self._can_connect(self._discovery.address):
+                return self.async_create_entry(
+                    title=_title(self._discovery), data={CONF_ADDRESS: self._discovery.address}
+                )
+            errors["base"] = "cannot_connect"
+        self._set_confirm_only()
+        return self.async_show_form(
+            step_id="bluetooth_confirm",
+            description_placeholders={"name": _title(self._discovery)},
+            errors=errors,
+        )
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            address = user_input[CONF_ADDRESS]
+            await self.async_set_unique_id(address, raise_on_progress=False)
+            self._abort_if_unique_id_configured()
+            if await self._can_connect(address):
+                return self.async_create_entry(
+                    title=_title(self._discovered[address]), data={CONF_ADDRESS: address}
+                )
+            errors["base"] = "cannot_connect"
+
+        configured = self._async_current_ids(include_ignore=False)
+        for info in bluetooth.async_discovered_service_info(self.hass, connectable=True):
+            if info.address not in configured and matches(info.name, info.service_uuids):
+                self._discovered[info.address] = info
+        if not self._discovered:
+            return self.async_abort(reason="no_devices_found")
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_ADDRESS): vol.In(
+                        {a: _title(i) for a, i in self._discovered.items()}
+                    )
+                }
+            ),
+            errors=errors,
+        )
+
+    async def _can_connect(self, address: str) -> bool:
+        ble_device = bluetooth.async_ble_device_from_address(self.hass, address, connectable=True)
+        if ble_device is None:
+            return False
+        try:
+            await FirepitClient(ble_device).read_device_info()
+        except FirepitConnectionError:
+            return False
+        return True
+
+
+def _title(info: bluetooth.BluetoothServiceInfoBleak) -> str:
+    return info.name or info.address

@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+[project]
+name = "{{ sdk_package }}"
+version = "{{ integration_version }}"
+description = "Auto-generated SDK for {{ name }}"
+requires-python = ">=3.12"
+dependencies = ["bleak>=0.22", "bleak-retry-connector>=3.5"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
