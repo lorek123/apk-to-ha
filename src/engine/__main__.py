@@ -40,6 +40,11 @@ def main() -> None:
         action="store_true",
         help="Refresh the committed fixtures/snapshots/<id>/ (default: runs/<run_id>/snapshot/)",
     )
+    p.add_argument(
+        "--from-checkpoint",
+        action="store_true",
+        help="Reuse the last extraction of this APK (.cache/checkpoints/) and only emit + validate",
+    )
 
     args = parser.parse_args()
 
@@ -58,6 +63,7 @@ def main() -> None:
                     apk_id=args.apk_id,
                     dynamic=args.dynamic,
                     update_snapshots=args.update_snapshots,
+                    from_checkpoint=args.from_checkpoint,
                 )
             )
         except TuyaDetectedError as exc:

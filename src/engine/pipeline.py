@@ -9,6 +9,7 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
 
@@ -52,6 +53,11 @@ _LOGGER = logging.getLogger(__name__)
 _RUNS_DIR = Path(__file__).parents[2] / "runs"
 _CACHE_DIR = Path(__file__).parents[2] / ".cache" / "jadx"
 _OUTPUT_DIR = Path(__file__).parents[2] / "sdk_output"
+_CHECKPOINT_DIR = Path(__file__).parents[2] / ".cache" / "checkpoints"
+# Code whose changes make a checkpointed IR stale (emission and validation don't).
+_EXTRACTOR_CODE = ("extraction", "ingestion", "ir", "duplicate_check", "dynamic", "llm")
+
+_Log = Callable[..., None]
 
 
 async def analyze(
@@ -60,12 +66,17 @@ async def analyze(
     emit: bool = True,
     dynamic: bool = True,
     update_snapshots: bool = False,
+    from_checkpoint: bool = False,
 ) -> ProtocolIR:
     """Run the full extraction pipeline on one APK. Returns the populated IR.
 
     The snapshot goes to runs/{run_id}/snapshot/ unless *update_snapshots* is set,
     in which case the committed fixtures/snapshots/{apk_id}/ is refreshed.
     *dynamic* False skips the P2-7 oracle.
+
+    Every extraction is checkpointed to .cache/checkpoints/{apk_id}.json;
+    *from_checkpoint* reloads it and goes straight to emission and the V-loop
+    (template work without redoing P1-P3).
     """
     run_id = str(uuid.uuid4())[:8]
     apk_id = apk_id or apk_path.stem.lower().replace(" ", "_")
@@ -84,6 +95,256 @@ async def analyze(
         log_entries.append(entry)
         getattr(_LOGGER, level.lower(), _LOGGER.info)(message)
 
+    checkpoint = _CHECKPOINT_DIR / f"{apk_id}.json"
+    if from_checkpoint:
+        ir = await asyncio.to_thread(_load_checkpoint, checkpoint, apk_path, log)
+    else:
+        ir = await _extract(apk_path, apk_id, run_id, dynamic, update_snapshots, log)
+        await asyncio.to_thread(_save_checkpoint, checkpoint, apk_path, ir)
+
+    # ── P4/P5: emit SDK + HACS integration ────────────────────────────────────
+    blocker = _emit_blocker(ir) if emit else None
+    if blocker:
+        status, why = blocker
+        log("P5", "emit", "ERROR", f"{why} — not emitting")
+        ir = ir.model_copy(update={"extra": {**ir.extra, "_status": status}})
+    if emit and not blocker:
+        ctx = emitter_context.build(ir)
+        for cmd in ctx["unmapped_commands"]:
+            log("P5", "entities", "WARNING", f"no entity for {cmd['cmd']}: {cmd['reason']}")
+        run_out = _OUTPUT_DIR / apk_id
+        sdk_dir = sdk_emitter.emit(ctx, run_out)
+        hacs_dir = hacs_emitter.emit(ctx, run_out)
+        tests_dir = hacs_emitter.emit_tests(ctx, run_out)
+        log("P4", "sdk_emit", "INFO", f"SDK emitted to {sdk_dir}")
+        log("P5", "hacs_emit", "INFO", f"HACS integration emitted to {hacs_dir}")
+        log(
+            "P5",
+            "tests_emit",
+            "INFO" if tests_dir else "WARNING",
+            f"runtime tests emitted to {tests_dir}" if tests_dir else "no runtime tests emitted",
+        )
+        ir = ir.model_copy(
+            update={"extra": {**ir.extra, "_sdk_dir": str(sdk_dir), "_hacs_dir": str(hacs_dir)}}
+        )
+
+        # ── V-1 / V-2 validation loop (budgets per SPECIFICATION.md §8) ───────
+        tracker = budget.FindingTracker()
+        fix_cycles = 0
+        unresolved: list[str] = []
+        while True:
+            iteration = fix_cycles
+            v1_hacs, v1_sdk, v2 = await asyncio.gather(
+                ruff_check.check(hacs_dir),
+                ruff_check.check(sdk_dir),
+                hassfest_validator.validate(hacs_dir),
+            )
+
+            v1_errors = v1_hacs.error_count + v1_sdk.error_count
+            v1_warnings = v1_hacs.warning_count + v1_sdk.warning_count
+            log(
+                "V1",
+                "ruff",
+                "INFO" if (v1_hacs.passed and v1_sdk.passed) else "WARNING",
+                f"[iter {iteration}] ruff: {v1_errors} errors, {v1_warnings} warnings",
+            )
+            for result in (v1_hacs, v1_sdk):
+                if result.tool_error:
+                    log("V1", "ruff", "ERROR", f"ruff failed: {result.tool_error}")
+            for f in v1_hacs.findings + v1_sdk.findings:
+                log(
+                    "V1",
+                    "ruff",
+                    "WARNING" if f.code.startswith("W") else "ERROR",
+                    f"{Path(f.file).name}:{f.line} [{f.code}] {f.message}",
+                )
+
+            log(
+                "V2",
+                "hassfest",
+                "INFO" if v2.passed else "WARNING",
+                f"[iter {iteration}] hassfest ({v2.tier}): {'PASS' if v2.passed else 'FAIL'} "
+                f"— {len(v2.errors)} errors, {len(v2.warnings)} warnings",
+            )
+            for finding in v2.findings:
+                log(
+                    "V2",
+                    "hassfest",
+                    finding.severity.upper(),
+                    f"[{finding.check}] {finding.message}",
+                )
+
+            if v1_hacs.passed and v1_sdk.passed and v2.passed:
+                unresolved = []
+                break  # clean — no fixes needed
+
+            blocking = [
+                budget.finding_key(f)
+                for f in v1_hacs.findings + v1_sdk.findings
+                if not f.code.startswith("W")
+            ] + [budget.finding_key(f) for f in v2.errors]
+            blocking += [
+                f"ruff:tool_error:{r.tool_error}" for r in (v1_hacs, v1_sdk) if r.tool_error
+            ]
+
+            stuck = tracker.exhausted(blocking)
+            if stuck:
+                log(
+                    "V5",
+                    "fix_router",
+                    "WARNING",
+                    f"{len(stuck)} finding(s) survived {tracker.max_attempts} fix attempts "
+                    "— needs human review",
+                )
+                for key in stuck:
+                    log("V5", "fix_router", "WARNING", f"not converging: {key}")
+                unresolved = sorted(set(blocking))
+                break
+            if fix_cycles >= budget.MAX_FIX_CYCLES:
+                log(
+                    "V5",
+                    "fix_router",
+                    "WARNING",
+                    f"run cap of {budget.MAX_FIX_CYCLES} fix cycles reached — needs human review",
+                )
+                unresolved = sorted(set(blocking))
+                break
+
+            tracker.record(blocking)
+            fix = await asyncio.to_thread(
+                fix_router.route_and_apply,
+                ruff_findings=v1_hacs.findings + v1_sdk.findings,
+                hassfest_findings=v2.findings,
+                ctx=ctx,
+                integration_dir=hacs_dir,
+                sdk_dir=sdk_dir,
+            )
+            fix_cycles += 1
+            log(
+                "V5",
+                "fix_router",
+                "INFO",
+                f"[iter {iteration}] applied={fix.applied} skipped={fix.skipped}",
+            )
+            for detail in fix.details:
+                log("V5", "fix_router", "INFO", detail)
+
+            if fix.applied == 0:
+                log(
+                    "V5",
+                    "fix_router",
+                    "WARNING",
+                    "No deterministic fixes available — needs human review",
+                )
+                unresolved = sorted(set(blocking))
+                break
+
+        # ── V-4: platinum quality rubric ─────────────────────────────────────
+        v4 = quality_checker.check(hacs_dir)
+        log(
+            "V4",
+            "quality",
+            "INFO" if v4.passed else "WARNING",
+            f"quality: {'PASS' if v4.passed else 'FAIL'} "
+            f"— {len(v4.errors)} errors, {len(v4.warnings)} warnings",
+        )
+        for r in v4.failures:
+            log(
+                "V4", "quality", r.rule.severity.upper(), f"[{r.rule.id}] {r.rule.name}: {r.detail}"
+            )
+
+        # ── V-3: HA container test (runtime in sandbox, else import-only) ─────
+        v3 = await container_test.run(ctx["domain"], run_out)
+        if v3.ran:
+            log(
+                "V3",
+                "container",
+                "INFO" if v3.passed else "WARNING",
+                f"container {v3.mode} test: {'PASS' if v3.passed else 'FAIL'}",
+            )
+            if not v3.passed:
+                log("V3", "container", "WARNING", v3.error or v3.output[-2000:])
+
+        # ── V-7: HA log analysis ──────────────────────────────────────────────
+        v7_findings = log_analyzer.analyze(v3.output if v3.ran else "")
+        for lf in v7_findings:
+            log("V7", "log_analyzer", lf.severity.upper(), f"[{lf.category}] {lf.message}")
+
+        skipped = [] if v2.tier == "hassfest_docker" else ["V2-hassfest"]
+        if not v3.ran:
+            skipped.append("V3")
+        elif v3.mode != "runtime":
+            skipped.append("V3-runtime")  # import-only is weaker than running the integration
+        v7_errors = [lf for lf in v7_findings if lf.severity == "error"]
+        status = _run_status(
+            unresolved=unresolved,
+            passed=[v1_hacs.passed and v1_sdk.passed, v2.passed, v4.passed, not v7_errors],
+            v3_passed=v3.passed,
+            skipped=skipped,
+        )
+        log(
+            "pipeline",
+            "status",
+            "INFO" if status == "pass" else "WARNING",
+            f"run status: {status}",
+            unresolved=len(unresolved),
+            skipped=skipped,
+            fix_cycles=fix_cycles,
+        )
+
+        ir = ir.model_copy(
+            update={
+                "extra": {
+                    **ir.extra,
+                    "_status": status,
+                    "_unresolved": unresolved,
+                    "_skipped": skipped,
+                    "_fix_cycles": fix_cycles,
+                    "_v1_passed": v1_hacs.passed and v1_sdk.passed,
+                    "_v1_errors": v1_hacs.error_count + v1_sdk.error_count,
+                    "_v1_warnings": v1_hacs.warning_count + v1_sdk.warning_count,
+                    "_v2_passed": v2.passed,
+                    "_v2_tier": v2.tier,
+                    "_v2_errors": [{"check": f.check, "message": f.message} for f in v2.errors],
+                    "_v2_warnings": [{"check": f.check, "message": f.message} for f in v2.warnings],
+                    "_v4_passed": v4.passed,
+                    "_v4_errors": [
+                        {"id": r.rule.id, "name": r.rule.name, "detail": r.detail}
+                        for r in v4.errors
+                    ],
+                    "_v4_warnings": [
+                        {"id": r.rule.id, "name": r.rule.name, "detail": r.detail}
+                        for r in v4.warnings
+                    ],
+                    "_v3_ran": v3.ran,
+                    "_v3_passed": v3.passed,
+                    "_v3_mode": v3.mode,
+                    "_v7_findings": [
+                        {"category": lf.category, "severity": lf.severity, "message": lf.message}
+                        for lf in v7_findings
+                    ],
+                }
+            }
+        )
+
+    # ── V-6: write run state ──────────────────────────────────────────────────
+    output_hash = await asyncio.to_thread(
+        _write_run_state, _RUNS_DIR / run_id, run_id, apk_path, ir, log_entries, emit
+    )
+
+    log("pipeline", "done", "INFO", "Pipeline complete", run_id=run_id, output_hash=output_hash)
+    return ir
+
+
+async def _extract(
+    apk_path: Path,
+    apk_id: str,
+    run_id: str,
+    dynamic: bool,
+    update_snapshots: bool,
+    log: _Log,
+) -> ProtocolIR:
+    """P1 → P3 and the snapshot: everything up to emission (what a checkpoint saves)."""
     log("P1", "start", "INFO", f"Analyzing {apk_path.name}", apk_id=apk_id)
 
     # ── P1: decompile ──────────────────────────────────────────────────────────
@@ -373,238 +634,6 @@ async def analyze(
     snap_dir = await asyncio.to_thread(snapshot_harness.write, apk_id, ir, out_dir, snap_target)
     log("F2a", "snapshot", "INFO", f"Snapshot saved to {snap_dir}")
     ir = ir.model_copy(update={"extra": {**ir.extra, "_snapshot_dir": str(snap_dir)}})
-
-    # ── P4/P5: emit SDK + HACS integration ────────────────────────────────────
-    blocker = _emit_blocker(ir) if emit else None
-    if blocker:
-        status, why = blocker
-        log("P5", "emit", "ERROR", f"{why} — not emitting")
-        ir = ir.model_copy(update={"extra": {**ir.extra, "_status": status}})
-    if emit and not blocker:
-        ctx = emitter_context.build(ir)
-        for cmd in ctx["unmapped_commands"]:
-            log("P5", "entities", "WARNING", f"no entity for {cmd['cmd']}: {cmd['reason']}")
-        run_out = _OUTPUT_DIR / apk_id
-        sdk_dir = sdk_emitter.emit(ctx, run_out)
-        hacs_dir = hacs_emitter.emit(ctx, run_out)
-        tests_dir = hacs_emitter.emit_tests(ctx, run_out)
-        log("P4", "sdk_emit", "INFO", f"SDK emitted to {sdk_dir}")
-        log("P5", "hacs_emit", "INFO", f"HACS integration emitted to {hacs_dir}")
-        log(
-            "P5",
-            "tests_emit",
-            "INFO" if tests_dir else "WARNING",
-            f"runtime tests emitted to {tests_dir}" if tests_dir else "no runtime tests emitted",
-        )
-        ir = ir.model_copy(
-            update={"extra": {**ir.extra, "_sdk_dir": str(sdk_dir), "_hacs_dir": str(hacs_dir)}}
-        )
-
-        # ── V-1 / V-2 validation loop (budgets per SPECIFICATION.md §8) ───────
-        tracker = budget.FindingTracker()
-        fix_cycles = 0
-        unresolved: list[str] = []
-        while True:
-            iteration = fix_cycles
-            v1_hacs, v1_sdk, v2 = await asyncio.gather(
-                ruff_check.check(hacs_dir),
-                ruff_check.check(sdk_dir),
-                hassfest_validator.validate(hacs_dir),
-            )
-
-            v1_errors = v1_hacs.error_count + v1_sdk.error_count
-            v1_warnings = v1_hacs.warning_count + v1_sdk.warning_count
-            log(
-                "V1",
-                "ruff",
-                "INFO" if (v1_hacs.passed and v1_sdk.passed) else "WARNING",
-                f"[iter {iteration}] ruff: {v1_errors} errors, {v1_warnings} warnings",
-            )
-            for result in (v1_hacs, v1_sdk):
-                if result.tool_error:
-                    log("V1", "ruff", "ERROR", f"ruff failed: {result.tool_error}")
-            for f in v1_hacs.findings + v1_sdk.findings:
-                log(
-                    "V1",
-                    "ruff",
-                    "WARNING" if f.code.startswith("W") else "ERROR",
-                    f"{Path(f.file).name}:{f.line} [{f.code}] {f.message}",
-                )
-
-            log(
-                "V2",
-                "hassfest",
-                "INFO" if v2.passed else "WARNING",
-                f"[iter {iteration}] hassfest ({v2.tier}): {'PASS' if v2.passed else 'FAIL'} "
-                f"— {len(v2.errors)} errors, {len(v2.warnings)} warnings",
-            )
-            for finding in v2.findings:
-                log(
-                    "V2",
-                    "hassfest",
-                    finding.severity.upper(),
-                    f"[{finding.check}] {finding.message}",
-                )
-
-            if v1_hacs.passed and v1_sdk.passed and v2.passed:
-                unresolved = []
-                break  # clean — no fixes needed
-
-            blocking = [
-                budget.finding_key(f)
-                for f in v1_hacs.findings + v1_sdk.findings
-                if not f.code.startswith("W")
-            ] + [budget.finding_key(f) for f in v2.errors]
-            blocking += [
-                f"ruff:tool_error:{r.tool_error}" for r in (v1_hacs, v1_sdk) if r.tool_error
-            ]
-
-            stuck = tracker.exhausted(blocking)
-            if stuck:
-                log(
-                    "V5",
-                    "fix_router",
-                    "WARNING",
-                    f"{len(stuck)} finding(s) survived {tracker.max_attempts} fix attempts "
-                    "— needs human review",
-                )
-                for key in stuck:
-                    log("V5", "fix_router", "WARNING", f"not converging: {key}")
-                unresolved = sorted(set(blocking))
-                break
-            if fix_cycles >= budget.MAX_FIX_CYCLES:
-                log(
-                    "V5",
-                    "fix_router",
-                    "WARNING",
-                    f"run cap of {budget.MAX_FIX_CYCLES} fix cycles reached — needs human review",
-                )
-                unresolved = sorted(set(blocking))
-                break
-
-            tracker.record(blocking)
-            fix = await asyncio.to_thread(
-                fix_router.route_and_apply,
-                ruff_findings=v1_hacs.findings + v1_sdk.findings,
-                hassfest_findings=v2.findings,
-                ctx=ctx,
-                integration_dir=hacs_dir,
-                sdk_dir=sdk_dir,
-            )
-            fix_cycles += 1
-            log(
-                "V5",
-                "fix_router",
-                "INFO",
-                f"[iter {iteration}] applied={fix.applied} skipped={fix.skipped}",
-            )
-            for detail in fix.details:
-                log("V5", "fix_router", "INFO", detail)
-
-            if fix.applied == 0:
-                log(
-                    "V5",
-                    "fix_router",
-                    "WARNING",
-                    "No deterministic fixes available — needs human review",
-                )
-                unresolved = sorted(set(blocking))
-                break
-
-        # ── V-4: platinum quality rubric ─────────────────────────────────────
-        v4 = quality_checker.check(hacs_dir)
-        log(
-            "V4",
-            "quality",
-            "INFO" if v4.passed else "WARNING",
-            f"quality: {'PASS' if v4.passed else 'FAIL'} "
-            f"— {len(v4.errors)} errors, {len(v4.warnings)} warnings",
-        )
-        for r in v4.failures:
-            log(
-                "V4", "quality", r.rule.severity.upper(), f"[{r.rule.id}] {r.rule.name}: {r.detail}"
-            )
-
-        # ── V-3: HA container test (runtime in sandbox, else import-only) ─────
-        v3 = await container_test.run(ctx["domain"], run_out)
-        if v3.ran:
-            log(
-                "V3",
-                "container",
-                "INFO" if v3.passed else "WARNING",
-                f"container {v3.mode} test: {'PASS' if v3.passed else 'FAIL'}",
-            )
-            if not v3.passed:
-                log("V3", "container", "WARNING", v3.error or v3.output[-2000:])
-
-        # ── V-7: HA log analysis ──────────────────────────────────────────────
-        v7_findings = log_analyzer.analyze(v3.output if v3.ran else "")
-        for lf in v7_findings:
-            log("V7", "log_analyzer", lf.severity.upper(), f"[{lf.category}] {lf.message}")
-
-        skipped = [] if v2.tier == "hassfest_docker" else ["V2-hassfest"]
-        if not v3.ran:
-            skipped.append("V3")
-        elif v3.mode != "runtime":
-            skipped.append("V3-runtime")  # import-only is weaker than running the integration
-        v7_errors = [lf for lf in v7_findings if lf.severity == "error"]
-        status = _run_status(
-            unresolved=unresolved,
-            passed=[v1_hacs.passed and v1_sdk.passed, v2.passed, v4.passed, not v7_errors],
-            v3_passed=v3.passed,
-            skipped=skipped,
-        )
-        log(
-            "pipeline",
-            "status",
-            "INFO" if status == "pass" else "WARNING",
-            f"run status: {status}",
-            unresolved=len(unresolved),
-            skipped=skipped,
-            fix_cycles=fix_cycles,
-        )
-
-        ir = ir.model_copy(
-            update={
-                "extra": {
-                    **ir.extra,
-                    "_status": status,
-                    "_unresolved": unresolved,
-                    "_skipped": skipped,
-                    "_fix_cycles": fix_cycles,
-                    "_v1_passed": v1_hacs.passed and v1_sdk.passed,
-                    "_v1_errors": v1_hacs.error_count + v1_sdk.error_count,
-                    "_v1_warnings": v1_hacs.warning_count + v1_sdk.warning_count,
-                    "_v2_passed": v2.passed,
-                    "_v2_tier": v2.tier,
-                    "_v2_errors": [{"check": f.check, "message": f.message} for f in v2.errors],
-                    "_v2_warnings": [{"check": f.check, "message": f.message} for f in v2.warnings],
-                    "_v4_passed": v4.passed,
-                    "_v4_errors": [
-                        {"id": r.rule.id, "name": r.rule.name, "detail": r.detail}
-                        for r in v4.errors
-                    ],
-                    "_v4_warnings": [
-                        {"id": r.rule.id, "name": r.rule.name, "detail": r.detail}
-                        for r in v4.warnings
-                    ],
-                    "_v3_ran": v3.ran,
-                    "_v3_passed": v3.passed,
-                    "_v3_mode": v3.mode,
-                    "_v7_findings": [
-                        {"category": lf.category, "severity": lf.severity, "message": lf.message}
-                        for lf in v7_findings
-                    ],
-                }
-            }
-        )
-
-    # ── V-6: write run state ──────────────────────────────────────────────────
-    output_hash = await asyncio.to_thread(
-        _write_run_state, _RUNS_DIR / run_id, run_id, apk_path, ir, log_entries, emit
-    )
-
-    log("pipeline", "done", "INFO", "Pipeline complete", run_id=run_id, output_hash=output_hash)
     return ir
 
 
@@ -723,6 +752,58 @@ def _write_run_state(
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     return output_hash
+
+
+class CheckpointError(Exception):
+    """No usable checkpoint for --from-checkpoint (missing, or for a different APK)."""
+
+
+def _sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _extractor_hash() -> str:
+    """Hash of the code that produces the IR, to flag checkpoints made by older code."""
+    root = Path(__file__).parent
+    h = hashlib.sha256()
+    for pkg in _EXTRACTOR_CODE:
+        for fp in sorted((root / pkg).rglob("*.py")):
+            h.update(fp.relative_to(root).as_posix().encode())
+            h.update(fp.read_bytes())
+    return h.hexdigest()[:16]
+
+
+def _save_checkpoint(path: Path, apk_path: Path, ir: ProtocolIR) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "apk_sha256": _sha256(apk_path),
+        "extractor_hash": _extractor_hash(),
+        "created": time.time(),
+        "ir": ir.model_dump(mode="json"),
+    }
+    path.write_text(json.dumps(payload))
+
+
+def _load_checkpoint(path: Path, apk_path: Path, log: _Log) -> ProtocolIR:
+    if not path.exists():
+        raise CheckpointError(f"no checkpoint at {path}; run once without --from-checkpoint")
+    payload = json.loads(path.read_text())
+    if payload.get("apk_sha256") != _sha256(apk_path):
+        raise CheckpointError(f"{path} was made from a different APK than {apk_path.name}")
+    if payload.get("extractor_hash") != _extractor_hash():
+        log(
+            "P3",
+            "checkpoint",
+            "WARNING",
+            "extraction code changed since this checkpoint — the IR may be stale",
+        )
+    age_min = (time.time() - payload.get("created", 0)) / 60
+    log("P3", "checkpoint", "INFO", f"IR loaded from {path} ({age_min:.0f} min old)")
+    return ProtocolIR.model_validate(payload["ir"])
 
 
 class TuyaDetectedError(Exception):

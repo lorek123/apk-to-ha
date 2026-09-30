@@ -14,6 +14,7 @@ Prints a table, writes runs/corpus-<timestamp>.json, and exits 1 when a
 verdict contradicts `expected_verdict`.
 
 Usage:  uv run python scripts/run_corpus.py [--only id1,id2] [--no-emit] [--dynamic]
+                                           [--from-checkpoint]
         make corpus
 """
 
@@ -45,11 +46,19 @@ def _apk_path(entry: dict[str, Any]) -> Path:
     return _ROOT / local if local else _CACHE / f"{entry['id']}.apk"
 
 
-async def _run_one(entry: dict[str, Any], emit: bool, dynamic: bool) -> dict[str, Any]:
+async def _run_one(
+    entry: dict[str, Any], emit: bool, dynamic: bool, from_checkpoint: bool
+) -> dict[str, Any]:
     t0 = time.time()
     row: dict[str, Any] = {"id": entry["id"], "group": entry.get("group", "")}
     try:
-        ir = await analyze(_apk_path(entry), apk_id=entry["id"], emit=emit, dynamic=dynamic)
+        ir = await analyze(
+            _apk_path(entry),
+            apk_id=entry["id"],
+            emit=emit,
+            dynamic=dynamic,
+            from_checkpoint=from_checkpoint,
+        )
     except TuyaDetectedError:
         row["verdict"] = "skip:tuya"
     except DuplicateFoundError as exc:
@@ -126,7 +135,9 @@ async def _main(args: argparse.Namespace) -> int:
             print(f"skip {entry['id']}: not in fixtures/_cache (run `make fixtures`)")
             continue
         print(f"== {entry['id']}", flush=True)
-        row = await _run_one(entry, emit=not args.no_emit, dynamic=args.dynamic)
+        row = await _run_one(
+            entry, emit=not args.no_emit, dynamic=args.dynamic, from_checkpoint=args.from_checkpoint
+        )
         row["ok"] = {True: "yes", False: "NO", None: "-"}[_matches(entry, row)]
         rows.append(row)
 
@@ -143,6 +154,11 @@ def main() -> None:
     parser.add_argument("--only", help="comma-separated fixture ids")
     parser.add_argument("--no-emit", action="store_true", help="extract only (skip P4/P5 + V-tier)")
     parser.add_argument("--dynamic", action="store_true", help="run the P2-7 oracle (redroid)")
+    parser.add_argument(
+        "--from-checkpoint",
+        action="store_true",
+        help="reuse each APK's last extraction; only emit + validate (template iteration)",
+    )
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     sys.exit(asyncio.run(_main(parser.parse_args())))
 
