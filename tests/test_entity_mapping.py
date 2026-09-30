@@ -169,3 +169,18 @@ def test_queries_are_not_buttons() -> None:
 
     assert [b["cmd"] for b in ctx["buttons"]] == ["wave"]  # status-only reply: still an action
     assert {u["cmd"] for u in ctx["unmapped_commands"]} == {"paired_list", "getWifiList"}
+
+
+def test_whole_system_stop_is_maintenance_but_plain_stop_is_not() -> None:
+    ctx = _ctx(
+        [
+            _cmd("stop_array", EntityHint.BUTTON),
+            _cmd("stop", EntityHint.BUTTON),
+        ],
+        [],
+    )
+
+    assert {b["cmd"]: b["maintenance"] for b in ctx["buttons"]} == {
+        "stop_array": True,
+        "stop": False,
+    }

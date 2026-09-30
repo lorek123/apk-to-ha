@@ -618,7 +618,7 @@ def _brand_strings(out_dir: Path, framework: Framework) -> list[str]:
 
 # Transports the SDK/HACS templates can generate a working client for.
 _EMITTABLE_TRANSPORTS = frozenset(
-    {TransportType.WEBSOCKET, TransportType.BLE, TransportType.HTTP_REST}
+    {TransportType.WEBSOCKET, TransportType.BLE, TransportType.HTTP_REST, TransportType.GRAPHQL}
 )
 
 
@@ -634,6 +634,8 @@ def _emit_blocker(ir: ProtocolIR) -> tuple[str, str] | None:
             "unsupported-auth",
             f"Challenge-response profile incomplete (missing: {', '.join(missing)})",
         )
+    if ir.transport.type == TransportType.GRAPHQL and not ir.state.poll_endpoints:
+        return "unsupported-transport", "GraphQL API without a query to poll for state"
     if ir.transport.type == TransportType.HTTP_REST and not ir.state.poll_endpoint:
         # The HTTP templates poll a state endpoint; without one there's nothing to show.
         return "unsupported-transport", "HTTP device without a state endpoint to poll"

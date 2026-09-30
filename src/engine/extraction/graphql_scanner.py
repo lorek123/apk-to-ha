@@ -169,14 +169,18 @@ def _leaf_fields(src: str, document: str) -> list[FieldDef]:
         for java_type, field in classes.get(cls, []):
             path = f"{prefix}{field}"
             if java_type.startswith("List<"):
-                leaves.append(FieldDef(name=path, serialized_name=path, kind=FieldKind.ARRAY))
+                leaves.append(
+                    FieldDef(name=_identifier(path), serialized_name=path, kind=FieldKind.ARRAY)
+                )
             elif java_type in classes and depth < _MAX_DEPTH:
                 walk(java_type, path + ".", depth + 1)
             else:
                 kind = _JAVA_KINDS.get(java_type, FieldKind.ENUM)
                 nullable = java_type[:1].isupper() and java_type != "String"
                 leaves.append(
-                    FieldDef(name=path, serialized_name=path, kind=kind, nullable=nullable)
+                    FieldDef(
+                        name=_identifier(path), serialized_name=path, kind=kind, nullable=nullable
+                    )
                 )
 
     walk("Data", "", 0)
@@ -184,6 +188,12 @@ def _leaf_fields(src: str, document: str) -> list[FieldDef]:
 
 
 _MAX_POLL_QUERIES = 5
+
+
+def _identifier(path: str) -> str:
+    """metrics.cpu.percentTotal → metrics_cpu_percent_total (the wire path stays dotted)."""
+    snake = re.sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", path.replace(".", "_"))
+    return snake.lower()
 
 
 def _wire_name(field: str, document_words: set[str]) -> str:

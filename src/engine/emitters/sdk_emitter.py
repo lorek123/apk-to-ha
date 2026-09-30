@@ -42,7 +42,10 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
         return pkg_dir
 
     _render(env, ctx, pkg_dir, "__init__.py.j2", "__init__.py")
-    client = "client_http.py.j2" if ctx.get("transport") == "http_rest" else "client.py.j2"
+    client = {
+        "http_rest": "client_http.py.j2",
+        "graphql": "client_graphql.py.j2",
+    }.get(str(ctx.get("transport")), "client.py.j2")
     _render(env, ctx, pkg_dir, client, "client.py")
     _render(env, ctx, pkg_dir, "models.py.j2", "models.py")
     _render(env, ctx, pkg_dir, "const.py.j2", "const.py")

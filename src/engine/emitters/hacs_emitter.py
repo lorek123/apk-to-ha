@@ -59,7 +59,7 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
     tests_dir.mkdir(parents=True, exist_ok=True)
     _render(env, tests_ctx, out_root, "pytest.ini.j2", "pytest.ini")
     # WebSocket push devices and polled HTTP devices get different mocks and tests.
-    suffix = "_http" if ctx.get("transport") == "http_rest" else ""
+    suffix = {"http_rest": "_http", "graphql": "_graphql"}.get(str(ctx.get("transport")), "")
     _render(env, tests_ctx, tests_dir, "__init__.py.j2", "__init__.py")
     for name in ("conftest", "test_integration"):
         _render(env, tests_ctx, tests_dir, f"{name}{suffix}.py.j2", f"{name}.py")
@@ -146,16 +146,19 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     sort_manifest(domain_dir / "manifest.json")
     _render(env, ctx, domain_dir, "__init__.py.j2", "__init__.py")
     _render(env, ctx, domain_dir, "const.py.j2", "const.py")
-    _render(env, ctx, domain_dir, "config_flow.py.j2", "config_flow.py")
-    coordinator = (
-        "coordinator_http.py.j2" if ctx.get("transport") == "http_rest" else "coordinator.py.j2"
-    )
+    graphql = ctx.get("transport") == "graphql"
+    config_flow = "config_flow_graphql.py.j2" if graphql else "config_flow.py.j2"
+    _render(env, ctx, domain_dir, config_flow, "config_flow.py")
+    polled = ctx.get("transport") in ("http_rest", "graphql")
+    coordinator = "coordinator_http.py.j2" if polled else "coordinator.py.j2"
     _render(env, ctx, domain_dir, coordinator, "coordinator.py")
     if ctx.get("has_ble"):
         _render(env, ctx, domain_dir, "ble_coordinator.py.j2", "ble_coordinator.py")
     _render(env, ctx, domain_dir, "entity_base.py.j2", "entity_base.py")
-    _render(env, ctx, domain_dir, "strings.json.j2", "strings.json")
-    _render(env, ctx, domain_dir / "translations", "translations/en.json.j2", "en.json")
+    strings = "strings_graphql.json.j2" if graphql else "strings.json.j2"
+    _render(env, ctx, domain_dir, strings, "strings.json")
+    translations = "strings_graphql.json.j2" if graphql else "translations/en.json.j2"
+    _render(env, ctx, domain_dir / "translations", translations, "en.json")
 
     platforms = ctx["platforms"]
     if "sensor" in platforms:

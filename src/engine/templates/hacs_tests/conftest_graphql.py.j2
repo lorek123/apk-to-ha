@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: MIT
+"""Fixtures for {{ name }} runtime tests: a mock GraphQL server."""
+from __future__ import annotations
+
+import json
+from collections.abc import AsyncIterator
+from typing import Any
+
+import pytest
+from aiohttp import web
+
+GRAPHQL_PATH = "{{ graphql_path }}"
+API_KEY_HEADER: str | None = {{ ('"' ~ api_key_header ~ '"') if api_key_header else "None" }}
+API_KEY = "test-api-key"
+STATE_QUERIES = {{ poll_queries | map(attribute="name") | list | tojson }}
+INITIAL_STATE: dict[str, Any] = json.loads({{ test_initial_state | tojson | tojson }})
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
+    """Make custom_components/ loadable in every test."""
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_sockets(socket_enabled: None) -> None:
+    """The mock server is a real server on 127.0.0.1 (the sandbox runs with no network)."""
+
+
+def _nest(flat: dict[str, Any]) -> dict[str, Any]:
+    """{"a.b": 1} → {"a": {"b": 1}} — the shape a GraphQL server returns."""
+    root: dict[str, Any] = {}
+    for path, value in flat.items():
+        node = root
+        *parents, leaf = path.split(".")
+        for part in parents:
+            node = node.setdefault(part, {})
+        node[leaf] = value
+    return root
+
+
+class MockServer:
+    """Answers the state queries, records mutations, checks the API key."""
+
+    def __init__(self) -> None:
+        self.state: dict[str, Any] = dict(INITIAL_STATE)
+        self.api_key = API_KEY
+        self.mutations: list[str] = []
+        self.port = 0
+        self._runner: web.AppRunner | None = None
+
+    @property
+    def url(self) -> str:
+        return f"http://127.0.0.1:{self.port}"
+
+    async def start(self, port: int = 0) -> None:
+        app = web.Application()
+        app.router.add_post(GRAPHQL_PATH, self._handle)
+        self._runner = web.AppRunner(app)
+        await self._runner.setup()
+        site = web.TCPSite(self._runner, "127.0.0.1", port, reuse_address=True)
+        await site.start()
+        self.port = self._runner.addresses[0][1]
+
+    async def stop(self) -> None:
+        if self._runner is not None:
+            await self._runner.cleanup()
+            self._runner = None
+
+    def set_state(self, **changes: Any) -> None:
+        self.state.update(changes)
+
+    async def _handle(self, request: web.Request) -> web.Response:
+        if API_KEY_HEADER and request.headers.get(API_KEY_HEADER) != self.api_key:
+            return web.json_response({"errors": [{"message": "Unauthorized"}], "data": None})
+        body = await request.json()
+        name = body["operationName"]
+        if name in STATE_QUERIES:
+            return web.json_response({"data": _nest(self.state)})
+        self.mutations.append(name)
+        return web.json_response({"data": {name: True}})
+
+
+@pytest.fixture
+async def server() -> AsyncIterator[MockServer]:
+    mock = MockServer()
+    await mock.start()
+    yield mock
+    await mock.stop()

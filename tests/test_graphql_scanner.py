@@ -103,7 +103,8 @@ def test_typed_state_from_nested_data_classes(tmp_path: Path) -> None:
     assert result is not None
 
     assert result.poll_queries == ["QUERY GetMetrics"]
-    assert [(f.name, f.kind, f.nullable) for f in result.state] == [
+    assert result.state[0].name == "metrics_cpu_percent_total"  # identifier; wire path stays dotted
+    assert [(f.serialized_name, f.kind, f.nullable) for f in result.state] == [
         ("metrics.cpu.percentTotal", FieldKind.NUMBER, False),
         ("metrics.memory.buffcache", FieldKind.INTEGER, True),
         ("metrics.memory.total", FieldKind.INTEGER, False),
