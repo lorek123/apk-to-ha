@@ -196,16 +196,16 @@ apks:
     expected_verdict: proceed
 
   # Community request (GitHub issue): BioLite FirePit+ fan over BLE, used on a smoker.
-  # Proprietary, Play Store only: the base APK from the XAPK goes into fixtures/_cache/
-  # by hand and is never committed.
+  # Proprietary, Play Store only: the APKPure XAPK (base + language/density splits)
+  # goes into fixtures/_cache/ by hand and is never committed.
   - id: biolite_firepit
     description: "BioLite FirePit v5.0 — BLE fan control for the FirePit+"
     framework: native
     package: com.biolite.firepit
     license: proprietary
     source: "https://play.google.com/store/apps/details?id=com.biolite.firepit"
-    apk_url: "https://example.invalid/replace.me.apk"   # proprietary — extract the base APK from the XAPK manually
-    local_path: "fixtures/_cache/biolite_firepit.apk"
+    apk_url: "https://example.invalid/replace.me.apk"   # proprietary — download the XAPK manually
+    local_path: "fixtures/_cache/biolite_firepit.xapk"
     transport: ble
 
   # Home Assistant's own companion app: must never generate a duplicate.

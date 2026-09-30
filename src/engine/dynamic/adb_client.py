@@ -46,9 +46,14 @@ async def connect() -> None:
     _LOGGER.info("adb: device ready")
 
 
-async def install_apk(apk_path: Path) -> None:
-    _LOGGER.info("adb: installing %s", apk_path.name)
-    await adb("install", "-r", "-t", str(apk_path))
+async def install_apk(apks: Path | list[Path]) -> None:
+    """Install an APK, or a split set (base first) with install-multiple."""
+    paths = [apks] if isinstance(apks, Path) else apks
+    _LOGGER.info("adb: installing %s (+%d splits)", paths[0].name, len(paths) - 1)
+    if len(paths) == 1:
+        await adb("install", "-r", "-t", str(paths[0]))
+    else:
+        await adb("install-multiple", "-r", "-t", *(str(p) for p in paths))
 
 
 def _download_frida_server() -> None:

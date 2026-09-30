@@ -12,6 +12,7 @@ Usage:  uv run python scripts/download_fixtures.py
 from __future__ import annotations
 
 import sys
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -43,7 +44,10 @@ def main() -> None:
             continue
 
         local = apk.get("local_path")
-        out_path = _ROOT / local if local else _CACHE / f"{apk_id}.apk"
+        # Keep a bundle's extension (.xapk/.apks/.apkm): the pipeline unpacks those.
+        suffix = Path(urllib.parse.urlparse(apk_url).path).suffix.lower()
+        suffix = suffix if suffix in (".apk", ".xapk", ".apks", ".apkm") else ".apk"
+        out_path = _ROOT / local if local else _CACHE / f"{apk_id}{suffix}"
 
         if out_path.exists():
             print(f"  skip  {apk_id}: already at {out_path.relative_to(_ROOT)}")
