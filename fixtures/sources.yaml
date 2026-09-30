@@ -172,6 +172,29 @@ apks:
     version_code: 117
     expected_verdict: proceed
 
+  # Ktor clients (Kotlin Multiplatform), no HA Core integration.
+  - id: inkcast
+    description: "Inkcast — companion app for the Xteink X4 CrossPoint e-reader (Ktor)"
+    framework: native
+    branch: M1
+    package: dev.inkcast.aos
+    license: Apache-2.0
+    source: "https://f-droid.org/packages/dev.inkcast.aos/"
+    apk_url: "https://f-droid.org/repo/dev.inkcast.aos_1.apk"
+    version_code: 1
+    expected_verdict: proceed
+
+  - id: navic
+    description: "Navic — Navidrome/Subsonic music-server client (Ktor)"
+    framework: native
+    branch: M1
+    package: paige.navic
+    license: GPL-3.0-only
+    source: "https://f-droid.org/packages/paige.navic/"
+    apk_url: "https://f-droid.org/repo/paige.navic_55.apk"
+    version_code: 55
+    expected_verdict: proceed
+
   # Home Assistant's own companion app: must never generate a duplicate.
   - id: ha_companion
     description: "Home Assistant companion (minimal/F-Droid flavour)"

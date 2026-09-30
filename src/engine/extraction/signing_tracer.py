@@ -278,6 +278,13 @@ def _resolve_variable(
 ) -> tuple[list[SigningComponent], list[str]]:
     expr = _unwrap_conversions(expr.strip())
 
+    # Self-referential assignments (x = x + y) and long chains end here as
+    # unresolved instead of recursing forever.
+    if depth > _MAX_RESOLVE_DEPTH:
+        return [SigningComponent(kind="unknown", variable_name=expr[:60], confidence=0.1)], [
+            f"{expr[:60]} (resolution depth exceeded)"
+        ]
+
     if _is_string_literal(expr):
         return [SigningComponent(kind="literal", variable_name="", value=_unquote(expr))], []
 
@@ -286,7 +293,7 @@ def _resolve_variable(
 
     # Inline concatenation passed directly (e.g. as doFinal arg)
     if " + " in expr and not _is_simple_name(expr):
-        return _parse_concat(expr, method_src, class_src, sources_dir, graph, depth)
+        return _parse_concat(expr, method_src, class_src, sources_dir, graph, depth + 1)
 
     if _is_simple_name(expr):
         # Check for StringBuilder first
@@ -297,7 +304,7 @@ def _resolve_variable(
 
         rhs = _find_assignment(expr, method_src)
         if rhs is not None:
-            return _resolve_rhs(rhs, expr, method_src, class_src, sources_dir, graph, depth)
+            return _resolve_rhs(rhs, expr, method_src, class_src, sources_dir, graph, depth + 1)
 
         # Parameter or field — classify by name
         kind = _classify_name(expr)
@@ -312,6 +319,8 @@ def _resolve_variable(
         [] if kind != "unknown" else [expr]
     )
 
+
+_MAX_RESOLVE_DEPTH = 12
 
 _BYTES_CONCAT = re.compile(r"^(?:ArraysKt\.plus|Bytes\.concat|ArrayUtils\.addAll)\s*\(")
 

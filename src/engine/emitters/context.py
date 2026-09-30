@@ -193,6 +193,19 @@ def _class_prefix(domain: str) -> str:
     return "".join(result)
 
 
+# Package suffixes that name the platform, not the product: dev.inkcast.aos → inkcast.
+_GENERIC_SEGMENTS = frozenset(
+    {"android", "aos", "app", "apps", "client", "droid", "mobile", "phone", "release"}
+)
+
+
+def _domain_segment(package_name: str) -> str:
+    """The package's last product-naming segment."""
+    segments = [s.lower() for s in package_name.split(".") if s]
+    named = [s for s in segments[1:] if s not in _GENERIC_SEGMENTS]
+    return named[-1] if named else segments[-1]
+
+
 def _human(slug: str) -> str:
     """'face_detection' → 'Face detection', 'r2d2' → 'R2D2'"""
     return slug.replace("_", " ").replace("-", " ").capitalize()
@@ -202,8 +215,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     with _HA_TARGET.open("rb") as fh:
         ha_cfg = tomllib.load(fh)
 
-    domain = ir.package_name.split(".")[-1].lower()
-    domain = _slugify(domain)
+    domain = _slugify(_domain_segment(ir.package_name))
     class_pfx = _class_prefix(domain)
     sdk_pkg = f"{domain}_sdk"
     # Strip version/build suffixes from APK filename:

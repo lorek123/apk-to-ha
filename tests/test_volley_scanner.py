@@ -116,3 +116,8 @@ def test_emit_blocker() -> None:
     assert _blocked(_ir(TransportType.WEBSOCKET, cmds=False)) == "nothing-extracted"
     assert _blocked(_ir(TransportType.BLE, AuthType.CHALLENGE_RESPONSE)) == "unsupported-auth"
     assert _blocked(_ir(TransportType.HTTP_REST)) == "unsupported-transport"
+
+
+def test_url_template_scheme_and_host_are_the_base() -> None:
+    assert url_template('"http://" + ((String) str) + "/api/status"') == "/api/status"
+    assert url_template('"http://" + host + ":" + port + "/x"') is not None
