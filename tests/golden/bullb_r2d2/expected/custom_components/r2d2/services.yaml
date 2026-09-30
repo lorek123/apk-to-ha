@@ -1,0 +1,127 @@
+# SPDX-License-Identifier: MIT
+play_sound:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: r2d2
+    interrupt:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: 1
+    sound_id:
+      required: true
+      selector:
+        text: {}
+move_head:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: r2d2
+    angle:
+      required: true
+      selector:
+        text: {}
+self_update:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: r2d2
+    url:
+      required: true
+      selector:
+        text: {}
+change_name:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: r2d2
+    new_name:
+      required: true
+      selector:
+        text: {}
+unpair:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: r2d2
+    uuid:
+      required: true
+      selector:
+        text: {}
+connect_wifi:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: r2d2
+    ssid:
+      required: true
+      selector:
+        text: {}
+    wifi_pw:
+      required: true
+      selector:
+        text:
+          type: password
+    enable:
+      required: true
+      selector:
+        boolean: {}
+head_shift:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: r2d2
+    angle:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: 1
+    interrupt:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: 1
+move:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: r2d2
+    angle:
+      required: true
+      selector:
+        text: {}
+    enable:
+      required: true
+      selector:
+        boolean: {}
+head_dir:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: r2d2
+    dir:
+      required: true
+      selector:
+        text: {}

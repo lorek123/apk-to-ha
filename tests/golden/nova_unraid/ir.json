@@ -31,7 +31,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       }
     ],
     "description": "API key sent in the 'x-api-key' header",
@@ -56,7 +57,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "array_capacity_kilobytes_total",
@@ -66,7 +68,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "array_capacity_kilobytes_used",
@@ -76,7 +79,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "array_parity_check_status_errors",
@@ -86,7 +90,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "array_parity_check_status_paused",
@@ -96,7 +101,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "array_parity_check_status_progress",
@@ -106,7 +112,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "array_parity_check_status_running",
@@ -116,7 +123,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "array_parity_check_status_speed",
@@ -126,7 +134,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "array_state",
@@ -136,7 +145,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "info_cpu_brand",
@@ -146,7 +156,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "info_cpu_cores",
@@ -156,7 +167,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "info_cpu_speedmax",
@@ -166,7 +178,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "info_cpu_threads",
@@ -176,7 +189,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "info_os_hostname",
@@ -186,7 +200,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "info_os_kernel",
@@ -196,7 +211,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "info_os_uptime",
@@ -206,7 +222,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "info_versions_core_kernel",
@@ -216,7 +233,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "info_versions_core_unraid",
@@ -226,7 +244,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "display_critical",
@@ -236,7 +255,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "display_hot",
@@ -246,7 +266,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "display_max",
@@ -256,7 +277,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "display_warning",
@@ -266,7 +288,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "metrics_cpu_percent_total",
@@ -276,7 +299,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "metrics_memory_buffcache",
@@ -286,7 +310,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "metrics_memory_total",
@@ -296,7 +321,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "metrics_memory_used",
@@ -306,7 +332,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "notifications_overview_unread_alert",
@@ -316,7 +343,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "notifications_overview_unread_info",
@@ -326,7 +354,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "notifications_overview_unread_total",
@@ -336,7 +365,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "notifications_overview_unread_warning",
@@ -346,7 +376,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       }
     ]
   },
@@ -366,7 +397,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "notifications_overview_unread_alert",
@@ -376,7 +408,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "notifications_overview_unread_info",
@@ -386,7 +419,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "notifications_overview_unread_total",
@@ -396,7 +430,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "notifications_overview_unread_warning",
@@ -406,7 +441,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "notifications_unread",
@@ -416,7 +452,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -439,7 +476,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -463,7 +501,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -488,7 +527,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -511,7 +551,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -535,7 +576,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -560,7 +602,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "notifications_overview_unread_info",
@@ -570,7 +613,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "notifications_overview_unread_total",
@@ -580,7 +624,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "notifications_overview_unread_warning",
@@ -590,7 +635,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "notifications_warnings_and_alerts",
@@ -600,7 +646,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -623,7 +670,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -648,7 +696,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -672,7 +721,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_capacity_kilobytes_free",
@@ -682,7 +732,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_capacity_kilobytes_total",
@@ -692,7 +743,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_capacity_kilobytes_used",
@@ -702,7 +754,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_disks",
@@ -712,7 +765,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_parities",
@@ -722,7 +776,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_parity_check_status_errors",
@@ -732,7 +787,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_parity_check_status_paused",
@@ -742,7 +798,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_parity_check_status_progress",
@@ -752,7 +809,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_parity_check_status_running",
@@ -762,7 +820,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_parity_check_status_speed",
@@ -772,7 +831,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "array_state",
@@ -782,7 +842,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -831,7 +892,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -855,7 +917,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "type",
@@ -865,7 +928,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -890,7 +954,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "display_hot",
@@ -900,7 +965,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "display_max",
@@ -910,7 +976,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "display_warning",
@@ -920,7 +987,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -943,7 +1011,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -967,7 +1036,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -992,7 +1062,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_cpu_cores",
@@ -1002,7 +1073,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_cpu_speedmax",
@@ -1012,7 +1084,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_cpu_threads",
@@ -1022,7 +1095,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_memory_layout",
@@ -1032,7 +1106,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_os_hostname",
@@ -1042,7 +1117,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_os_kernel",
@@ -1052,7 +1128,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_os_uptime",
@@ -1062,7 +1139,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_versions_core_kernel",
@@ -1072,7 +1150,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_versions_core_unraid",
@@ -1082,7 +1161,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -1106,7 +1186,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -1142,7 +1223,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -1166,7 +1248,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -1191,7 +1274,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -1241,7 +1325,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -1264,7 +1349,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -1289,7 +1375,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -1312,7 +1399,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "tail",
@@ -1322,7 +1410,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [
@@ -1334,7 +1423,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "docker_logs_lines",
@@ -1344,7 +1434,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -1368,7 +1459,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_network_interfaces",
@@ -1378,7 +1470,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "info_primary_network_name",
@@ -1388,7 +1481,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -1411,7 +1505,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -1435,7 +1530,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -1485,7 +1581,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -1535,7 +1632,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -1560,7 +1658,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -1584,7 +1683,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "metrics_memory_buffcache",
@@ -1594,7 +1694,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "metrics_memory_total",
@@ -1604,7 +1705,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "metrics_memory_used",
@@ -1614,7 +1716,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "metrics_temperature_sensors",
@@ -1624,7 +1727,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,

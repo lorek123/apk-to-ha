@@ -122,9 +122,12 @@ class R2D2Client:
 
     async def send_command(self, cmd: str, **params: Any) -> None:
         if self._ws is None or self._ws.closed:
-            raise RuntimeError("Not connected")
+            raise R2D2ConnectionError(f"{cmd}: not connected")
         payload: dict[str, Any] = {"cmd": cmd, **params}
-        await self._ws.send_str(json.dumps(payload))
+        try:
+            await self._ws.send_str(json.dumps(payload))
+        except (aiohttp.ClientError, ConnectionResetError) as exc:
+            raise R2D2ConnectionError(f"{cmd} failed: {exc!r}") from exc
 
     async def set_power(self, enable: bool) -> None:
         await self.send_command("power", enable=enable)
@@ -152,6 +155,115 @@ class R2D2Client:
 
     async def press_d_leg_power(self) -> None:
         await self.send_command("d-leg-power")
+
+    async def play_sound(
+        self,
+        *,
+        interrupt: int,
+        sound_id: str,
+    ) -> None:
+        """play_sound."""
+        params: dict[str, Any] = {
+            "interrupt": interrupt,
+            "sound_id": sound_id,
+        }
+        await self.send_command("play_sound", **params)
+
+    async def move_head(
+        self,
+        *,
+        angle: str,
+    ) -> None:
+        """move-head."""
+        params: dict[str, Any] = {
+            "angle": angle,
+        }
+        await self.send_command("move-head", **params)
+
+    async def self_update(
+        self,
+        *,
+        url: str,
+    ) -> None:
+        """self_update."""
+        params: dict[str, Any] = {
+            "url": url,
+        }
+        await self.send_command("self_update", **params)
+
+    async def change_name(
+        self,
+        *,
+        new_name: str,
+    ) -> None:
+        """change_name."""
+        params: dict[str, Any] = {
+            "new_name": new_name,
+        }
+        await self.send_command("change_name", **params)
+
+    async def unpair(
+        self,
+        *,
+        uuid: str,
+    ) -> None:
+        """unpair."""
+        params: dict[str, Any] = {
+            "uuid": uuid,
+        }
+        await self.send_command("unpair", **params)
+
+    async def connect_wifi(
+        self,
+        *,
+        ssid: str,
+        wifi_pw: str,
+        enable: bool,
+    ) -> None:
+        """connectWifi."""
+        params: dict[str, Any] = {
+            "ssid": ssid,
+            "wifi_pw": wifi_pw,
+            "enable": enable,
+        }
+        await self.send_command("connectWifi", **params)
+
+    async def head_shift(
+        self,
+        *,
+        angle: int,
+        interrupt: int,
+    ) -> None:
+        """head-shift."""
+        params: dict[str, Any] = {
+            "angle": angle,
+            "interrupt": interrupt,
+        }
+        await self.send_command("head-shift", **params)
+
+    async def move(
+        self,
+        *,
+        angle: str,
+        enable: bool,
+    ) -> None:
+        """move."""
+        params: dict[str, Any] = {
+            "angle": angle,
+            "enable": enable,
+        }
+        await self.send_command("move", **params)
+
+    async def head_dir(
+        self,
+        *,
+        dir: str,
+    ) -> None:
+        """head-dir."""
+        params: dict[str, Any] = {
+            "dir": dir,
+        }
+        await self.send_command("head-dir", **params)
 
     async def _listen(self) -> None:
         ws = self._ws

@@ -39,7 +39,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "ip",
@@ -49,7 +50,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       },
       {
         "name": "mode",
@@ -59,7 +61,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "rssi",
@@ -69,7 +72,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "uptime",
@@ -79,7 +83,8 @@
         "nullable": true,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "version",
@@ -89,7 +94,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       }
     ]
   },
@@ -108,7 +114,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "query"
         }
       ],
       "response_fields": [],
@@ -132,7 +139,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "query"
         }
       ],
       "response_fields": [],
@@ -157,7 +165,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "ip",
@@ -167,7 +176,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "mode",
@@ -177,7 +187,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "rssi",
@@ -187,7 +198,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "uptime",
@@ -197,7 +209,8 @@
           "nullable": true,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "version",
@@ -207,7 +220,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "description": null,
@@ -243,7 +257,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "body"
         }
       ],
       "response_fields": [],
@@ -267,7 +282,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "form"
         },
         {
           "name": "type",
@@ -277,7 +293,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "form"
         }
       ],
       "response_fields": [],
@@ -301,7 +318,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "form"
         },
         {
           "name": "name",
@@ -311,7 +329,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "form"
         }
       ],
       "response_fields": [],
@@ -335,7 +354,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "form"
         },
         {
           "name": "dest",
@@ -345,7 +365,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "form"
         }
       ],
       "response_fields": [],
@@ -369,7 +390,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "form"
         },
         {
           "name": "path",
@@ -379,7 +401,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": "form"
         }
       ],
       "response_fields": [],

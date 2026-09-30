@@ -45,6 +45,7 @@ class MockServer:
         self.state: dict[str, Any] = dict(INITIAL_STATE)
         self.api_key = API_KEY
         self.mutations: list[str] = []
+        self.variables: list[dict[str, Any]] = []
         self.port = 0
         self._runner: web.AppRunner | None = None
 
@@ -77,6 +78,7 @@ class MockServer:
         if name in STATE_QUERIES:
             return web.json_response({"data": _nest(self.state)})
         self.mutations.append(name)
+        self.variables.append(body.get("variables") or {})
         return web.json_response({"data": {name: True}})
 
 

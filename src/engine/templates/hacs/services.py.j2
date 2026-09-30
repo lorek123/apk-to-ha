@@ -1,0 +1,87 @@
+# SPDX-License-Identifier: MIT
+"""Actions for {{ name }}: device commands that take parameters or return a reply."""
+from __future__ import annotations
+
+{% if actions | selectattr("response") | list %}
+from typing import Any
+
+{% endif %}
+import voluptuous as vol
+
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import ATTR_CONFIG_ENTRY_ID
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+    callback,
+)
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers import config_validation as cv
+from {{ sdk_package }} import {{ class_prefix }}Client, {{ class_prefix }}ConnectionError
+
+from .const import DOMAIN
+{% for a in actions %}
+
+_SCHEMA_{{ a.name | upper }} = vol.Schema(
+    {
+        vol.Required(ATTR_CONFIG_ENTRY_ID): cv.string,
+{% for f in a.fields %}
+        vol.{{ "Required" if f.required else "Optional" }}({{ f.arg | tojson }}): {{ f.schema }},
+{% endfor %}
+    }
+)
+{% endfor %}
+
+
+def _client(call: ServiceCall) -> {{ class_prefix }}Client:
+    """The client of the loaded config entry the action targets."""
+    entry = call.hass.config_entries.async_get_entry(call.data[ATTR_CONFIG_ENTRY_ID])
+    if entry is None or entry.domain != DOMAIN:
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="entry_not_found")
+    if entry.state is not ConfigEntryState.LOADED:
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="entry_not_loaded")
+    client: {{ class_prefix }}Client = entry.runtime_data.client
+    return client
+
+
+def _failed(action: str, err: Exception) -> HomeAssistantError:
+    return HomeAssistantError(
+        translation_domain=DOMAIN,
+        translation_key="action_failed",
+        translation_placeholders={"action": action, "error": str(err)},
+    )
+{% for a in actions %}
+
+
+async def _{{ a.name }}(call: ServiceCall) -> ServiceResponse:
+    client = _client(call)
+    try:
+{% if a.fields %}
+        {{ "reply: dict[str, Any] = " if a.response }}await client.{{ a.name }}(
+{% for f in a.fields %}
+            {{ f.arg }}=call.data{{ ("[" ~ (f.arg | tojson) ~ "]") if f.required else (".get(" ~ (f.arg | tojson) ~ ")") }},
+{% endfor %}
+        )
+{% else %}
+        {{ "reply: dict[str, Any] = " if a.response }}await client.{{ a.name }}()
+{% endif %}
+    except {{ class_prefix }}ConnectionError as err:
+        raise _failed({{ a.name | tojson }}, err) from err
+    return {{ "reply" if a.response else "None" }}
+{% endfor %}
+
+
+@callback
+def async_setup_services(hass: HomeAssistant) -> None:
+    """Register the actions once per Home Assistant instance (not per entry)."""
+{% for a in actions %}
+    hass.services.async_register(
+        DOMAIN,
+        {{ a.name | tojson }},
+        _{{ a.name }},
+        schema=_SCHEMA_{{ a.name | upper }},
+        supports_response=SupportsResponse.{{ "ONLY" if a.response else "NONE" }},
+    )
+{% endfor %}

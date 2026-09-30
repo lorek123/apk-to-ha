@@ -31,7 +31,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       },
       {
         "name": "device_name",
@@ -41,7 +42,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       }
     ],
     "description": "Send grantAccess on WebSocket open; robot responds with state + resultCode",
@@ -60,7 +62,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "battery",
@@ -70,7 +73,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "charging",
@@ -80,7 +84,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "error",
@@ -90,7 +95,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "f43ip",
@@ -100,7 +106,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       },
       {
         "name": "isAPMode",
@@ -110,7 +117,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "lightsaber",
@@ -120,7 +128,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "longLCD",
@@ -130,7 +139,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "mode",
@@ -140,7 +150,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "name",
@@ -150,7 +161,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       },
       {
         "name": "projector",
@@ -160,7 +172,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "selfUpdate",
@@ -170,7 +183,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       },
       {
         "name": "shortLCD",
@@ -180,7 +194,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "ssid",
@@ -190,7 +205,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       },
       {
         "name": "timestamp",
@@ -200,7 +216,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       },
       {
         "name": "updateDownloadProgress",
@@ -210,7 +227,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       },
       {
         "name": "uuid",
@@ -220,7 +238,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": null
+        "entity_hint": null,
+        "location": null
       }
     ]
   },
@@ -239,7 +258,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "sound_id",
@@ -249,7 +269,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -273,7 +294,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -297,7 +319,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "interrupt",
@@ -307,7 +330,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "sound_id",
@@ -317,7 +341,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -380,7 +405,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -404,7 +430,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "device_name",
@@ -414,7 +441,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "new_name",
@@ -424,7 +452,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -448,7 +477,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -472,7 +502,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -496,7 +527,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -520,7 +552,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "wifi_pw",
@@ -530,7 +563,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -554,7 +588,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "wifi_pw",
@@ -564,7 +599,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "enable",
@@ -574,7 +610,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -598,7 +635,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -622,7 +660,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -646,7 +685,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -670,7 +710,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -694,7 +735,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "interrupt",
@@ -704,7 +746,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -728,7 +771,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "enable",
@@ -738,7 +782,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -762,7 +807,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],

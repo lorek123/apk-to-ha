@@ -1,0 +1,12 @@
+{# Method header of an action; `returns` is set by the including template. #}
+{% if a.signature %}
+    async def {{ a.name }}(
+        self,
+{% for line in a.signature %}
+        {{ line }}
+{% endfor %}
+    ) -> {{ returns }}:
+{% else %}
+    async def {{ a.name }}(self) -> {{ returns }}:
+{% endif %}
+        """{{ a.cmd }}."""

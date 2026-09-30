@@ -8,10 +8,13 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
 from smart_radio_telescope_sdk import SmartRadioTelescopeClient
 
-from .const import DEFAULT_PORT
+from .const import DEFAULT_PORT, DOMAIN
 from .coordinator import SmartRadioTelescopeCoordinator
+from .services import async_setup_services
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -28,6 +31,14 @@ class SmartRadioTelescopeRuntimeData:
 
 
 type SmartRadioTelescopeConfigEntry = ConfigEntry[SmartRadioTelescopeRuntimeData]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the integration's actions (they target a config entry by ID)."""
+    async_setup_services(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SmartRadioTelescopeConfigEntry) -> bool:

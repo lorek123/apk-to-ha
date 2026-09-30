@@ -2,12 +2,16 @@
 """Runtime tests for NOVA: config flow, polling, mutations, reauth, unload."""
 from __future__ import annotations
 
+import json
 from datetime import timedelta
+from typing import Any
 
+import pytest
 from custom_components.nova.const import DOMAIN
 from custom_components.nova.coordinator import POLL_INTERVAL
 from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
 from homeassistant.const import (
+    ATTR_CONFIG_ENTRY_ID,
     ATTR_ENTITY_ID,
     CONF_API_KEY,
     CONF_URL,
@@ -17,6 +21,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
@@ -155,3 +160,49 @@ async def test_unload(hass: HomeAssistant, server: MockServer) -> None:
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     assert entry.state is ConfigEntryState.NOT_LOADED
+
+
+ACTION_DATA: dict[str, Any] = json.loads("{\"id\": \"test\", \"type\": \"test\"}")
+
+
+async def test_action_sends_command(hass: HomeAssistant, server: MockServer) -> None:
+    """The delete_notification action sends MUTATION DeleteNotification with its parameters."""
+    entry = await _setup_entry(hass, server)
+    await hass.services.async_call(
+        DOMAIN,
+        "delete_notification",
+        {ATTR_CONFIG_ENTRY_ID: entry.entry_id, **ACTION_DATA},
+        blocking=True,
+    )
+    assert server.mutations[-1] == "DeleteNotification"
+    assert server.variables[-1] == json.loads("{\"id\": \"test\", \"type\": \"test\"}")
+
+
+async def test_action_needs_loaded_entry(hass: HomeAssistant, server: MockServer) -> None:
+    """Actions are registered once; on an unloaded entry they refuse, not crash."""
+    entry = await _setup_entry(hass, server)
+    await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            DOMAIN,
+            "delete_notification",
+            {ATTR_CONFIG_ENTRY_ID: entry.entry_id, **ACTION_DATA},
+            blocking=True,
+        )
+
+
+async def test_query_action_returns_reply(hass: HomeAssistant, server: MockServer) -> None:
+    """The get_plugin_operations action returns the device's reply."""
+    entry = await _setup_entry(hass, server)
+    response = await hass.services.async_call(
+        DOMAIN,
+        "get_plugin_operations",
+        {
+            ATTR_CONFIG_ENTRY_ID: entry.entry_id,
+            **json.loads("{}"),
+        },
+        blocking=True,
+        return_response=True,
+    )
+    assert response == json.loads("{\"GetPluginOperations\": true}")

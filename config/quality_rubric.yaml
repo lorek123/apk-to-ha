@@ -73,3 +73,15 @@ rules:
     description: "Entity names should be human-readable; internal cmd names must be slugified and translated"
     check_type: agent
     severity: warning
+
+  - id: PLT-013
+    name: action_setup
+    description: "Actions are registered in async_setup (not per entry), with CONFIG_SCHEMA, a services.yaml entry and strings.json name for each"
+    check_type: deterministic
+    severity: error
+
+  - id: PLT-014
+    name: action_exceptions
+    description: "Action handlers raise translated HomeAssistantError/ServiceValidationError; every translation_key exists in strings.json exceptions"
+    check_type: deterministic
+    severity: error

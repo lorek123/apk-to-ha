@@ -2,10 +2,15 @@
 """Runtime tests for {{ name }}: config flow, polling, mutations, reauth, unload."""
 from __future__ import annotations
 
+import json
+from typing import Any
+
+import pytest
 from datetime import timedelta
 
 from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
 from homeassistant.const import (
+    ATTR_CONFIG_ENTRY_ID,
     ATTR_ENTITY_ID,
     CONF_API_KEY,
     CONF_URL,
@@ -14,6 +19,7 @@ from homeassistant.const import (
     EntityCategory,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
@@ -166,3 +172,6 @@ async def test_unload(hass: HomeAssistant, server: MockServer) -> None:
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     assert entry.state is ConfigEntryState.NOT_LOADED
+{% set fixture = "hass: HomeAssistant, server: MockServer" %}
+{% set setup = "_setup_entry(hass, server)" %}
+{% include "_actions_tests.py.j2" %}

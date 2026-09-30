@@ -12,7 +12,9 @@
       "reauth_confirm": {
         "title": "Re-authenticate NOVA",
         "description": "The server rejected the API key. Enter a new one.",
-        "data": {"api_key": "API key"}
+        "data": {
+          "api_key": "API key"
+        }
       }
     },
     "error": {
@@ -28,49 +30,476 @@
   },
   "entity": {
     "sensor": {
-      "array_capacity_kilobytes_free": {"name": "Array.capacity.kilobytes.free"},
-      "array_capacity_kilobytes_total": {"name": "Array.capacity.kilobytes.total"},
-      "array_capacity_kilobytes_used": {"name": "Array.capacity.kilobytes.used"},
-      "array_paritycheckstatus_errors": {"name": "Array.paritycheckstatus.errors"},
-      "array_paritycheckstatus_progress": {"name": "Array.paritycheckstatus.progress"},
-      "array_paritycheckstatus_speed": {"name": "Array.paritycheckstatus.speed"},
-      "array_state": {"name": "Array.state"},
-      "info_cpu_brand": {"name": "Info.cpu.brand"},
-      "info_cpu_cores": {"name": "Info.cpu.cores"},
-      "info_cpu_speedmax": {"name": "Info.cpu.speedmax"},
-      "info_cpu_threads": {"name": "Info.cpu.threads"},
-      "info_os_hostname": {"name": "Info.os.hostname"},
-      "info_os_kernel": {"name": "Info.os.kernel"},
-      "info_os_uptime": {"name": "Info.os.uptime"},
-      "info_versions_core_kernel": {"name": "Info.versions.core.kernel"},
-      "info_versions_core_unraid": {"name": "Info.versions.core.unraid"},
-      "display_critical": {"name": "Display.critical"},
-      "display_hot": {"name": "Display.hot"},
-      "display_max": {"name": "Display.max"},
-      "display_warning": {"name": "Display.warning"},
-      "metrics_cpu_percenttotal": {"name": "Metrics.cpu.percenttotal"},
-      "metrics_memory_buffcache": {"name": "Metrics.memory.buffcache"},
-      "metrics_memory_total": {"name": "Metrics.memory.total"},
-      "metrics_memory_used": {"name": "Metrics.memory.used"},
-      "notifications_overview_unread_alert": {"name": "Notifications.overview.unread.alert"},
-      "notifications_overview_unread_info": {"name": "Notifications.overview.unread.info"},
-      "notifications_overview_unread_total": {"name": "Notifications.overview.unread.total"},
-      "notifications_overview_unread_warning": {"name": "Notifications.overview.unread.warning"}
+      "array_capacity_kilobytes_free": {
+        "name": "Array.capacity.kilobytes.free"
+      },
+      "array_capacity_kilobytes_total": {
+        "name": "Array.capacity.kilobytes.total"
+      },
+      "array_capacity_kilobytes_used": {
+        "name": "Array.capacity.kilobytes.used"
+      },
+      "array_paritycheckstatus_errors": {
+        "name": "Array.paritycheckstatus.errors"
+      },
+      "array_paritycheckstatus_progress": {
+        "name": "Array.paritycheckstatus.progress"
+      },
+      "array_paritycheckstatus_speed": {
+        "name": "Array.paritycheckstatus.speed"
+      },
+      "array_state": {
+        "name": "Array.state"
+      },
+      "info_cpu_brand": {
+        "name": "Info.cpu.brand"
+      },
+      "info_cpu_cores": {
+        "name": "Info.cpu.cores"
+      },
+      "info_cpu_speedmax": {
+        "name": "Info.cpu.speedmax"
+      },
+      "info_cpu_threads": {
+        "name": "Info.cpu.threads"
+      },
+      "info_os_hostname": {
+        "name": "Info.os.hostname"
+      },
+      "info_os_kernel": {
+        "name": "Info.os.kernel"
+      },
+      "info_os_uptime": {
+        "name": "Info.os.uptime"
+      },
+      "info_versions_core_kernel": {
+        "name": "Info.versions.core.kernel"
+      },
+      "info_versions_core_unraid": {
+        "name": "Info.versions.core.unraid"
+      },
+      "display_critical": {
+        "name": "Display.critical"
+      },
+      "display_hot": {
+        "name": "Display.hot"
+      },
+      "display_max": {
+        "name": "Display.max"
+      },
+      "display_warning": {
+        "name": "Display.warning"
+      },
+      "metrics_cpu_percenttotal": {
+        "name": "Metrics.cpu.percenttotal"
+      },
+      "metrics_memory_buffcache": {
+        "name": "Metrics.memory.buffcache"
+      },
+      "metrics_memory_total": {
+        "name": "Metrics.memory.total"
+      },
+      "metrics_memory_used": {
+        "name": "Metrics.memory.used"
+      },
+      "notifications_overview_unread_alert": {
+        "name": "Notifications.overview.unread.alert"
+      },
+      "notifications_overview_unread_info": {
+        "name": "Notifications.overview.unread.info"
+      },
+      "notifications_overview_unread_total": {
+        "name": "Notifications.overview.unread.total"
+      },
+      "notifications_overview_unread_warning": {
+        "name": "Notifications.overview.unread.warning"
+      }
     },
     "binary_sensor": {
-      "array_paritycheckstatus_paused": {"name": "Array.paritycheckstatus.paused"},
-      "array_paritycheckstatus_running": {"name": "Array.paritycheckstatus.running"}
+      "array_paritycheckstatus_paused": {
+        "name": "Array.paritycheckstatus.paused"
+      },
+      "array_paritycheckstatus_running": {
+        "name": "Array.paritycheckstatus.running"
+      }
     },
     "button": {
-      "stop_array": {"name": "Stop array"},
-      "resume_parity_check": {"name": "Resume parity check"},
-      "start_array": {"name": "Start array"},
-      "archive_all_notifications": {"name": "Archive all notifications"},
-      "recalculate_notification_overview": {"name": "Recalculate notification overview"},
-      "cancel_parity_check": {"name": "Cancel parity check"},
-      "delete_archived_notifications": {"name": "Delete archived notifications"},
-      "pause_parity_check": {"name": "Pause parity check"},
-      "update_all_containers": {"name": "Update all containers"}
+      "stop_array": {
+        "name": "Stop array"
+      },
+      "resume_parity_check": {
+        "name": "Resume parity check"
+      },
+      "start_array": {
+        "name": "Start array"
+      },
+      "archive_all_notifications": {
+        "name": "Archive all notifications"
+      },
+      "recalculate_notification_overview": {
+        "name": "Recalculate notification overview"
+      },
+      "cancel_parity_check": {
+        "name": "Cancel parity check"
+      },
+      "delete_archived_notifications": {
+        "name": "Delete archived notifications"
+      },
+      "pause_parity_check": {
+        "name": "Pause parity check"
+      },
+      "update_all_containers": {
+        "name": "Update all containers"
+      }
+    }
+  },
+  "services": {
+    "update_container": {
+      "name": "Update container",
+      "description": "Sends MUTATION UpdateContainer to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "reboot_vm": {
+      "name": "Reboot vm",
+      "description": "Sends MUTATION RebootVm to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "get_plugin_operations": {
+      "name": "Get plugin operations",
+      "description": "Asks the device (QUERY GetPluginOperations) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        }
+      }
+    },
+    "archive_notification": {
+      "name": "Archive notification",
+      "description": "Sends MUTATION ArchiveNotification to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "pause_container": {
+      "name": "Pause container",
+      "description": "Sends MUTATION PauseContainer to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "get_notifications": {
+      "name": "Get notifications",
+      "description": "Asks the device (QUERY GetNotifications) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        }
+      }
+    },
+    "pause_vm": {
+      "name": "Pause vm",
+      "description": "Sends MUTATION PauseVm to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "get_network_throughput": {
+      "name": "Get network throughput",
+      "description": "Asks the device (QUERY GetNetworkThroughput) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        }
+      }
+    },
+    "stop_vm": {
+      "name": "Stop vm",
+      "description": "Sends MUTATION StopVm to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "delete_notification": {
+      "name": "Delete notification",
+      "description": "Sends MUTATION DeleteNotification to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        },
+        "type": {
+          "name": "Type",
+          "description": "Value for `type`."
+        }
+      }
+    },
+    "unread_notification": {
+      "name": "Unread notification",
+      "description": "Sends MUTATION UnreadNotification to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "start_container": {
+      "name": "Start container",
+      "description": "Sends MUTATION StartContainer to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "get_docker_containers": {
+      "name": "Get docker containers",
+      "description": "Asks the device (QUERY GetDockerContainers) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        }
+      }
+    },
+    "start_vm": {
+      "name": "Start vm",
+      "description": "Sends MUTATION StartVm to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "start_parity_check": {
+      "name": "Start parity check",
+      "description": "Sends MUTATION StartParityCheck to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "correct": {
+          "name": "Correct",
+          "description": "Value for `correct`."
+        }
+      }
+    },
+    "ping": {
+      "name": "Ping",
+      "description": "Asks the device (QUERY Ping) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        }
+      }
+    },
+    "get_installed_unraid_plugins": {
+      "name": "Get installed unraid plugins",
+      "description": "Asks the device (QUERY GetInstalledUnraidPlugins) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        }
+      }
+    },
+    "force_stop_vm": {
+      "name": "Force stop vm",
+      "description": "Sends MUTATION ForceStopVm to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "get_plugins": {
+      "name": "Get plugins",
+      "description": "Asks the device (QUERY GetPlugins) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        }
+      }
+    },
+    "fetch_container_logs": {
+      "name": "Fetch container logs",
+      "description": "Asks the device (QUERY FetchContainerLogs) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        },
+        "tail": {
+          "name": "Tail",
+          "description": "Value for `tail`."
+        }
+      }
+    },
+    "get_network_interfaces": {
+      "name": "Get network interfaces",
+      "description": "Asks the device (QUERY GetNetworkInterfaces) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        }
+      }
+    },
+    "resume_vm": {
+      "name": "Resume vm",
+      "description": "Sends MUTATION ResumeVm to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "stop_container": {
+      "name": "Stop container",
+      "description": "Sends MUTATION StopContainer to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "unpause_container": {
+      "name": "Unpause container",
+      "description": "Sends MUTATION UnpauseContainer to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "reset_vm": {
+      "name": "Reset vm",
+      "description": "Sends MUTATION ResetVm to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        },
+        "id": {
+          "name": "Id",
+          "description": "Value for `id`."
+        }
+      }
+    },
+    "get_vms": {
+      "name": "Get vms",
+      "description": "Asks the device (QUERY GetVms) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The NOVA to send the action to."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "No NOVA with this config entry ID."
+    },
+    "entry_not_loaded": {
+      "message": "NOVA is not loaded."
+    },
+    "action_failed": {
+      "message": "{action} failed: {error}"
     }
   }
 }

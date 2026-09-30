@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from urllib.parse import quote
 
 import aiohttp
 
@@ -13,6 +14,13 @@ from .models import RobotState
 _LOGGER = logging.getLogger(__name__)
 
 REQUEST_TIMEOUT = 10.0
+
+
+def _scalars(values: dict[str, Any] | None) -> dict[str, str] | None:
+    """Query/form values as strings (aiohttp rejects bools): True → "true"."""
+    if not values:
+        return None
+    return {k: str(v).lower() if isinstance(v, bool) else str(v) for k, v in values.items()}
 
 
 class SmartRadioTelescopeConnectionError(Exception):
@@ -76,7 +84,137 @@ class SmartRadioTelescopeClient:
             {"hz": int(value)},
         )
 
-    async def _request(self, method: str, path: str, body: dict[str, Any] | None = None) -> Any:
+    async def system(self) -> dict[str, Any]:
+        """GET /system."""
+        result = await self._request(
+            "GET",
+            "/system",
+        )
+        return result if isinstance(result, dict) else {"result": result}
+
+    async def goto(
+        self,
+        *,
+        az: float,
+        el: float,
+        pol: float,
+    ) -> None:
+        """POST /goto."""
+        body: dict[str, Any] = {
+            "az": az,
+            "el": el,
+            "pol": pol,
+        }
+        await self._request(
+            "POST",
+            "/goto",
+            body=body,
+        )
+
+    async def goto_radec(
+        self,
+        *,
+        ra_deg: float,
+        dec_deg: float,
+        lat: float,
+        lon: float,
+    ) -> None:
+        """POST /goto/radec."""
+        body: dict[str, Any] = {
+            "ra_deg": ra_deg,
+            "dec_deg": dec_deg,
+            "lat": lat,
+            "lon": lon,
+        }
+        await self._request(
+            "POST",
+            "/goto/radec",
+            body=body,
+        )
+
+    async def home(
+        self,
+        *,
+        axis: str,
+    ) -> None:
+        """POST /home/{axis}."""
+        await self._request(
+            "POST",
+            f"/home/{quote(str(axis), safe="")}",
+        )
+
+    async def move(
+        self,
+        *,
+        axis: str,
+        degrees: float,
+    ) -> None:
+        """POST /move."""
+        body: dict[str, Any] = {
+            "axis": axis,
+            "degrees": degrees,
+        }
+        await self._request(
+            "POST",
+            "/move",
+            body=body,
+        )
+
+    async def jog(
+        self,
+        *,
+        az_dps: float,
+        el_dps: float,
+    ) -> None:
+        """POST /jog."""
+        body: dict[str, Any] = {
+            "az_dps": az_dps,
+            "el_dps": el_dps,
+        }
+        await self._request(
+            "POST",
+            "/jog",
+            body=body,
+        )
+
+    async def scan(
+        self,
+        *,
+        sweep: str,
+        pattern: str,
+        s0: float,
+        s1: float,
+        t0: float,
+        t1: float,
+        speed: float,
+        rows: int,
+    ) -> None:
+        """POST /scan."""
+        body: dict[str, Any] = {
+            "sweep": sweep,
+            "pattern": pattern,
+            "s0": s0,
+            "s1": s1,
+            "t0": t0,
+            "t1": t1,
+            "speed": speed,
+            "rows": rows,
+        }
+        await self._request(
+            "POST",
+            "/scan",
+            body=body,
+        )
+
+    async def _request(
+        self,
+        method: str,
+        path: str,
+        body: Any = None,
+        *,
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+    ) -> Any:
         if self._session is None:
             self._session = aiohttp.ClientSession()
         try:
@@ -84,6 +222,8 @@ class SmartRadioTelescopeClient:
                 method,
                 self._base + path,
                 json=body,
+                params=_scalars(params),
+                data=_scalars(data),
                 timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
             ) as resp:
                 if resp.status in (401, 403):

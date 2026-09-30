@@ -1,0 +1,162 @@
+# SPDX-License-Identifier: MIT
+system:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: smart_radio_telescope
+goto:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: smart_radio_telescope
+    az:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    el:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    pol:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+goto_radec:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: smart_radio_telescope
+    ra_deg:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    dec_deg:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    lat:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    lon:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+home:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: smart_radio_telescope
+    axis:
+      required: true
+      selector:
+        text: {}
+move:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: smart_radio_telescope
+    axis:
+      required: true
+      selector:
+        text: {}
+    degrees:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+jog:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: smart_radio_telescope
+    az_dps:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    el_dps:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+scan:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: smart_radio_telescope
+    sweep:
+      required: true
+      selector:
+        text: {}
+    pattern:
+      required: true
+      selector:
+        text: {}
+    s0:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    s1:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    t0:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    t1:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    speed:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: any
+    rows:
+      required: true
+      selector:
+        number:
+          mode: box
+          step: 1

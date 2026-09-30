@@ -72,19 +72,24 @@ def test_switch_without_state_field_is_optimistic() -> None:
     assert ctx["switches"][0]["state_attr"] is None
 
 
-def test_switch_needing_more_than_enable_is_unmapped() -> None:
+def test_switch_needing_more_than_enable_becomes_an_action() -> None:
     ctx = _ctx([_cmd("connectWifi", EntityHint.SWITCH, ("ssid", FieldKind.STRING), _ENABLE)], [])
 
     assert not ctx["switches"]
-    assert ctx["unmapped_commands"][0]["cmd"] == "connectWifi"
-    assert "ssid:string" in ctx["unmapped_commands"][0]["reason"]
+    assert not ctx["unmapped_commands"]
+    (action,) = ctx["actions"]
+    assert action["name"] == "connect_wifi"
+    assert [(f["arg"], f["required"]) for f in action["fields"]] == [
+        ("ssid", True),
+        ("enable", True),
+    ]
 
 
-def test_button_with_required_param_is_unmapped() -> None:
+def test_button_with_required_param_becomes_an_action() -> None:
     ctx = _ctx([_cmd("move-head", EntityHint.BUTTON, ("angle", FieldKind.STRING))], [])
 
     assert not ctx["buttons"]
-    assert ctx["unmapped_commands"][0]["cmd"] == "move-head"
+    assert [a["cmd"] for a in ctx["actions"]] == ["move-head"]
 
 
 def test_maintenance_buttons_flagged() -> None:
@@ -120,7 +125,7 @@ def test_number_needs_exactly_one_numeric_param() -> None:
     )
 
     assert [(n["cmd"], n["param"]) for n in ctx["numbers"]] == [("volume", "level")]
-    assert [u["cmd"] for u in ctx["unmapped_commands"]] == ["head-shift"]
+    assert [a["cmd"] for a in ctx["actions"]] == ["head-shift"]
 
 
 def test_select_requires_known_options_and_reads_state() -> None:

@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Callable
 from datetime import timedelta
+from typing import Any
 
+import pytest
 from custom_components.r2d2.const import DOMAIN
 from custom_components.r2d2.coordinator import RECONNECT_INTERVAL
 from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
 from homeassistant.const import (
     ATTR_ASSUMED_STATE,
+    ATTR_CONFIG_ENTRY_ID,
     ATTR_ENTITY_ID,
     CONF_HOST,
     CONF_PORT,
@@ -19,6 +23,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
@@ -173,3 +178,33 @@ async def test_maintenance_buttons_hidden_by_default(
         assert entity is not None
         assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION, key
         assert entity.entity_category is EntityCategory.CONFIG, key
+
+
+ACTION_DATA: dict[str, Any] = json.loads("{\"enable\": true, \"ssid\": \"test\", \"wifi_pw\": \"test\"}")
+
+
+async def test_action_sends_command(hass: HomeAssistant, mock_device: MockDevice) -> None:
+    """The connect_wifi action sends connectWifi with its parameters."""
+    entry = await _setup_entry(hass, mock_device.port)
+    await hass.services.async_call(
+        DOMAIN,
+        "connect_wifi",
+        {ATTR_CONFIG_ENTRY_ID: entry.entry_id, **ACTION_DATA},
+        blocking=True,
+    )
+    frame = json.loads("{\"cmd\": \"connectWifi\", \"enable\": true, \"ssid\": \"test\", \"wifi_pw\": \"test\"}")
+    await _wait_for(lambda: frame in mock_device.received)
+
+
+async def test_action_needs_loaded_entry(hass: HomeAssistant, mock_device: MockDevice) -> None:
+    """Actions are registered once; on an unloaded entry they refuse, not crash."""
+    entry = await _setup_entry(hass, mock_device.port)
+    await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            DOMAIN,
+            "connect_wifi",
+            {ATTR_CONFIG_ENTRY_ID: entry.entry_id, **ACTION_DATA},
+            blocking=True,
+        )

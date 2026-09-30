@@ -21,26 +21,217 @@
   },
   "entity": {
     "sensor": {
-      "az": {"name": "Az"},
-      "el": {"name": "El"},
-      "pol": {"name": "Pol"},
-      "temp_c": {"name": "Temp c"},
-      "adc_v": {"name": "Adc v"}
+      "az": {
+        "name": "Az"
+      },
+      "el": {
+        "name": "El"
+      },
+      "pol": {
+        "name": "Pol"
+      },
+      "temp_c": {
+        "name": "Temp c"
+      },
+      "adc_v": {
+        "name": "Adc v"
+      }
     },
     "binary_sensor": {
-      "moving": {"name": "Moving"},
-      "homed": {"name": "Homed"},
-      "fault": {"name": "Fault"}
+      "moving": {
+        "name": "Moving"
+      },
+      "homed": {
+        "name": "Homed"
+      },
+      "fault": {
+        "name": "Fault"
+      }
     },
     "button": {
-      "shutdown": {"name": "Shutdown"},
-      "home": {"name": "Home"},
-      "stop": {"name": "Stop"},
-      "sleep": {"name": "Sleep"},
-      "wake": {"name": "Wake"}
+      "shutdown": {
+        "name": "Shutdown"
+      },
+      "home": {
+        "name": "Home"
+      },
+      "stop": {
+        "name": "Stop"
+      },
+      "sleep": {
+        "name": "Sleep"
+      },
+      "wake": {
+        "name": "Wake"
+      }
     },
     "number": {
-      "adc_rate": {"name": "Adc rate"}
+      "adc_rate": {
+        "name": "Adc rate"
+      }
+    }
+  },
+  "services": {
+    "system": {
+      "name": "System",
+      "description": "Asks the device (GET /system) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Smart Radio Telescope to send the action to."
+        }
+      }
+    },
+    "goto": {
+      "name": "Goto",
+      "description": "Sends POST /goto to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Smart Radio Telescope to send the action to."
+        },
+        "az": {
+          "name": "Az",
+          "description": "Value for `az`."
+        },
+        "el": {
+          "name": "El",
+          "description": "Value for `el`."
+        },
+        "pol": {
+          "name": "Pol",
+          "description": "Value for `pol`."
+        }
+      }
+    },
+    "goto_radec": {
+      "name": "Goto radec",
+      "description": "Sends POST /goto/radec to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Smart Radio Telescope to send the action to."
+        },
+        "ra_deg": {
+          "name": "Ra deg",
+          "description": "Value for `ra_deg`."
+        },
+        "dec_deg": {
+          "name": "Dec deg",
+          "description": "Value for `dec_deg`."
+        },
+        "lat": {
+          "name": "Lat",
+          "description": "Value for `lat`."
+        },
+        "lon": {
+          "name": "Lon",
+          "description": "Value for `lon`."
+        }
+      }
+    },
+    "home": {
+      "name": "Home",
+      "description": "Sends POST /home/{axis} to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Smart Radio Telescope to send the action to."
+        },
+        "axis": {
+          "name": "Axis",
+          "description": "Value for `axis`."
+        }
+      }
+    },
+    "move": {
+      "name": "Move",
+      "description": "Sends POST /move to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Smart Radio Telescope to send the action to."
+        },
+        "axis": {
+          "name": "Axis",
+          "description": "Value for `axis`."
+        },
+        "degrees": {
+          "name": "Degrees",
+          "description": "Value for `degrees`."
+        }
+      }
+    },
+    "jog": {
+      "name": "Jog",
+      "description": "Sends POST /jog to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Smart Radio Telescope to send the action to."
+        },
+        "az_dps": {
+          "name": "Az dps",
+          "description": "Value for `az_dps`."
+        },
+        "el_dps": {
+          "name": "El dps",
+          "description": "Value for `el_dps`."
+        }
+      }
+    },
+    "scan": {
+      "name": "Scan",
+      "description": "Sends POST /scan to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Smart Radio Telescope to send the action to."
+        },
+        "sweep": {
+          "name": "Sweep",
+          "description": "Value for `sweep`."
+        },
+        "pattern": {
+          "name": "Pattern",
+          "description": "Value for `pattern`."
+        },
+        "s0": {
+          "name": "S0",
+          "description": "Value for `s0`."
+        },
+        "s1": {
+          "name": "S1",
+          "description": "Value for `s1`."
+        },
+        "t0": {
+          "name": "T0",
+          "description": "Value for `t0`."
+        },
+        "t1": {
+          "name": "T1",
+          "description": "Value for `t1`."
+        },
+        "speed": {
+          "name": "Speed",
+          "description": "Value for `speed`."
+        },
+        "rows": {
+          "name": "Rows",
+          "description": "Value for `rows`."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "No Smart Radio Telescope with this config entry ID."
+    },
+    "entry_not_loaded": {
+      "message": "Smart Radio Telescope is not loaded."
+    },
+    "action_failed": {
+      "message": "{action} failed: {error}"
     }
   }
 }

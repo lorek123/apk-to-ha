@@ -1,0 +1,16 @@
+{# Builds each argument dict of an action method (body/params/form). #}
+{% for g in a.groups %}
+{% if g.required %}
+        {{ g.var }}: dict[str, Any] = {
+{% for f in g.required %}
+            {{ f.wire | tojson }}: {{ f.arg }},
+{% endfor %}
+        }
+{% else %}
+        {{ g.var }}: dict[str, Any] = {}
+{% endif %}
+{% for f in g.optional %}
+        if {{ f.arg }} is not None:
+            {{ g.var }}[{{ f.wire | tojson }}] = {{ f.arg }}
+{% endfor %}
+{% endfor %}

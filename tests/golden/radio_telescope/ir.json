@@ -39,7 +39,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "el",
@@ -49,7 +50,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "pol",
@@ -59,7 +61,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "moving",
@@ -69,7 +72,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "homed",
@@ -79,7 +83,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "fault",
@@ -89,7 +94,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "binary_sensor"
+        "entity_hint": "binary_sensor",
+        "location": null
       },
       {
         "name": "temp_c",
@@ -99,7 +105,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       },
       {
         "name": "adc_v",
@@ -109,7 +116,8 @@
         "nullable": false,
         "enum_values": null,
         "description": null,
-        "entity_hint": "sensor"
+        "entity_hint": "sensor",
+        "location": null
       }
     ]
   },
@@ -167,7 +175,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "el",
@@ -177,7 +186,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "pol",
@@ -187,7 +197,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -211,7 +222,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "dec_deg",
@@ -221,7 +233,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "lat",
@@ -231,7 +244,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "lon",
@@ -241,7 +255,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -330,7 +345,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "degrees",
@@ -340,7 +356,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -364,7 +381,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "el_dps",
@@ -374,7 +392,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -398,7 +417,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],
@@ -422,7 +442,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "pattern",
@@ -432,7 +453,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "s0",
@@ -442,7 +464,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "s1",
@@ -452,7 +475,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "t0",
@@ -462,7 +486,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "t1",
@@ -472,7 +497,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "speed",
@@ -482,7 +508,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         },
         {
           "name": "rows",
@@ -492,7 +519,8 @@
           "nullable": false,
           "enum_values": null,
           "description": null,
-          "entity_hint": null
+          "entity_hint": null,
+          "location": null
         }
       ],
       "response_fields": [],

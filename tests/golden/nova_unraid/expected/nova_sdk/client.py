@@ -32,6 +32,32 @@ DOC_CANCEL_PARITY_CHECK = "mutation CancelParityCheck { parityCheck { cancel } }
 DOC_DELETE_ARCHIVED_NOTIFICATIONS = "mutation DeleteArchivedNotifications { deleteArchivedNotifications { unread { info warning alert total } } }"
 DOC_PAUSE_PARITY_CHECK = "mutation PauseParityCheck { parityCheck { pause } }"
 DOC_UPDATE_ALL_CONTAINERS = "mutation UpdateAllContainers { docker { updateAllContainers { id state } } }"
+ACTION_DOC_UPDATE_CONTAINER = "mutation UpdateContainer($id: PrefixedID!) { docker { updateContainer(id: $id) { id state } } }"
+ACTION_DOC_REBOOT_VM = "mutation RebootVm($id: PrefixedID!) { vm { reboot(id: $id) } }"
+ACTION_DOC_GET_PLUGIN_OPERATIONS = "query GetPluginOperations { pluginInstallOperations { id url name status createdAt finishedAt output } }"
+ACTION_DOC_ARCHIVE_NOTIFICATION = "mutation ArchiveNotification($id: PrefixedID!) { archiveNotification(id: $id) { id } }"
+ACTION_DOC_PAUSE_CONTAINER = "mutation PauseContainer($id: PrefixedID!) { docker { pause(id: $id) { id state } } }"
+ACTION_DOC_GET_NOTIFICATIONS = "query GetNotifications { notifications { overview { unread { info warning alert total } } warningsAndAlerts { id title subject description importance timestamp } } }"
+ACTION_DOC_PAUSE_VM = "mutation PauseVm($id: PrefixedID!) { vm { pause(id: $id) } }"
+ACTION_DOC_GET_NETWORK_THROUGHPUT = "query GetNetworkThroughput { metrics { network { interfaces { iface rxBytesPerSec txBytesPerSec } } } }"
+ACTION_DOC_STOP_VM = "mutation StopVm($id: PrefixedID!) { vm { stop(id: $id) } }"
+ACTION_DOC_DELETE_NOTIFICATION = "mutation DeleteNotification($id: PrefixedID!, $type: NotificationType!) { deleteNotification(id: $id, type: $type) { unread { warning alert } } }"
+ACTION_DOC_UNREAD_NOTIFICATION = "mutation UnreadNotification($id: PrefixedID!) { unreadNotification(id: $id) { id } }"
+ACTION_DOC_START_CONTAINER = "mutation StartContainer($id: PrefixedID!) { docker { start(id: $id) { id state } } }"
+ACTION_DOC_GET_DOCKER_CONTAINERS = "query GetDockerContainers { docker { containers { id names image state status autoStart iconUrl isUpdateAvailable isRebuildReady webUiUrl ports { privatePort publicPort type } mounts networkSettings } } }"
+ACTION_DOC_START_VM = "mutation StartVm($id: PrefixedID!) { vm { start(id: $id) } }"
+ACTION_DOC_START_PARITY_CHECK = "mutation StartParityCheck($correct: Boolean!) { parityCheck { start(correct: $correct) } }"
+ACTION_DOC_PING = "query Ping { __typename }"
+ACTION_DOC_GET_INSTALLED_UNRAID_PLUGINS = "query GetInstalledUnraidPlugins { installedUnraidPlugins }"
+ACTION_DOC_FORCE_STOP_VM = "mutation ForceStopVm($id: PrefixedID!) { vm { forceStop(id: $id) } }"
+ACTION_DOC_GET_PLUGINS = "query GetPlugins { plugins { name version hasApiModule hasCliModule } }"
+ACTION_DOC_FETCH_CONTAINER_LOGS = "query FetchContainerLogs($id: PrefixedID!, $tail: Int) { docker { logs(id: $id, tail: $tail) { lines { timestamp message } cursor } } }"
+ACTION_DOC_GET_NETWORK_INTERFACES = "query GetNetworkInterfaces { info { networkInterfaces { name description macAddress status protocol ipAddress netmask gateway useDhcp ipv6Address ipv6Netmask ipv6Gateway useDhcp6 } primaryNetwork { name } devices { network { iface model vendor mac virtual speed dhcp } } } }"
+ACTION_DOC_RESUME_VM = "mutation ResumeVm($id: PrefixedID!) { vm { resume(id: $id) } }"
+ACTION_DOC_STOP_CONTAINER = "mutation StopContainer($id: PrefixedID!) { docker { stop(id: $id) { id state } } }"
+ACTION_DOC_UNPAUSE_CONTAINER = "mutation UnpauseContainer($id: PrefixedID!) { docker { unpause(id: $id) { id state } } }"
+ACTION_DOC_RESET_VM = "mutation ResetVm($id: PrefixedID!) { vm { reset(id: $id) } }"
+ACTION_DOC_GET_VMS = "query GetVms { vms { domains { id name state } } }"
 _UNAUTHORIZED = ("unauthorized", "unauthenticated", "forbidden", "invalid api key")
 
 
@@ -95,6 +121,295 @@ class NovaClient:
 
     async def press_update_all_containers(self) -> None:
         await self._execute("UpdateAllContainers", DOC_UPDATE_ALL_CONTAINERS)
+
+    async def update_container(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION UpdateContainer."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "UpdateContainer", ACTION_DOC_UPDATE_CONTAINER, params
+        )
+
+    async def reboot_vm(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION RebootVm."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "RebootVm", ACTION_DOC_REBOOT_VM, params
+        )
+
+    async def get_plugin_operations(self) -> dict[str, Any]:
+        """QUERY GetPluginOperations."""
+        params: dict[str, Any] = {}
+        return await self._execute(
+            "GetPluginOperations", ACTION_DOC_GET_PLUGIN_OPERATIONS, params
+        )
+
+    async def archive_notification(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION ArchiveNotification."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "ArchiveNotification", ACTION_DOC_ARCHIVE_NOTIFICATION, params
+        )
+
+    async def pause_container(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION PauseContainer."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "PauseContainer", ACTION_DOC_PAUSE_CONTAINER, params
+        )
+
+    async def get_notifications(self) -> dict[str, Any]:
+        """QUERY GetNotifications."""
+        params: dict[str, Any] = {}
+        return await self._execute(
+            "GetNotifications", ACTION_DOC_GET_NOTIFICATIONS, params
+        )
+
+    async def pause_vm(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION PauseVm."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "PauseVm", ACTION_DOC_PAUSE_VM, params
+        )
+
+    async def get_network_throughput(self) -> dict[str, Any]:
+        """QUERY GetNetworkThroughput."""
+        params: dict[str, Any] = {}
+        return await self._execute(
+            "GetNetworkThroughput", ACTION_DOC_GET_NETWORK_THROUGHPUT, params
+        )
+
+    async def stop_vm(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION StopVm."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "StopVm", ACTION_DOC_STOP_VM, params
+        )
+
+    async def delete_notification(
+        self,
+        *,
+        id: str,
+        type: str,
+    ) -> None:
+        """MUTATION DeleteNotification."""
+        params: dict[str, Any] = {
+            "id": id,
+            "type": type,
+        }
+        await self._execute(
+            "DeleteNotification", ACTION_DOC_DELETE_NOTIFICATION, params
+        )
+
+    async def unread_notification(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION UnreadNotification."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "UnreadNotification", ACTION_DOC_UNREAD_NOTIFICATION, params
+        )
+
+    async def start_container(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION StartContainer."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "StartContainer", ACTION_DOC_START_CONTAINER, params
+        )
+
+    async def get_docker_containers(self) -> dict[str, Any]:
+        """QUERY GetDockerContainers."""
+        params: dict[str, Any] = {}
+        return await self._execute(
+            "GetDockerContainers", ACTION_DOC_GET_DOCKER_CONTAINERS, params
+        )
+
+    async def start_vm(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION StartVm."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "StartVm", ACTION_DOC_START_VM, params
+        )
+
+    async def start_parity_check(
+        self,
+        *,
+        correct: bool,
+    ) -> None:
+        """MUTATION StartParityCheck."""
+        params: dict[str, Any] = {
+            "correct": correct,
+        }
+        await self._execute(
+            "StartParityCheck", ACTION_DOC_START_PARITY_CHECK, params
+        )
+
+    async def ping(self) -> dict[str, Any]:
+        """QUERY Ping."""
+        params: dict[str, Any] = {}
+        return await self._execute(
+            "Ping", ACTION_DOC_PING, params
+        )
+
+    async def get_installed_unraid_plugins(self) -> dict[str, Any]:
+        """QUERY GetInstalledUnraidPlugins."""
+        params: dict[str, Any] = {}
+        return await self._execute(
+            "GetInstalledUnraidPlugins", ACTION_DOC_GET_INSTALLED_UNRAID_PLUGINS, params
+        )
+
+    async def force_stop_vm(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION ForceStopVm."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "ForceStopVm", ACTION_DOC_FORCE_STOP_VM, params
+        )
+
+    async def get_plugins(self) -> dict[str, Any]:
+        """QUERY GetPlugins."""
+        params: dict[str, Any] = {}
+        return await self._execute(
+            "GetPlugins", ACTION_DOC_GET_PLUGINS, params
+        )
+
+    async def fetch_container_logs(
+        self,
+        *,
+        id: str,
+        tail: int | None = None,
+    ) -> dict[str, Any]:
+        """QUERY FetchContainerLogs."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        if tail is not None:
+            params["tail"] = tail
+        return await self._execute(
+            "FetchContainerLogs", ACTION_DOC_FETCH_CONTAINER_LOGS, params
+        )
+
+    async def get_network_interfaces(self) -> dict[str, Any]:
+        """QUERY GetNetworkInterfaces."""
+        params: dict[str, Any] = {}
+        return await self._execute(
+            "GetNetworkInterfaces", ACTION_DOC_GET_NETWORK_INTERFACES, params
+        )
+
+    async def resume_vm(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION ResumeVm."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "ResumeVm", ACTION_DOC_RESUME_VM, params
+        )
+
+    async def stop_container(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION StopContainer."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "StopContainer", ACTION_DOC_STOP_CONTAINER, params
+        )
+
+    async def unpause_container(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION UnpauseContainer."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "UnpauseContainer", ACTION_DOC_UNPAUSE_CONTAINER, params
+        )
+
+    async def reset_vm(
+        self,
+        *,
+        id: str,
+    ) -> None:
+        """MUTATION ResetVm."""
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        await self._execute(
+            "ResetVm", ACTION_DOC_RESET_VM, params
+        )
+
+    async def get_vms(self) -> dict[str, Any]:
+        """QUERY GetVms."""
+        params: dict[str, Any] = {}
+        return await self._execute(
+            "GetVms", ACTION_DOC_GET_VMS, params
+        )
 
     async def _execute(
         self, name: str, document: str, variables: dict[str, Any] | None = None
