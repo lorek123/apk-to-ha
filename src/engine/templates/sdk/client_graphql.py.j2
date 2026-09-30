@@ -26,6 +26,9 @@ STATE_QUERIES: list[tuple[str, str]] = [
 {% for btn in buttons %}
 DOC_{{ btn.key | upper }} = {{ btn.document | tojson }}
 {% endfor %}
+{% for a in actions %}
+ACTION_DOC_{{ a.name | upper }} = {{ a.document | tojson }}
+{% endfor %}
 _UNAUTHORIZED = ("unauthorized", "unauthenticated", "forbidden", "invalid api key")
 
 
@@ -72,6 +75,15 @@ class {{ class_prefix }}Client:
 
     async def press_{{ btn.key }}(self) -> None:
         await self._execute("{{ btn.operation }}", DOC_{{ btn.key | upper }})
+{% endfor %}
+{% for a in actions %}
+
+{% set returns = "dict[str, Any]" if a.response else "None" %}
+{% include "_actions/def.j2" %}
+{% include "_actions/groups.j2" %}
+        {{ "return " if a.response }}await self._execute(
+            {{ a.operation | tojson }}, ACTION_DOC_{{ a.name | upper }}, params
+        )
 {% endfor %}
 
     async def _execute(

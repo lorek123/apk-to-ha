@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+{% if actions | selectattr("has_path_params") | list %}
+from urllib.parse import quote
+{% endif %}
 
 import aiohttp
 
@@ -13,6 +16,13 @@ from .models import RobotState
 _LOGGER = logging.getLogger(__name__)
 
 REQUEST_TIMEOUT = 10.0
+
+
+def _scalars(values: dict[str, Any] | None) -> dict[str, str] | None:
+    """Query/form values as strings (aiohttp rejects bools): True → "true"."""
+    if not values:
+        return None
+    return {k: str(v).lower() if isinstance(v, bool) else str(v) for k, v in values.items()}
 
 
 class {{ class_prefix }}ConnectionError(Exception):
@@ -72,8 +82,35 @@ class {{ class_prefix }}Client:
     async def set_{{ sw.key }}(self, enable: bool) -> None:
         await self._request("{{ sw.http_method }}", "{{ sw.path }}", {"enable": enable})
 {% endfor %}
+{% for a in actions %}
 
-    async def _request(self, method: str, path: str, body: dict[str, Any] | None = None) -> Any:
+{% set returns = "dict[str, Any]" if a.response else "None" %}
+{% include "_actions/def.j2" %}
+{% include "_actions/groups.j2" %}
+        {{ "result = " if a.response }}await self._request(
+            {{ a.http_method | tojson }},
+            {{ a.path_expr }},
+{% if a.raw_body %}
+            {{ a.raw_body }},
+{% endif %}
+{% for g in a.groups %}
+            {{ g.kwarg }}={{ g.var }},
+{% endfor %}
+        )
+{% if a.response %}
+        return result if isinstance(result, dict) else {"result": result}
+{% endif %}
+{% endfor %}
+
+    async def _request(
+        self,
+        method: str,
+        path: str,
+        body: Any = None,
+        *,
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+    ) -> Any:
         if self._session is None:
             self._session = aiohttp.ClientSession()
         try:
@@ -81,6 +118,8 @@ class {{ class_prefix }}Client:
                 method,
                 self._base + path,
                 json=body,
+                params=_scalars(params),
+                data=_scalars(data),
                 timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
             ) as resp:
                 if resp.status in (401, 403):

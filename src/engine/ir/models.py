@@ -79,6 +79,8 @@ class FieldDef(BaseModel):
     enum_values: list[str | int] | None = None
     description: str | None = None
     entity_hint: EntityHint | None = None  # for StateSchema fields → which HA entity type
+    # HTTP: where the value goes. None = the transport default (JSON body; query for GET).
+    location: Literal["path", "query", "form", "body"] | None = None
 
 
 class Endpoint(BaseModel):

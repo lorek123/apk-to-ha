@@ -88,8 +88,11 @@ def test_graphql_context() -> None:
     }
     assert ctx["api_key_header"] == "x-api-key"
     assert ctx["poll_queries"] == [{"name": "GetMetrics", "document": _METRICS}]
-    unmapped = {u["cmd"] for u in ctx["unmapped_commands"]}
-    assert unmapped == {"QUERY GetMetrics", "MUTATION StartContainer"}
+    # the polled query feeds the state; StartContainer(id) needs a value: an action
+    assert {u["cmd"] for u in ctx["unmapped_commands"]} == {"QUERY GetMetrics"}
+    assert [(a["name"], a["operation"]) for a in ctx["actions"]] == [
+        ("start_container", "StartContainer")
+    ]
 
 
 def test_graphql_templates_render_compile_and_lint(tmp_path: Path) -> None:

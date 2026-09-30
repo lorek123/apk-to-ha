@@ -29,7 +29,7 @@ def test_all_rules_have_required_fields() -> None:
 
 def test_deterministic_rules_subset() -> None:
     det = deterministic_rules()
-    assert len(det) == 10
+    assert len(det) == 12
     assert all(r.check_type == "deterministic" for r in det)
 
 
@@ -291,3 +291,62 @@ def test_http_and_coordinator_rules_not_applicable_to_ble_only(tmp_path: Path) -
     # entity rules are checked on the entity itself when there's no entity_base
     for rule_id in ("PLT-001", "PLT-002", "PLT-006"):
         assert results[rule_id].passed, (rule_id, results[rule_id].detail)
+
+
+# ── PLT-013/014: actions, against a real generated integration ──────────────
+
+_GOLDEN_INKCAST = (
+    Path(__file__).parent / "golden" / "inkcast" / "expected" / "custom_components" / "inkcast"
+)
+
+
+def _result(d: Path, rule_id: str) -> Any:
+    return next(r for r in check(d).results if r.rule.id == rule_id)
+
+
+def _copy_golden(tmp_path: Path) -> Path:
+    import shutil
+
+    return Path(shutil.copytree(_GOLDEN_INKCAST, tmp_path / "inkcast"))
+
+
+def test_generated_actions_pass_plt013_and_plt014(tmp_path: Path) -> None:
+    d = _copy_golden(tmp_path)
+
+    assert _result(d, "PLT-013").passed, _result(d, "PLT-013").detail
+    assert _result(d, "PLT-014").passed, _result(d, "PLT-014").detail
+
+
+def test_plt013_fails_when_actions_register_per_entry(tmp_path: Path) -> None:
+    d = _copy_golden(tmp_path)
+    init = d / "__init__.py"
+    src = init.read_text().replace("    async_setup_services(hass)\n    return True\n", "")
+    src = src.replace("    coordinator = ", "    async_setup_services(hass)\n    coordinator = ", 1)
+    init.write_text(src.replace("async def async_setup(", "async def _unused_setup("))
+
+    detail = _result(d, "PLT-013").detail
+    assert "no async_setup" in detail
+    assert "per entry" in detail
+
+
+def test_plt013_fails_without_services_yaml_entry(tmp_path: Path) -> None:
+    d = _copy_golden(tmp_path)
+    (d / "services.yaml").write_text("# SPDX-License-Identifier: MIT\n")
+
+    assert "missing from services.yaml" in _result(d, "PLT-013").detail
+
+
+def test_plt014_fails_on_untranslated_exception(tmp_path: Path) -> None:
+    d = _copy_golden(tmp_path)
+    strings = json.loads((d / "strings.json").read_text())
+    del strings["exceptions"]["action_failed"]
+    (d / "strings.json").write_text(json.dumps(strings))
+
+    assert "action_failed" in _result(d, "PLT-014").detail
+
+
+def test_action_rules_not_applicable_without_actions(tmp_path: Path) -> None:
+    d = _make_integration(tmp_path)
+
+    assert _result(d, "PLT-013").detail.startswith("n/a")
+    assert _result(d, "PLT-014").detail.startswith("n/a")

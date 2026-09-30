@@ -21,11 +21,158 @@
   },
   "entity": {
     "sensor": {
-      "freeheap": {"name": "Freeheap"},
-      "mode": {"name": "Mode"},
-      "rssi": {"name": "Rssi"},
-      "uptime": {"name": "Uptime"},
-      "version": {"name": "Version"}
+      "freeheap": {
+        "name": "Freeheap"
+      },
+      "mode": {
+        "name": "Mode"
+      },
+      "rssi": {
+        "name": "Rssi"
+      },
+      "uptime": {
+        "name": "Uptime"
+      },
+      "version": {
+        "name": "Version"
+      }
+    }
+  },
+  "services": {
+    "download": {
+      "name": "Download",
+      "description": "Asks the device (GET /download) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Inkcast to send the action to."
+        },
+        "path": {
+          "name": "Path",
+          "description": "Value for `path`."
+        }
+      }
+    },
+    "files": {
+      "name": "Files",
+      "description": "Asks the device (GET /api/files) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Inkcast to send the action to."
+        },
+        "path": {
+          "name": "Path",
+          "description": "Value for `path`."
+        }
+      }
+    },
+    "get_settings": {
+      "name": "Get settings",
+      "description": "Asks the device (GET /api/settings) and returns its reply.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Inkcast to send the action to."
+        }
+      }
+    },
+    "post_settings": {
+      "name": "Post settings",
+      "description": "Sends POST /api/settings to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Inkcast to send the action to."
+        },
+        "body": {
+          "name": "Body",
+          "description": "Value for `body`."
+        }
+      }
+    },
+    "delete": {
+      "name": "Delete",
+      "description": "Sends POST /delete to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Inkcast to send the action to."
+        },
+        "path": {
+          "name": "Path",
+          "description": "Value for `path`."
+        },
+        "type": {
+          "name": "Type",
+          "description": "Value for `type`."
+        }
+      }
+    },
+    "rename": {
+      "name": "Rename",
+      "description": "Sends POST /rename to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Inkcast to send the action to."
+        },
+        "path": {
+          "name": "Path",
+          "description": "Value for `path`."
+        },
+        "name": {
+          "name": "Name",
+          "description": "Value for `name`."
+        }
+      }
+    },
+    "move": {
+      "name": "Move",
+      "description": "Sends POST /move to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Inkcast to send the action to."
+        },
+        "path": {
+          "name": "Path",
+          "description": "Value for `path`."
+        },
+        "dest": {
+          "name": "Dest",
+          "description": "Value for `dest`."
+        }
+      }
+    },
+    "mkdir": {
+      "name": "Mkdir",
+      "description": "Sends POST /mkdir to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Inkcast to send the action to."
+        },
+        "name": {
+          "name": "Name",
+          "description": "Value for `name`."
+        },
+        "path": {
+          "name": "Path",
+          "description": "Value for `path`."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "No Inkcast with this config entry ID."
+    },
+    "entry_not_loaded": {
+      "message": "Inkcast is not loaded."
+    },
+    "action_failed": {
+      "message": "{action} failed: {error}"
     }
   }
 }

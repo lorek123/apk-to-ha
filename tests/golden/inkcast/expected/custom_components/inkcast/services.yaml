@@ -1,0 +1,101 @@
+# SPDX-License-Identifier: MIT
+download:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: inkcast
+    path:
+      required: true
+      selector:
+        text: {}
+files:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: inkcast
+    path:
+      required: true
+      selector:
+        text: {}
+get_settings:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: inkcast
+post_settings:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: inkcast
+    body:
+      required: true
+      selector:
+        object: {}
+delete:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: inkcast
+    path:
+      required: true
+      selector:
+        text: {}
+    type:
+      required: true
+      selector:
+        text: {}
+rename:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: inkcast
+    path:
+      required: true
+      selector:
+        text: {}
+    name:
+      required: true
+      selector:
+        text: {}
+move:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: inkcast
+    path:
+      required: true
+      selector:
+        text: {}
+    dest:
+      required: true
+      selector:
+        text: {}
+mkdir:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: inkcast
+    name:
+      required: true
+      selector:
+        text: {}
+    path:
+      required: true
+      selector:
+        text: {}

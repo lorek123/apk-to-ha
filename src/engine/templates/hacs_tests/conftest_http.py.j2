@@ -30,6 +30,7 @@ class MockDevice:
     def __init__(self) -> None:
         self.state: dict[str, Any] = dict(INITIAL_STATE)
         self.requests: list[tuple[str, str, Any]] = []
+        self.queries: list[dict[str, str]] = []
         self.port = 0
         self._runner: web.AppRunner | None = None
 
@@ -55,8 +56,13 @@ class MockDevice:
         return web.json_response(self.state)
 
     async def _handle_command(self, request: web.Request) -> web.Response:
-        body = await request.json() if request.can_read_body else None
+        body: Any = None
+        if request.content_type == "application/x-www-form-urlencoded":
+            body = {k: str(v) for k, v in (await request.post()).items()}
+        elif request.can_read_body:
+            body = await request.json()
         self.requests.append((request.method, request.path, body))
+        self.queries.append(dict(request.query))
         return web.json_response({"ok": True})
 
 

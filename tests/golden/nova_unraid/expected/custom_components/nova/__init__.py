@@ -8,9 +8,13 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_URL, CONF_VERIFY_SSL, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
 from nova_sdk import NovaClient
 
+from .const import DOMAIN
 from .coordinator import NovaCoordinator
+from .services import async_setup_services
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -26,6 +30,14 @@ class NovaRuntimeData:
 
 
 type NovaConfigEntry = ConfigEntry[NovaRuntimeData]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the integration's actions (they target a config entry by ID)."""
+    async_setup_services(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: NovaConfigEntry) -> bool:

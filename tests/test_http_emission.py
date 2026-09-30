@@ -79,9 +79,13 @@ def test_http_keys_path_params_and_queries() -> None:
     assert [(n["key"], n["param"], n["param_kind"]) for n in ctx["numbers"]] == [
         ("adc_rate", "hz", "integer")
     ]
-    unmapped = {u["cmd"] for u in ctx["unmapped_commands"]}
-    # a GET is a query; /home/{axis} needs an axis; goto needs two values
-    assert unmapped == {"GET /status", "POST /home/{axis}", "POST /goto/radec"}
+    # the polled GET feeds the state; /home/{axis} needs an axis and goto two values,
+    # so those two become actions
+    assert {u["cmd"] for u in ctx["unmapped_commands"]} == {"GET /status"}
+    actions = {a["name"]: a for a in ctx["actions"]}
+    assert set(actions) == {"home", "goto_radec"}
+    assert [(f["arg"], f["location"]) for f in actions["home"]["fields"]] == [("axis", "path")]
+    assert "quote(str(axis)" in actions["home"]["path_expr"]
     assert (ctx["poll_method"], ctx["poll_path"]) == ("GET", "/status")
 
 

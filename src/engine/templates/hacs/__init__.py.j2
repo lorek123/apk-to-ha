@@ -12,6 +12,10 @@ from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 {% endif %}
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
+{% if actions %}
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
+{% endif %}
 from {{ sdk_package }} import {{ class_prefix }}Client
 {% if has_ble %}
 from {{ sdk_package }}.ble_client import {{ class_prefix }}BleClient
@@ -20,7 +24,13 @@ from {{ sdk_package }}.ble_client import {{ class_prefix }}BleClient
 {% if transport != "graphql" %}
 from .const import DEFAULT_PORT
 {% endif %}
+{% if actions %}
+from .const import DOMAIN
+{% endif %}
 from .coordinator import {{ class_prefix }}Coordinator
+{% if actions %}
+from .services import async_setup_services
+{% endif %}
 {% if has_ble %}
 from .ble_coordinator import {{ class_prefix }}BleCoordinator
 {% endif %}
@@ -43,6 +53,16 @@ class {{ class_prefix }}RuntimeData:
 
 
 type {{ class_prefix }}ConfigEntry = ConfigEntry[{{ class_prefix }}RuntimeData]
+{% if actions %}
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the integration's actions (they target a config entry by ID)."""
+    async_setup_services(hass)
+    return True
+{% endif %}
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: {{ class_prefix }}ConfigEntry) -> bool:

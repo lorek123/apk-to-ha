@@ -1,0 +1,261 @@
+# SPDX-License-Identifier: MIT
+update_container:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+reboot_vm:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+get_plugin_operations:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+archive_notification:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+pause_container:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+get_notifications:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+pause_vm:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+get_network_throughput:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+stop_vm:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+delete_notification:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+    type:
+      required: true
+      selector:
+        text: {}
+unread_notification:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+start_container:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+get_docker_containers:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+start_vm:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+start_parity_check:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    correct:
+      required: true
+      selector:
+        boolean: {}
+ping:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+get_installed_unraid_plugins:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+force_stop_vm:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+get_plugins:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+fetch_container_logs:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+    tail:
+      required: false
+      selector:
+        number:
+          mode: box
+          step: 1
+get_network_interfaces:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+resume_vm:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+stop_container:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+unpause_container:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+reset_vm:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova
+    id:
+      required: true
+      selector:
+        text: {}
+get_vms:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: nova

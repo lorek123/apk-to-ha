@@ -2,12 +2,17 @@
 """Runtime tests for {{ name }}: config flow, push updates, reconnect, unload."""
 from __future__ import annotations
 
+import json
+from typing import Any
+
+import pytest
 import asyncio
 from collections.abc import Callable
 from datetime import timedelta
 
 from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
 from homeassistant.const import (
+    ATTR_CONFIG_ENTRY_ID,
     ATTR_ASSUMED_STATE,
     ATTR_ENTITY_ID,
     CONF_HOST,
@@ -16,6 +21,7 @@ from homeassistant.const import (
     EntityCategory,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
@@ -213,3 +219,6 @@ async def test_maintenance_buttons_hidden_by_default(
         assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION, key
         assert entity.entity_category is EntityCategory.CONFIG, key
 {% endif %}
+{% set fixture = "hass: HomeAssistant, mock_device: MockDevice" %}
+{% set setup = "_setup_entry(hass, mock_device.port)" %}
+{% include "_actions_tests.py.j2" %}

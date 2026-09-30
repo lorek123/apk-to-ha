@@ -66,12 +66,14 @@ def scan(apk_out_dir: Path, app_package: str) -> list[Endpoint]:
             b = re.escape(builder)
             verb = re.search(rf"\b{b}\.setMethod\(HttpMethod\.\w+\.get(\w+)\(\)\)", window)
             fields = [
-                FieldDef(name=k, serialized_name=k, kind=FieldKind.STRING)
+                FieldDef(name=k, serialized_name=k, kind=FieldKind.STRING, location="query")
                 for k in re.findall(rf'UtilsKt\.parameter\(\s*{b}\s*,\s*"(\w+)"', window)
             ]
             if re.search(rf"\b{b}\.setBody\(", window):
                 # A body we can't see into: never send it empty from a parameterless button.
-                fields.append(FieldDef(name="body", kind=FieldKind.OBJECT, required=True))
+                fields.append(
+                    FieldDef(name="body", kind=FieldKind.OBJECT, required=True, location="body")
+                )
             response = _RESPONSE_CLASS.search(window)
             _add(
                 endpoints,
@@ -85,7 +87,7 @@ def scan(apk_out_dir: Path, app_package: str) -> list[Endpoint]:
             if template is None:
                 continue
             fields = [
-                FieldDef(name=k, serialized_name=k, kind=FieldKind.STRING)
+                FieldDef(name=k, serialized_name=k, kind=FieldKind.STRING, location="form")
                 for k in dict.fromkeys(_FORM_FIELD.findall(_form_builder(src, m.start())))
             ]
             _add(endpoints, f"POST {template}", cls, fields, [])

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 """V-4b — Deterministic platinum quality checkers.
 
-Runs the 10 deterministic PLT-* rules against a rendered HACS integration
+Runs the deterministic PLT-* rules against a rendered HACS integration
 directory and returns a QualityReport.
 """
 
@@ -226,6 +226,69 @@ def _check_translation_coverage(d: Path, rule: QualityRule) -> RuleResult:
     return RuleResult(rule=rule, passed=True)
 
 
+_REGISTER = re.compile(r"hass\.services\.async_register\(\s*DOMAIN,\s*\"(\w+)\"")
+_TRANSLATION_KEY = re.compile(r'translation_key="(\w+)"')
+
+
+def _action_files(d: Path) -> dict[str, str]:
+    return {py.name: py.read_text() for py in sorted(d.glob("*.py"))}
+
+
+def _check_action_setup(d: Path, rule: QualityRule) -> RuleResult:
+    sources = _action_files(d)
+    registered = [n for src in sources.values() for n in _REGISTER.findall(src)]
+    if not registered and not (d / "services.yaml").exists():
+        return _not_applicable(rule, "integration has no actions")
+    issues = []
+    init = sources.get("__init__.py", "")
+    if "async def async_setup(" not in init:
+        issues.append("no async_setup in __init__.py")
+    if "CONFIG_SCHEMA" not in init:
+        issues.append("no CONFIG_SCHEMA in __init__.py")
+    setup_entry = init.split("async def async_setup_entry(", 1)[-1].split("\nasync def ", 1)[0]
+    if "async_register" in setup_entry or "async_setup_services" in setup_entry:
+        issues.append("actions registered per entry (async_setup_entry)")
+    yaml_names = set(
+        re.findall(r"^(\w+):", (d / "services.yaml").read_text(), re.MULTILINE)
+        if (d / "services.yaml").exists()
+        else []
+    )
+    try:
+        services = json.loads((d / "strings.json").read_text()).get("services", {})
+    except OSError, json.JSONDecodeError:
+        services = {}
+    for name in registered:
+        if name not in yaml_names:
+            issues.append(f"{name} missing from services.yaml")
+        if name not in services:
+            issues.append(f"{name} missing from strings.json services")
+    if issues:
+        return RuleResult(rule=rule, passed=False, detail="; ".join(issues))
+    return RuleResult(rule=rule, passed=True)
+
+
+def _check_action_exceptions(d: Path, rule: QualityRule) -> RuleResult:
+    services_py = d / "services.py"
+    if not services_py.exists():
+        return _not_applicable(rule, "integration has no actions")
+    src = services_py.read_text()
+    issues = []
+    if "ServiceValidationError" not in src:
+        issues.append("no ServiceValidationError for bad targets")
+    if "HomeAssistantError" not in src:
+        issues.append("device failures not raised as HomeAssistantError")
+    try:
+        known = json.loads((d / "strings.json").read_text()).get("exceptions", {})
+    except OSError, json.JSONDecodeError:
+        known = {}
+    missing = sorted(set(_TRANSLATION_KEY.findall(src)) - set(known))
+    if missing:
+        issues.append(f"translation_key without strings.json exceptions: {', '.join(missing)}")
+    if issues:
+        return RuleResult(rule=rule, passed=False, detail="; ".join(issues))
+    return RuleResult(rule=rule, passed=True)
+
+
 # ── checker registry ──────────────────────────────────────────────────────────
 
 _CHECKERS: dict[str, Callable[[Path, QualityRule], RuleResult]] = {
@@ -238,5 +301,7 @@ _CHECKERS: dict[str, Callable[[Path, QualityRule], RuleResult]] = {
     "PLT-007": _check_spdx_headers,
     "PLT-008": _check_config_flow_user_step,
     "PLT-009": _check_iot_class,
+    "PLT-013": _check_action_setup,
+    "PLT-014": _check_action_exceptions,
     "PLT-010": _check_translation_coverage,
 }

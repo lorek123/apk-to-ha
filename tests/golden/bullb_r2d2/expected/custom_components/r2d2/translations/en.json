@@ -49,31 +49,224 @@
   },
   "entity": {
     "sensor": {
-      "battery": {"name": "Battery"},
-      "error": {"name": "Error"},
-      "projector": {"name": "Projector"}
+      "battery": {
+        "name": "Battery"
+      },
+      "error": {
+        "name": "Error"
+      },
+      "projector": {
+        "name": "Projector"
+      }
     },
     "binary_sensor": {
-      "arm": {"name": "Arm"},
-      "charging": {"name": "Charging"},
-      "ap_mode": {"name": "Ap mode"},
-      "lightsaber": {"name": "Lightsaber"},
-      "lcd_l": {"name": "Lcd l"},
-      "lcd_s": {"name": "Lcd s"}
+      "arm": {
+        "name": "Arm"
+      },
+      "charging": {
+        "name": "Charging"
+      },
+      "ap_mode": {
+        "name": "Ap mode"
+      },
+      "lightsaber": {
+        "name": "Lightsaber"
+      },
+      "lcd_l": {
+        "name": "Lcd l"
+      },
+      "lcd_s": {
+        "name": "Lcd s"
+      }
     },
     "switch": {
-      "power": {"name": "Power"},
-      "mute": {"name": "Mute"},
-      "face_detection": {"name": "Face detection"},
-      "voice_recognition": {"name": "Voice recognition"}
+      "power": {
+        "name": "Power"
+      },
+      "mute": {
+        "name": "Mute"
+      },
+      "face_detection": {
+        "name": "Face detection"
+      },
+      "voice_recognition": {
+        "name": "Voice recognition"
+      }
     },
     "button": {
-      "reset_mcu": {"name": "Reset mcu"},
-      "d_head_power": {"name": "D head power"},
-      "d_leg_power": {"name": "D leg power"}
+      "reset_mcu": {
+        "name": "Reset mcu"
+      },
+      "d_head_power": {
+        "name": "D head power"
+      },
+      "d_leg_power": {
+        "name": "D leg power"
+      }
     },
     "select": {
-      "mode": {"name": "Mode"}
+      "mode": {
+        "name": "Mode"
+      }
+    }
+  },
+  "services": {
+    "play_sound": {
+      "name": "Play sound",
+      "description": "Sends play_sound to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Build Your Own R2-D2 to send the action to."
+        },
+        "interrupt": {
+          "name": "Interrupt",
+          "description": "Value for `interrupt`."
+        },
+        "sound_id": {
+          "name": "Sound id",
+          "description": "Value for `sound_id`."
+        }
+      }
+    },
+    "move_head": {
+      "name": "Move head",
+      "description": "Sends move-head to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Build Your Own R2-D2 to send the action to."
+        },
+        "angle": {
+          "name": "Angle",
+          "description": "Value for `angle`."
+        }
+      }
+    },
+    "self_update": {
+      "name": "Self update",
+      "description": "Sends self_update to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Build Your Own R2-D2 to send the action to."
+        },
+        "url": {
+          "name": "Url",
+          "description": "Value for `url`."
+        }
+      }
+    },
+    "change_name": {
+      "name": "Change name",
+      "description": "Sends change_name to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Build Your Own R2-D2 to send the action to."
+        },
+        "new_name": {
+          "name": "New name",
+          "description": "Value for `new_name`."
+        }
+      }
+    },
+    "unpair": {
+      "name": "Unpair",
+      "description": "Sends unpair to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Build Your Own R2-D2 to send the action to."
+        },
+        "uuid": {
+          "name": "Uuid",
+          "description": "Value for `uuid`."
+        }
+      }
+    },
+    "connect_wifi": {
+      "name": "Connect wifi",
+      "description": "Sends connectWifi to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Build Your Own R2-D2 to send the action to."
+        },
+        "ssid": {
+          "name": "Ssid",
+          "description": "Value for `ssid`."
+        },
+        "wifi_pw": {
+          "name": "Wifi pw",
+          "description": "Value for `wifi_pw`."
+        },
+        "enable": {
+          "name": "Enable",
+          "description": "Value for `enable`."
+        }
+      }
+    },
+    "head_shift": {
+      "name": "Head shift",
+      "description": "Sends head-shift to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Build Your Own R2-D2 to send the action to."
+        },
+        "angle": {
+          "name": "Angle",
+          "description": "Value for `angle`."
+        },
+        "interrupt": {
+          "name": "Interrupt",
+          "description": "Value for `interrupt`."
+        }
+      }
+    },
+    "move": {
+      "name": "Move",
+      "description": "Sends move to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Build Your Own R2-D2 to send the action to."
+        },
+        "angle": {
+          "name": "Angle",
+          "description": "Value for `angle`."
+        },
+        "enable": {
+          "name": "Enable",
+          "description": "Value for `enable`."
+        }
+      }
+    },
+    "head_dir": {
+      "name": "Head dir",
+      "description": "Sends head-dir to the device.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Device",
+          "description": "The Build Your Own R2-D2 to send the action to."
+        },
+        "dir": {
+          "name": "Dir",
+          "description": "Value for `dir`."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "No Build Your Own R2-D2 with this config entry ID."
+    },
+    "entry_not_loaded": {
+      "message": "Build Your Own R2-D2 is not loaded."
+    },
+    "action_failed": {
+      "message": "{action} failed: {error}"
     }
   }
 }

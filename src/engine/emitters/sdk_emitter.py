@@ -15,6 +15,7 @@ _TEMPLATES_DIR = Path(__file__).parents[1] / "templates" / "sdk"
 
 def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     """Render the SDK package into *out_root*/{sdk_package}/. Returns that dir."""
+    ctx = {"actions": [], **ctx}  # contexts built before P5 actions existed
     pkg_dir = out_root / str(ctx["sdk_package"])
     pkg_dir.mkdir(parents=True, exist_ok=True)
 

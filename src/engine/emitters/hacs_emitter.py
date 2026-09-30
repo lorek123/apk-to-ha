@@ -8,7 +8,9 @@ import logging
 import subprocess
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
+import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,6 +24,7 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
     Returns the tests dir, or None when the integration has no push-state entity
     to probe or uses a transport the mock device can't speak (BLE).
     """
+    ctx = {"actions": [], **ctx}  # contexts built before P5 actions existed
     if ctx.get("has_challenge_auth"):
         tests_dir = out_root / "tests"
         tests_dir.mkdir(parents=True, exist_ok=True)
@@ -54,6 +57,8 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
         "test_press": next((b for b in ctx.get("buttons", []) if not b["maintenance"]), None),
         "test_maintenance": [b for b in ctx.get("buttons", []) if b["maintenance"]],
         "test_number": ctx["numbers"][0] if ctx.get("numbers") else None,
+        "test_action": _test_action(ctx),
+        "test_query_action": next((a for a in ctx.get("actions", []) if a["response"]), None),
     }
     tests_dir = out_root / "tests"
     tests_dir.mkdir(parents=True, exist_ok=True)
@@ -66,6 +71,42 @@ def emit_tests(ctx: dict[str, Any], out_root: Path) -> Path | None:
     # Test-only helpers are imported unconditionally; drop the ones this device doesn't use.
     _fix_imports(tests_dir, select="I001,F401")
     return tests_dir
+
+
+def _test_action(ctx: dict[str, Any]) -> dict[str, Any] | None:
+    """A command action (the one with most parameters) and the request it must produce."""
+    commands = [a for a in ctx.get("actions", []) if not a["response"]]
+    if not commands:
+        return None
+    action = max(commands, key=lambda a: len(a["fields"]))
+    fields = [f for f in action["fields"] if f["required"]]
+    data = action["sample_data"]
+
+    def scalar(v: Any) -> str:
+        return str(v).lower() if isinstance(v, bool) else str(v)
+
+    def wire(location: str | None) -> dict[str, Any]:
+        return {f["wire"]: f["sample"] for f in fields if f["location"] == location}
+
+    expected: dict[str, Any] = {
+        "data": data,
+        "wire": wire(None),
+        "ws_frame": {"cmd": action["cmd"], **wire(None)},
+    }
+    if action["http_method"]:
+        path = action["path"]
+        for f in fields:
+            if f["location"] == "path":
+                path = path.replace("{" + f["wire"] + "}", quote(scalar(f["sample"]), safe=""))
+        raw = next((f["sample"] for f in fields if f["location"] == "body"), None)
+        form = {k: scalar(v) for k, v in wire("form").items()}
+        expected.update(
+            method=action["http_method"],
+            path=path,
+            body=raw if raw is not None else (wire("json") or (form or None)),
+            query={k: scalar(v) for k, v in wire("query").items()},
+        )
+    return {**action, "expected": expected}
 
 
 def _test_switch(ctx: dict[str, Any]) -> dict[str, Any] | None:
@@ -128,6 +169,7 @@ def _test_probe(ctx: dict[str, Any]) -> dict[str, Any] | None:
 
 def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     """Render HACS integration into *out_root*/custom_components/{domain}/."""
+    ctx = {"actions": [], **ctx}  # contexts built before P5 actions existed
     domain_dir = out_root / "custom_components" / str(ctx["domain"])
     domain_dir.mkdir(parents=True, exist_ok=True)
     (domain_dir / "translations").mkdir(exist_ok=True)
@@ -160,6 +202,12 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     translations = "strings_graphql.json.j2" if graphql else "translations/en.json.j2"
     _render(env, ctx, domain_dir / "translations", translations, "en.json")
 
+    if ctx.get("actions"):
+        _render(env, ctx, domain_dir, "services.py.j2", "services.py")
+        _write_services_yaml(ctx, domain_dir)
+    for path in (domain_dir / "strings.json", domain_dir / "translations" / "en.json"):
+        _merge_strings(path, ctx.get("action_strings", {}))
+
     platforms = ctx["platforms"]
     if "sensor" in platforms:
         _render(env, ctx, domain_dir, "sensor.py.j2", "sensor.py")
@@ -183,6 +231,19 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
     _fix_imports(domain_dir)
     _LOGGER.info("HACS integration emitted to %s", domain_dir)
     return domain_dir
+
+
+def _write_services_yaml(ctx: dict[str, Any], domain_dir: Path) -> None:
+    body = yaml.safe_dump(ctx["services_yaml"], sort_keys=False, allow_unicode=True)
+    (domain_dir / "services.yaml").write_text("# SPDX-License-Identifier: MIT\n" + body)
+
+
+def _merge_strings(path: Path, sections: dict[str, Any]) -> None:
+    """Add sections (services, exceptions) to a rendered strings file; normalise layout."""
+    data = json.loads(path.read_text())
+    for key, value in sections.items():
+        data[key] = {**data.get(key, {}), **value}
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
 def _emit_ble_auth(ctx: dict[str, Any], out_root: Path, domain_dir: Path) -> Path:

@@ -21,6 +21,7 @@ from ..ir.models import (
     StreamingContract,
     TransportType,
 )
+from . import actions as actions_mod
 
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
 
@@ -256,6 +257,9 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
     # parameter; otherwise sending it would be malformed. Those are reported.
     switches, buttons, selects, numbers = [], [], [], []
     unmapped: list[dict[str, str]] = []
+    # Commands no entity can drive: (endpoint, required params, is a query) → actions.
+    action_candidates: list[tuple[Endpoint, list[FieldDef], bool]] = []
+    polled = {ir.state.poll_endpoint, *ir.state.poll_endpoints}
     for ep in ir.commands:
         if ep.cmd in _SKIP_CMDS:
             continue
@@ -282,6 +286,7 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         if ep.entity_hint == EntityHint.SWITCH:
             if [(f.name, f.kind) for f in params] != [("enable", FieldKind.BOOLEAN)]:
                 unmapped.append(_unmapped(ep.cmd, "switch", params))
+                action_candidates.append((ep, params, _is_query(ep)))
                 continue
             switches.append(base)
         elif ep.entity_hint == EntityHint.SELECT:
@@ -293,14 +298,18 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
             numeric = [f for f in params if f.kind in (FieldKind.INTEGER, FieldKind.NUMBER)]
             if len(params) != 1 or len(numeric) != 1:
                 unmapped.append(_unmapped(ep.cmd, "number", params))
+                action_candidates.append((ep, params, _is_query(ep)))
                 continue
             numbers.append({**base, "param": numeric[0].name, "param_kind": numeric[0].kind.value})
         elif ep.entity_hint == EntityHint.BUTTON:
             if params:
                 unmapped.append(_unmapped(ep.cmd, "button", params))
+                action_candidates.append((ep, params, _is_query(ep)))
                 continue
             if _is_query(ep):
                 unmapped.append({"cmd": ep.cmd, "reason": "query: a button can't show its reply"})
+                if ep.cmd not in polled:  # polled queries already feed the state
+                    action_candidates.append((ep, params, True))
                 continue
             maintenance = bool(_MAINTENANCE_CMD.search(ep.cmd))
             buttons.append(
@@ -310,6 +319,11 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
                     "device_class": "restart" if _RESTART_CMD.search(ep.cmd) else None,
                 }
             )
+
+    # Actions replace the "unmapped" report for the commands they cover.
+    actions, action_unmapped = actions_mod.build(action_candidates, domain)
+    covered = {a["cmd"] for a in actions} | {u["cmd"] for u in action_unmapped}
+    unmapped = [u for u in unmapped if u["cmd"] not in covered] + action_unmapped
 
     # Every state field stays in the SDK's state model, but a field already shown
     # by a control (mute switch, mode select) doesn't also get its own sensor.
@@ -459,6 +473,10 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         "model_sensors": model_sensors,
         "model_binary_sensors": model_binary_sensors,
         "unmapped_commands": unmapped,
+        # P5 actions: commands with parameters, and queries that return a reply.
+        "actions": actions,
+        "services_yaml": actions_mod.services_yaml(actions, domain),
+        "action_strings": actions_mod.strings(actions, clean_name),
         "mode_actions": mode_actions,
         # platforms present
         "platforms": _platforms(

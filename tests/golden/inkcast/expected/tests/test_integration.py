@@ -3,19 +3,24 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Callable
 from datetime import timedelta
+from typing import Any
 
+import pytest
 from custom_components.inkcast.const import DOMAIN
 from custom_components.inkcast.coordinator import POLL_INTERVAL
 from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
 from homeassistant.const import (
+    ATTR_CONFIG_ENTRY_ID,
     CONF_HOST,
     CONF_PORT,
     STATE_UNAVAILABLE,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
@@ -122,3 +127,54 @@ async def test_unload(hass: HomeAssistant, mock_device: MockDevice) -> None:
     await hass.async_block_till_done()
 
     assert entry.state is ConfigEntryState.NOT_LOADED
+
+
+ACTION_DATA: dict[str, Any] = json.loads("{\"path\": \"test\", \"type\": \"test\"}")
+
+
+async def test_action_sends_command(hass: HomeAssistant, mock_device: MockDevice) -> None:
+    """The delete action sends POST /delete with its parameters."""
+    entry = await _setup_entry(hass, mock_device.port)
+    await hass.services.async_call(
+        DOMAIN,
+        "delete",
+        {ATTR_CONFIG_ENTRY_ID: entry.entry_id, **ACTION_DATA},
+        blocking=True,
+    )
+    method, path, body = mock_device.requests[-1]
+    assert (method, path) == (
+        "POST",
+        "/delete",
+    )
+    assert body == json.loads("{\"path\": \"test\", \"type\": \"test\"}")
+    assert mock_device.queries[-1] == json.loads("{}")
+
+
+async def test_action_needs_loaded_entry(hass: HomeAssistant, mock_device: MockDevice) -> None:
+    """Actions are registered once; on an unloaded entry they refuse, not crash."""
+    entry = await _setup_entry(hass, mock_device.port)
+    await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            DOMAIN,
+            "delete",
+            {ATTR_CONFIG_ENTRY_ID: entry.entry_id, **ACTION_DATA},
+            blocking=True,
+        )
+
+
+async def test_query_action_returns_reply(hass: HomeAssistant, mock_device: MockDevice) -> None:
+    """The download action returns the device's reply."""
+    entry = await _setup_entry(hass, mock_device.port)
+    response = await hass.services.async_call(
+        DOMAIN,
+        "download",
+        {
+            ATTR_CONFIG_ENTRY_ID: entry.entry_id,
+            **json.loads("{\"path\": \"test\"}"),
+        },
+        blocking=True,
+        return_response=True,
+    )
+    assert response == {"ok": True}
