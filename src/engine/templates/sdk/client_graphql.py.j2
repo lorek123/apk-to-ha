@@ -1,0 +1,103 @@
+# SPDX-License-Identifier: MIT
+"""GraphQL client for {{ name }} ({{ graphql_path }})."""
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+import aiohttp
+
+from .models import RobotState
+
+_LOGGER = logging.getLogger(__name__)
+
+GRAPHQL_PATH = "{{ graphql_path }}"
+{% if api_key_header %}
+API_KEY_HEADER = "{{ api_key_header }}"
+{% endif %}
+REQUEST_TIMEOUT = 15.0
+
+# Queries fetched together on each refresh; their results share one state object.
+STATE_QUERIES: list[tuple[str, str]] = [
+{% for q in poll_queries %}
+    ({{ q.name | tojson }}, {{ q.document | tojson }}),
+{% endfor %}
+]
+{% for btn in buttons %}
+DOC_{{ btn.key | upper }} = {{ btn.document | tojson }}
+{% endfor %}
+_UNAUTHORIZED = ("unauthorized", "unauthenticated", "forbidden", "invalid api key")
+
+
+class {{ class_prefix }}ConnectionError(Exception):
+    """The server can't be reached or answered with an error."""
+
+
+class {{ class_prefix }}AuthError({{ class_prefix }}ConnectionError):
+    """The server rejected the credentials."""
+
+
+class {{ class_prefix }}Client:
+    """Runs GraphQL operations against {{ name }} at *url*."""
+
+    def __init__(
+        self,
+        url: str,
+        session: aiohttp.ClientSession,
+{% if api_key_header %}
+        api_key: str,
+{% endif %}
+    ) -> None:
+        self._endpoint = url.rstrip("/") + GRAPHQL_PATH
+        self._session = session
+{% if api_key_header %}
+        self._headers = {API_KEY_HEADER: api_key}
+{% else %}
+        self._headers: dict[str, str] = {}
+{% endif %}
+
+    @property
+    def host(self) -> str:
+        return self._endpoint
+
+    async def get_state(self) -> RobotState:
+        merged: dict[str, Any] = {}
+        for name, document in STATE_QUERIES:
+            merged.update(await self._execute(name, document))
+        return RobotState.from_dict(merged)
+
+    async def disconnect(self) -> None:
+        """Nothing to close: the session belongs to Home Assistant."""
+{% for btn in buttons %}
+
+    async def press_{{ btn.key }}(self) -> None:
+        await self._execute("{{ btn.operation }}", DOC_{{ btn.key | upper }})
+{% endfor %}
+
+    async def _execute(
+        self, name: str, document: str, variables: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        payload = {"query": document, "operationName": name, "variables": variables or {}}
+        try:
+            async with self._session.post(
+                self._endpoint,
+                json=payload,
+                headers=self._headers,
+                timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+            ) as resp:
+                if resp.status in (401, 403):
+                    raise {{ class_prefix }}AuthError(f"{name}: HTTP {resp.status}")
+                resp.raise_for_status()
+                body = await resp.json()
+        except (aiohttp.ClientError, TimeoutError) as exc:
+            raise {{ class_prefix }}ConnectionError(f"{name} failed: {exc!r}") from exc
+        errors = body.get("errors") or []
+        if errors:
+            message = str(errors[0].get("message", errors[0]))
+            if any(word in message.lower() for word in _UNAUTHORIZED):
+                raise {{ class_prefix }}AuthError(f"{name}: {message}")
+            raise {{ class_prefix }}ConnectionError(f"{name}: {message}")
+        data = body.get("data")
+        if not isinstance(data, dict):
+            raise {{ class_prefix }}ConnectionError(f"{name}: response has no data")
+        return data

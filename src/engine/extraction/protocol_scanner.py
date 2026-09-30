@@ -33,6 +33,7 @@ from ..ir.models import (
 from . import confidence
 from .app_sources import app_source_files
 from .discovery_scanner import scan as discovery_scan
+from .graphql_scanner import scan as graphql_scan
 from .okhttp_scanner import json_map_state
 from .okhttp_scanner import scan as okhttp_scan
 from .payload_resolver import PayloadResolver, serialized_fields
@@ -136,6 +137,16 @@ class ProtocolScanner:
         auth = self._detect_auth()
         state = self._detect_state_schema()
         commands, events = self._extract_endpoints()
+        gql = graphql_scan(self._apk_out_dir, self._app_package)
+        if gql is not None:
+            commands, events = commands + gql.commands, events + gql.events
+            if auth.type == AuthType.NONE:
+                auth = gql.auth
+            if not state.fields:
+                state = state.model_copy(
+                    update={"fields": gql.state, "poll_endpoints": gql.poll_queries}
+                )
+            self.extra["graphql_path"] = gql.path
         self._extract_mode_actions()
         self._detect_streaming()
         state = self._fill_http_state(state, commands)

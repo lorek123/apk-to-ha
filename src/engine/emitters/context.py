@@ -47,7 +47,10 @@ def _slugify(text: str) -> str:
 
 # Maintenance/debug commands: config category, disabled by default.
 _MAINTENANCE_CMD = re.compile(
-    r"^d[-_]|reset|reboot|restart|shutdown|poweroff|debug|factory|calibrat|firmware|update",
+    r"^d[-_]|reset|reboot|restart|shutdown|poweroff|debug|factory|calibrat|firmware|update"
+    r"|delete|force"
+    # stopping a whole array/system takes everything on it down (Unraid StopArray)
+    r"|stop_?(?:array|system|server|all)",
     re.IGNORECASE,
 )
 _RESTART_CMD = re.compile(r"reset|reboot|restart", re.IGNORECASE)
@@ -105,10 +108,13 @@ def _is_query(ep: Endpoint) -> bool:
         for f in ep.response_fields
         if not _RESULT_FIELD_RE.match(_norm(f.serialized_name or f.name))
     ]
-    if ep.cmd.startswith("GET "):
+    if ep.cmd.startswith(("GET ", "QUERY ")):
         return True
     return bool(data) or bool(_QUERY_CMD.search(_norm(ep.cmd)))
 
+
+# GraphQL operations are named "MUTATION StartArray" / "QUERY GetMetrics".
+_GRAPHQL_CMD = re.compile(r"^(QUERY|MUTATION|SUBSCRIPTION) (\w+)$")
 
 # HTTP endpoints are named "VERB /path/{param}".
 _HTTP_CMD = re.compile(r"^([A-Z]+) (/\S*)$")
@@ -243,7 +249,13 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
             continue
         params = _required_params(ep)
         http = _HTTP_CMD.match(ep.cmd)
-        key = _http_key(http.group(2)) if http else _slugify(ep.cmd)
+        gql = _GRAPHQL_CMD.match(ep.cmd)
+        if http:
+            key = _http_key(http.group(2))
+        elif gql:
+            key = _to_snake(gql.group(2))  # MUTATION StartArray → start_array
+        else:
+            key = _slugify(ep.cmd)
         base = {
             "cmd": ep.cmd,
             "name": _human(key),
@@ -252,6 +264,8 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
             "state_attr": state_attrs.get(_norm(key)),
             "http_method": http.group(1) if http else None,
             "path": http.group(2) if http else None,
+            "operation": gql.group(2) if gql else None,
+            "document": ep.document,
         }
         if ep.entity_hint == EntityHint.SWITCH:
             if [(f.name, f.kind) for f in params] != [("enable", FieldKind.BOOLEAN)]:
@@ -404,6 +418,16 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         # discovery.py broadcasts CMD_DISCOVERY on UDP_PORT: needs both.
         "has_udp_discovery": bool(ir.discovery.port and ir.discovery.broadcast_cmd),
         "transport": ir.transport.type.value,
+        # GraphQL: endpoint path, API-key header and the queries polled for state.
+        "graphql_path": ir.extra.get("graphql_path", "/graphql"),
+        "api_key_header": (
+            ir.auth.fields[0].name if ir.auth.type == AuthType.API_KEY and ir.auth.fields else None
+        ),
+        "poll_queries": [
+            {"name": c.cmd.split(" ", 1)[1], "document": c.document}
+            for c in ir.commands
+            if c.cmd in ir.state.poll_endpoints
+        ],
         # BLE devices that verify signed challenges (None unless the profile is complete).
         "challenge": challenge,
         "has_challenge_auth": challenge is not None,

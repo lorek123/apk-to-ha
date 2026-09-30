@@ -5,6 +5,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+def _get(data: dict, key: str) -> object:
+    """Value at *key*; dotted keys walk nested objects (GraphQL results)."""
+    value: object = data
+    for part in key.split("."):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+    return value
+
+
 def _opt_bool(value: object) -> bool | None:
     """Missing stays unknown (None) instead of reading as off."""
     return None if value is None else bool(value)
@@ -24,9 +34,9 @@ class RobotState:
     def from_dict(cls, data: dict) -> "RobotState":
         return cls(
 {% for s in model_sensors %}
-            {{ s.attr }}=data.get("{{ s.key }}"),
+            {{ s.attr }}=_get(data, "{{ s.key }}"),
 {% endfor %}
 {% for bs in model_binary_sensors %}
-            {{ bs.attr }}=_opt_bool(data.get("{{ bs.key }}")),
+            {{ bs.attr }}=_opt_bool(_get(data, "{{ bs.key }}")),
 {% endfor %}
         )

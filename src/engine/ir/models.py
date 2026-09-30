@@ -21,6 +21,7 @@ class TransportType(str, Enum):
     TCP_SOCKET = "tcp_socket"
     UDP = "udp"
     BLE = "ble"
+    GRAPHQL = "graphql"  # operations POSTed to one endpoint (e.g. /graphql)
 
 
 class DiscoveryType(str, Enum):
@@ -93,6 +94,7 @@ class Endpoint(BaseModel):
     response_fields: list[FieldDef] = Field(default_factory=list)
     description: str | None = None
     source_class: str | None = None  # Java class where this was found
+    document: str | None = None  # GraphQL: the operation document, sent verbatim
     confidence: float = 1.0  # 0.0-1.0; <0.7 flagged for review
     entity_hint: EntityHint | None = None  # suggested HA platform for this endpoint
 
@@ -171,6 +173,8 @@ class StateSchema(BaseModel):
 
     push_cmd: str | None = None  # e.g. "gin" for push-based
     poll_endpoint: str | None = None  # e.g. "GET /status" for poll-based HTTP devices
+    # GraphQL: queries fetched together on each refresh (e.g. "QUERY GetMetrics").
+    poll_endpoints: list[str] = Field(default_factory=list)
     fields: list[FieldDef] = Field(default_factory=list)
 
 

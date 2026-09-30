@@ -7,14 +7,24 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from {{ sdk_package }} import {{ class_prefix }}Client, {{ class_prefix }}ConnectionError, RobotState
+from {{ sdk_package }} import (
+    RobotState,
+    {{ class_prefix }}AuthError,
+    {{ class_prefix }}Client,
+    {{ class_prefix }}ConnectionError,
+)
 
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+{% if transport == "graphql" %}
+# How often the state queries are fetched.
+{% else %}
 # How often {{ poll_method }} {{ poll_path }} is fetched.
+{% endif %}
 POLL_INTERVAL = timedelta(seconds=30)
 
 
@@ -37,5 +47,8 @@ class {{ class_prefix }}Coordinator(DataUpdateCoordinator[RobotState]):
     async def _async_update_data(self) -> RobotState:
         try:
             return await self.client.get_state()
+        except {{ class_prefix }}AuthError as exc:
+            # Credentials rejected: HA starts the reauth flow.
+            raise ConfigEntryAuthFailed(str(exc)) from exc
         except {{ class_prefix }}ConnectionError as exc:
             raise UpdateFailed(str(exc)) from exc

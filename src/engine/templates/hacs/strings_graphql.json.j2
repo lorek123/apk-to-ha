@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to {{ name }}",
+        "data": {
+          "url": "Server URL",
+{% if api_key_header %}
+          "api_key": "API key",
+{% endif %}
+          "verify_ssl": "Verify SSL certificate"
+        }
+      }{% if api_key_header %},
+      "reauth_confirm": {
+        "title": "Re-authenticate {{ name }}",
+        "description": "The server rejected the API key. Enter a new one.",
+        "data": {"api_key": "API key"}
+      }{% endif %}
+
+    },
+    "error": {
+      "cannot_connect": "Failed to connect — check the URL and that the server is reachable",
+      "invalid_auth": "The server rejected the credentials",
+      "invalid_url": "Enter the full server address, starting with http or https",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This server is already configured",
+      "reauth_successful": "Re-authentication was successful"
+    }
+  }{% if entity_sections %},
+  "entity": {
+{% for platform, entities in entity_sections.items() %}
+    {{ platform | tojson }}: {
+{% for key, data in entities.items() %}
+      {{ key | tojson }}: {"name": {{ data.name | tojson }}}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    }{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  }
+{% endif %}
+}
