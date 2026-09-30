@@ -34,6 +34,7 @@ from . import confidence
 from .app_sources import app_source_files
 from .discovery_scanner import scan as discovery_scan
 from .graphql_scanner import scan as graphql_scan
+from .ktor_scanner import scan as ktor_scan
 from .okhttp_scanner import json_map_state
 from .okhttp_scanner import scan as okhttp_scan
 from .payload_resolver import PayloadResolver, serialized_fields
@@ -176,6 +177,25 @@ class ProtocolScanner:
                 None,
             )
             state = state.model_copy(update={"poll_endpoint": poll})
+        if not state.fields:
+            # A typed status response (Ktor/kotlinx.serialization body class) is the state.
+            poll_ep = next(
+                (
+                    c
+                    for c in sorted(commands, key=lambda c: c.cmd)
+                    if c.cmd.startswith("GET ") and _POLL_PATH.search(c.cmd) and c.response_fields
+                ),
+                None,
+            )
+            if poll_ep:
+                _LOGGER.info(
+                    "State schema (%s response): %s",
+                    poll_ep.cmd,
+                    [f.name for f in poll_ep.response_fields],
+                )
+                state = state.model_copy(
+                    update={"fields": poll_ep.response_fields, "poll_endpoint": poll_ep.cmd}
+                )
         return state
 
     def _attach_mode_enum(
@@ -444,11 +464,10 @@ class ProtocolScanner:
                         ),
                     )
 
-        # P2-1b/c: Volley and OkHttp requests (first-party call sites)
-        for ep in volley_scan(self._apk_out_dir, self._app_package) + okhttp_scan(
-            self._apk_out_dir, self._app_package
-        ):
-            endpoints_by_cmd.setdefault(ep.cmd, ep)
+        # P2-1b/c/e: Volley, OkHttp and Ktor requests (first-party call sites)
+        for scan in (volley_scan, okhttp_scan, ktor_scan):
+            for ep in scan(self._apk_out_dir, self._app_package):
+                endpoints_by_cmd.setdefault(ep.cmd, ep)
 
         # P2-1: merge richer RetrofitScanner results (set by _detect_transport)
         for ep in self._retrofit_endpoints:

@@ -383,3 +383,15 @@ def test_signing_trace_ir_model_serialises() -> None:
     assert data["algorithm"] == "HMAC-SHA256"
     assert len(data["components"]) == 2
     assert data["confidence"] == 0.87
+
+
+def test_self_referential_assignment_does_not_recurse_forever(tmp_path: Path) -> None:
+    from engine.extraction.signing_tracer import _resolve_variable
+
+    method = (
+        "void sign() {\n    String data = data + suffix;\n    mac.doFinal(data.getBytes());\n}\n"
+    )
+
+    _, unresolved = _resolve_variable("data", method, method, tmp_path, None, depth=0)
+
+    assert unresolved  # reported as unresolved, not a RecursionError

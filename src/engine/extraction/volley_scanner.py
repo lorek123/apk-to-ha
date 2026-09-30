@@ -147,6 +147,14 @@ def split_args(src: str, start: int) -> list[str]:
 def url_template(expr: str) -> str | None:
     """Path template for a URL concatenation, or None if no literal path part."""
     parts = _split_concat(expr)
+    # "http://" + host + "/api/status": the scheme literal and host piece are the base.
+    if (
+        len(parts) > 2
+        and re.fullmatch(r'"https?://"', parts[0])
+        and not _STRING_LITERAL.match(parts[1])
+    ):
+        parts = parts[2:]
+        parts[0:0] = ['""']
     pieces: list[str] = []
     saw_literal = False
     for i, part in enumerate(parts):

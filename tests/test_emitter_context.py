@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from engine.emitters.context import _class_prefix, _slugify, build
+from engine.emitters.context import _class_prefix, _domain_segment, _slugify, build
 from engine.snapshot.harness import load
 
 # ── unit helpers ──────────────────────────────────────────────────────────────
@@ -119,3 +119,16 @@ def test_skip_cmds_not_in_any_entity(r2d2_ctx: Any) -> None:
     assert "grantAccess" not in all_cmds
     assert "updBroadcast" not in all_cmds
     assert "gin" not in all_cmds
+
+
+@pytest.mark.parametrize(
+    ("package", "segment"),
+    [
+        ("dev.inkcast.aos", "inkcast"),
+        ("com.example.device.android", "device"),
+        ("com.sphero.r2d2", "r2d2"),
+        ("app", "app"),
+    ],
+)
+def test_domain_skips_platform_suffixes(package: str, segment: str) -> None:
+    assert _domain_segment(package) == segment
