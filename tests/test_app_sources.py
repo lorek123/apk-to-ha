@@ -82,3 +82,42 @@ def test_app_source_files_follows_manifest_entry_points_and_modules(tmp_path: Pa
 
     assert {main, api, model} <= files
     assert not any(f.parts[-2] in ("unused", "p001a") for f in files)
+
+
+def test_vendor_sibling_packages_imported_by_the_app_are_app_code(tmp_path: Path) -> None:
+    """JBL Portable (com.harman.ble.jbllink) keeps its speaker protocol in com.harman.sdk."""
+    sources = tmp_path / "sources"
+    app = _touch(sources, "com/harman/ble/jbllink/App.java")
+    app.write_text(
+        "package com.harman.ble.jbllink;\nimport com.harman.sdk.DeviceMgr;\nclass App {}"
+    )
+    mgr = _touch(sources, "com/harman/sdk/DeviceMgr.java")
+    mgr.write_text(
+        "package com.harman.sdk;\nimport com.harman.sdk.command.ReqBattery;\nclass DeviceMgr {}"
+    )
+    cmd = _touch(sources, "com/harman/sdk/command/ReqBattery.java")
+    _touch(sources, "com/harman/unused/Thing.java")  # same vendor, never imported
+    _touch(sources, "com/harman/ab/Obf.java")  # R8 bucket in the vendor namespace
+    _touch(sources, "com/other/sdk/Lib.java")  # another vendor
+
+    files = set(app_source_files(sources, "com.harman.ble.jbllink"))
+
+    assert {app, mgr, cmd} <= files
+    assert not any(p in str(f) for f in files for p in ("unused", "/ab/", "com/other"))
+
+
+def test_hosting_namespaces_scope_the_vendor_to_the_owner(tmp_path: Path) -> None:
+    """io.github.alice.app must not pull in io.github.bob (another owner)."""
+    sources = tmp_path / "sources"
+    app = _touch(sources, "io/github/alice/app/App.java")
+    app.write_text(
+        "package io.github.alice.app;\n"
+        "import io.github.alice.core.Api;\nimport io.github.bob.lib.Util;\nclass App {}"
+    )
+    api = _touch(sources, "io/github/alice/core/Api.java")
+    _touch(sources, "io/github/bob/lib/Util.java")
+
+    files = set(app_source_files(sources, "io.github.alice.app"))
+
+    assert api in files
+    assert not any("bob" in str(f) for f in files)

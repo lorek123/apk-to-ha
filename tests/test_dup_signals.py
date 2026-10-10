@@ -85,3 +85,44 @@ def test_flutter_ui_strings_from_libapp(tmp_path: Path) -> None:
 
     assert flutter_ui_strings(tmp_path) == ["Connect to your Jellyfin server"]
     assert flutter_ui_strings(tmp_path / "missing") == []
+
+
+def _patch_core(monkeypatch: pytest.MonkeyPatch, manifests: dict[str, str]) -> None:
+    from engine.duplicate_check import checker
+
+    async def components(_: object) -> list[str]:
+        return list(manifests)
+
+    async def index(_: object, __: object) -> dict[str, dict[str, object]]:
+        return {d: {"type": t, "ble": []} for d, t in manifests.items()}
+
+    monkeypatch.setattr(checker, "_fetch_core_components", components)
+    monkeypatch.setattr(checker, "_fetch_manifest_index", index)
+
+
+async def test_bluetooth_stack_is_not_the_apps_product(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A speaker app says "Bluetooth" everywhere; HA's bluetooth hub isn't its product."""
+    from engine.duplicate_check import checker
+
+    _patch_core(monkeypatch, {"bluetooth": "hub", "bluetooth_le_tracker": "hub"})
+    strings = ["Turn on Bluetooth to connect your speaker"] * 40
+
+    result = await checker.check(
+        "com.harman.ble.jbllink", MagicMock(), app_label="JBL Portable", app_strings=strings
+    )
+
+    assert not result.found
+
+
+async def test_protocol_mentions_are_partial_coverage(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A Matter plug's app: HA's matter integration covers the plug, not the whole app."""
+    from engine.duplicate_check import checker
+
+    _patch_core(monkeypatch, {"matter": "hub"})
+    strings = ["Add your plug to any Matter controller"] * 5
+
+    result = await checker.check(
+        "com.example.plug", MagicMock(), app_label="Plug", app_strings=strings
+    )
+
+    assert (result.found, result.name, result.coverage_estimate) == (True, "matter", "partial")
