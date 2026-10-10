@@ -210,6 +210,9 @@ apks:
 
   # JBL Portable (Harman): Bluetooth speakers. Proprietary, Play Store only: the
   # APKPure XAPK goes into fixtures/_cache/ by hand and is never committed.
+  # Framed command protocol (AA <opcode> <len> <payload>) over one GATT write/notify
+  # pair whose UUIDs live in assets/AppConfig.json; checked against a real Flip 6
+  # with scripts/framed_hw_check.py.
   - id: jbl_portable
     description: "JBL Portable v6.9.33 — JBL Bluetooth speakers (Harman)"
     package: com.harman.ble.jbllink
