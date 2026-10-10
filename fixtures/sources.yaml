@@ -208,6 +208,16 @@ apks:
     local_path: "fixtures/_cache/biolite_firepit.xapk"
     transport: ble
 
+  # JBL Portable (Harman): Bluetooth speakers. Proprietary, Play Store only: the
+  # APKPure XAPK goes into fixtures/_cache/ by hand and is never committed.
+  - id: jbl_portable
+    description: "JBL Portable v6.9.33 — JBL Bluetooth speakers (Harman)"
+    package: com.harman.ble.jbllink
+    license: proprietary
+    source: "https://play.google.com/store/apps/details?id=com.harman.ble.jbllink"
+    apk_url: "https://example.invalid/replace.me.apk"   # proprietary — download the XAPK manually
+    local_path: "fixtures/_cache/jbl_portable.xapk"
+
   # Home Assistant's own companion app: must never generate a duplicate.
   - id: ha_companion
     description: "Home Assistant companion (minimal/F-Droid flavour)"

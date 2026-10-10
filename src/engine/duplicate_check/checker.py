@@ -74,6 +74,9 @@ _NON_BRAND_DOMAINS = frozenset(
     {
         "air_quality", "alarm_control_panel", "api", "application_credentials", "assist",
         "browser", "github", "version",
+        # Bluetooth infrastructure: every BLE app says "Bluetooth"; none of these
+        # control a device (the stack, presence tracking, beacons).
+        "bluetooth", "bluetooth_le_tracker", "ibeacon",
         "binary_sensor", "button", "calendar", "camera", "climate", "cloud", "config",
         "conversation", "counter", "cover", "date", "datetime", "default_config",
         "device_tracker", "event", "fan", "frontend", "google", "homeassistant", "http",
@@ -82,6 +85,15 @@ _NON_BRAND_DOMAINS = frozenset(
         "scene", "schedule", "script", "select", "sensor", "siren", "stt", "switch",
         "system_health", "text", "time", "todo", "tts", "update", "vacuum", "valve",
         "wake_word", "water_heater", "weather", "webhook", "websocket_api", "zone",
+    }
+)  # fmt: skip
+
+# Protocol integrations: an app that mentions one ("Chromecast built-in", "Matter")
+# may be partly covered through it, but the protocol never covers the whole app.
+_PROTOCOL_DOMAINS = frozenset(
+    {
+        "cast", "dlna_dmr", "dlna_dms", "homekit_controller", "matter", "mqtt", "thread",
+        "upnp", "zha", "zwave_js",
     }
 )  # fmt: skip
 
@@ -177,7 +189,7 @@ async def check(
         brands = _brand_counts(app_strings, sorted(products)).most_common(2)
     if brands and brands[0][1] >= _MIN_BRAND_MENTIONS:
         (top, n), runner_up = brands[0], (brands[1][1] if len(brands) > 1 else 0)
-        dominant = n >= _BRAND_DOMINANCE * runner_up
+        dominant = n >= _BRAND_DOMINANCE * runner_up and top not in _PROTOCOL_DOMAINS
         return _found(top, "full" if dominant else "partial", f"strings mention it {n}x")
 
     # BLE service UUID match
