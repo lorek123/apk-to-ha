@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -289,7 +290,7 @@ def proto(tmp_path_factory: pytest.TempPathFactory) -> framed_scanner.FramedProt
     return result
 
 
-def _cmd(proto: framed_scanner.FramedProtocol, name: str) -> dict:
+def _cmd(proto: framed_scanner.FramedProtocol, name: str) -> dict[str, Any]:
     return next(c for c in proto.commands if c["name"] == name)
 
 
@@ -398,7 +399,7 @@ def test_no_frame_serialiser_means_no_framed_protocol(tmp_path: Path) -> None:
 
 # ── codec ─────────────────────────────────────────────────────────────────────
 
-_FRAME = [
+_FRAME: list[dict[str, Any]] = [
     {"kind": "const", "value": 0xAA},
     {"kind": "opcode"},
     {"kind": "length"},
