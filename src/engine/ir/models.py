@@ -117,6 +117,8 @@ class DiscoveryMechanism(BaseModel):
     service_type: str | None = None  # mDNS/zeroconf service type e.g. "_device._tcp.local."
     hostname_pattern: str | None = None  # DHCP hostname glob e.g. "mydevice*"
     local_name: str | None = None  # BLE: advertised-name substring the app filters on
+    # BLE: Bluetooth SIG company IDs whose manufacturer data the app's scan accepts
+    manufacturer_ids: list[int] = Field(default_factory=list)
     response_fields: list[FieldDef] = Field(default_factory=list)
 
 

@@ -21,9 +21,9 @@ from .dynamic import oracle as dynamic_oracle
 from .dynamic.ir_reconciler import ReconciliationReport
 from .emitters import context as emitter_context
 from .emitters import emit_all
-from .extraction import challenge_profile, entity_classifier
+from .extraction import challenge_profile, entity_classifier, framed_scanner
 from .extraction import confidence as extraction_confidence
-from .extraction.app_sources import is_third_party
+from .extraction.app_sources import app_source_files, is_third_party
 from .extraction.ble_scanner import BLEScanner
 from .extraction.crypto_scanner import scan as crypto_scan
 from .extraction.java_code_graph import JavaCodeGraph
@@ -37,7 +37,15 @@ from .extraction.strings_scanner import flutter_ui_strings
 from .extraction.strings_scanner import scan as strings_scan
 from .ingestion import bundle, classifier, decompiler, manifest_parser
 from .ingestion import play_store as play_store_fetcher
-from .ir.models import AuthType, Framework, ProtocolIR, TransportType
+from .ir.models import (
+    AuthType,
+    DiscoveryMechanism,
+    DiscoveryType,
+    Framework,
+    ProtocolIR,
+    TransportContract,
+    TransportType,
+)
 from .snapshot import harness as snapshot_harness
 from .validation import (
     budget,
@@ -433,6 +441,26 @@ async def _extract(
                 service_uuids=ble.extra.get("ble_service_uuids", []),
             )
 
+        # ── P2-8c: framed command protocol (one write/notify pair) ───────────
+        if not (commands or events):
+            framed = await asyncio.to_thread(_framed_scan, out_dir, manifest.package_name)
+            if framed is not None:
+                commands, events = framed_scanner.endpoints(framed)
+                transport = TransportContract(type=TransportType.BLE)
+                discovery = DiscoveryMechanism(
+                    type=DiscoveryType.BLUETOOTH if framed.manufacturer_ids else DiscoveryType.NONE,
+                    manufacturer_ids=framed.manufacturer_ids,
+                )
+                extra_ctx = {**extra_ctx, "framed": framed_scanner.to_extra(framed)}
+                log(
+                    "P2",
+                    "framed_scan",
+                    "INFO",
+                    f"Framed protocol: {len(framed.commands)} commands, "
+                    f"{len(framed.replies)} reply decoders, {len(framed.tokens)} tokens",
+                    transport=framed.transport,
+                )
+
     log(
         "P2",
         "scan",
@@ -661,6 +689,13 @@ def _brand_strings(out_dir: Path, framework: Framework) -> list[str]:
     return strings
 
 
+def _framed_scan(out_dir: Path, package: str) -> framed_scanner.FramedProtocol | None:
+    sources = out_dir / "sources"
+    if not sources.exists():
+        return None
+    return framed_scanner.scan(out_dir, app_source_files(sources, package))
+
+
 # Transports the SDK/HACS templates can generate a working client for.
 _EMITTABLE_TRANSPORTS = frozenset(
     {TransportType.WEBSOCKET, TransportType.BLE, TransportType.HTTP_REST, TransportType.GRAPHQL}
@@ -684,6 +719,11 @@ def _emit_blocker(ir: ProtocolIR) -> tuple[str, str] | None:
     if ir.transport.type == TransportType.HTTP_REST and not ir.state.poll_endpoint:
         # The HTTP templates poll a state endpoint; without one there's nothing to show.
         return "unsupported-transport", "HTTP device without a state endpoint to poll"
+    if "framed" in ir.extra:
+        return (
+            "unsupported-transport",
+            "Framed command protocol over GATT: extracted, but no client template yet",
+        )
     if ir.transport.type not in _EMITTABLE_TRANSPORTS:
         return (
             "unsupported-transport",
