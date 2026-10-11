@@ -19,6 +19,10 @@ Links:
                   Linux only, and needs a Python built with Bluetooth sockets
                   (the system python3; uv's standalone builds lack AF_BLUETOOTH).
 
+With --sdk DIR (a generated SDK package dir, e.g. output/<run>/jbllink_sdk), the
+generated protocol module is driven instead of the reference codec: its device
+info and poll requests, decoded by its own code (still read-only).
+
 A request the device doesn't answer is reported, not failed: models implement
 subsets of the protocol. The check fails when nothing answers, or when an
 answer's decoder yields nothing (the extraction misread the reply).
@@ -172,6 +176,37 @@ def _uuid(b: bytes) -> str:
     return f"{h[:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:]}"
 
 
+# ── generated SDK ─────────────────────────────────────────────────────────────
+
+
+def _load_protocol(sdk: Path) -> Any:
+    """The generated protocol module (pure Python: no bleak, no Home Assistant)."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("generated_protocol", sdk / "protocol.py")
+    if spec is None or spec.loader is None:
+        sys.exit(f"{sdk}: no protocol.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses look their module up
+    spec.loader.exec_module(module)
+    return module
+
+
+async def check_sdk(link: Any, protocol: Any) -> int:
+    session = protocol.Session(link.write)
+    link.on_notify = session.feed
+    await link.open(protocol.SERVICE_UUID, protocol.NOTIFY_UUID, protocol.WRITE_UUID)
+    try:
+        info = await session.read_device_info()
+        state = await session.read_state()
+    finally:
+        await link.close()
+    print("device info:", json.dumps(info, indent=2))
+    print("model:", protocol.model(info.get("product_id")))
+    print("state:", json.dumps(state, indent=2))
+    return 0 if info and state else 1
+
+
 # ── check ─────────────────────────────────────────────────────────────────────
 
 
@@ -236,10 +271,13 @@ def main() -> None:
     link.add_argument("--classic", metavar="ADDR")
     ap.add_argument("--ir", type=Path, default=_ROOT / ".cache/checkpoints/jbl_portable.json")
     ap.add_argument("--timeout", type=float, default=2.0)
+    ap.add_argument("--sdk", type=Path, help="generated SDK package dir to drive instead")
     args = ap.parse_args()
-    framed = _load(args.ir)
     dev = _ClassicAtt(args.classic) if args.classic else _Ble(args.ble)
-    problems = asyncio.run(check(dev, framed, args.timeout))
+    if args.sdk:
+        problems = asyncio.run(check_sdk(dev, _load_protocol(args.sdk)))
+    else:
+        problems = asyncio.run(check(dev, _load(args.ir), args.timeout))
     sys.exit(1 if problems else 0)
 
 

@@ -42,6 +42,21 @@ def emit(ctx: dict[str, Any], out_root: Path) -> Path:
         _LOGGER.info("SDK (BLE challenge-response) emitted to %s", pkg_dir)
         return pkg_dir
 
+    if ctx.get("has_framed"):
+        # Framed command protocol: a transport-free codec plus a Bleak client.
+        framed_env = Environment(
+            loader=FileSystemLoader(str(_TEMPLATES_DIR / "framed")),
+            undefined=StrictUndefined,
+            trim_blocks=True,
+            lstrip_blocks=True,
+            keep_trailing_newline=True,
+        )
+        for name in ("__init__.py", "protocol.py", "client.py"):
+            _render(framed_env, ctx, pkg_dir, f"{name}.j2", name)
+        _render(framed_env, ctx, out_root, "pyproject.toml.j2", "pyproject.toml")
+        _LOGGER.info("SDK (framed protocol over BLE) emitted to %s", pkg_dir)
+        return pkg_dir
+
     if ctx.get("has_gatt"):
         # Plain GATT device: a Bleak client that reads state and writes controls.
         gatt_env = Environment(

@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: MIT
+"""Select platform for {{ name }}: settings whose values the app names."""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from homeassistant.components.select import SelectEntity, SelectEntityDescription
+from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from . import {{ class_prefix }}ConfigEntry
+from .coordinator import {{ class_prefix }}Coordinator
+from .entity_base import {{ class_prefix }}Entity
+
+PARALLEL_UPDATES = 1
+
+
+@dataclass(frozen=True, kw_only=True)
+class {{ class_prefix }}SelectDescription(SelectEntityDescription):
+    field: str
+    values: dict[str, int] = field(default_factory=dict)  # option → value sent
+
+
+SELECTS: tuple[{{ class_prefix }}SelectDescription, ...] = (
+{% for s in framed.selects %}
+    {{ class_prefix }}SelectDescription(
+        key="{{ s.key }}",
+        field="{{ s.field }}",
+        options=[{% for v, o in s.options.items() %}"{{ o }}", {% endfor %}],
+        values={ {% for v, o in s.options.items() %}"{{ o }}": {{ v }}, {% endfor %}},
+        entity_category=EntityCategory.CONFIG,
+    ),
+{% endfor %}
+)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: {{ class_prefix }}ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    async_add_entities(
+        {{ class_prefix }}Select(coordinator, d) for d in SELECTS if d.field in coordinator.data
+    )
+
+
+class {{ class_prefix }}Select({{ class_prefix }}Entity, SelectEntity):
+    entity_description: {{ class_prefix }}SelectDescription
+
+    def __init__(
+        self, coordinator: {{ class_prefix }}Coordinator, description: {{ class_prefix }}SelectDescription
+    ) -> None:
+        super().__init__(coordinator, description.key, description.field)
+        self.entity_description = description
+
+    @property
+    def current_option(self) -> str | None:
+        value = self.value
+        return next(
+            (o for o, v in self.entity_description.values.items() if v == value), None
+        )
+
+    async def async_select_option(self, option: str) -> None:
+        await self._apply(self.entity_description.key, self.entity_description.values[option])

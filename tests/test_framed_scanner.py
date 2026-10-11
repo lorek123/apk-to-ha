@@ -10,12 +10,17 @@ UUIDs in an asset config); the frames are the shapes a JBL Flip 6 sent back
 
 from __future__ import annotations
 
+import importlib.util
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from engine.emitters import context as emitter_context
+from engine.emitters import framed as framed_emit
+from engine.emitters import sdk_emitter
 from engine.extraction import framed_codec as codec
 from engine.extraction import framed_scanner
 from engine.ir.models import (
@@ -87,6 +92,10 @@ public final class PacketFormat {
     public static final byte RET_DEV_INFO = 18;
     public static final byte RET_MFB_STATUS = 52;
     public static final byte SET_EQ_MODE_SETTING = 99;
+    public static final byte REQ_FEEDBACK_STATUS = 101;
+    public static final byte REP_FEEDBACK_STATUS = 102;
+    public static final byte SET_FEEDBACK_STATUS = 103;
+    public static final byte SET_LIGHT_STATUS = 115;
 }
 """,
     "command/ReqVerCommand.java": """package com.example.sdk.command;
@@ -138,6 +147,133 @@ public final class SetEQModeCommand extends BaseCommand {
         getResponseCommands().add((byte) 0);
         setPayload(new byte[]{b});
     }
+
+    @Override
+    public BaseMessage onReceive(HmDevice device, Command receivedCommand) {
+        byte[] payload;
+        BaseMessage baseMessage = new BaseMessage();
+        if (receivedCommand.getCommand() == 0 && (payload = receivedCommand.getPayload()) != null && payload.length > 1 && 99 == payload[0] && payload[1] == 0) {
+            getResponseCommands().removeFirst();
+            byte[] payload2 = getPayload();
+            if (payload2 != null) {
+                device.setEqMode(payload2[0]);
+            }
+        }
+        return baseMessage;
+    }
+}
+""",
+    "command/ReqFeedbackToneCommand.java": """package com.example.sdk.command;
+public final class ReqFeedbackToneCommand extends BaseCommand {
+    public ReqFeedbackToneCommand() {
+        setCommand(PacketFormat.REQ_FEEDBACK_STATUS);
+        getResponseCommands().add(Byte.valueOf(PacketFormat.REP_FEEDBACK_STATUS));
+    }
+}
+""",
+    "command/SetFeedbackToneCommand.java": """package com.example.sdk.command;
+public final class SetFeedbackToneCommand extends BaseCommand {
+    public SetFeedbackToneCommand(byte b) {
+        setCommand(PacketFormat.SET_FEEDBACK_STATUS);
+        setPayload(new byte[]{b});
+    }
+
+    @Override
+    public BaseMessage onReceive(HmDevice device, Command receivedCommand) {
+        BaseMessage baseMessage = new BaseMessage();
+        byte[] payload = receivedCommand.getPayload();
+        if (receivedCommand.getCommand() == 0 && payload != null && payload.length > 1 && 103 == payload[0] && payload[1] == 0) {
+            byte[] payload2 = getPayload();
+            if (payload2 != null) {
+                device.setFeedbackToneStatus(payload2[0]);
+            }
+        }
+        return baseMessage;
+    }
+}
+""",
+    "command/SetLightStatusCommand.java": """package com.example.sdk.command;
+public final class SetLightStatusCommand extends BaseCommand {
+    public SetLightStatusCommand(byte b) {
+        setCommand(PacketFormat.SET_LIGHT_STATUS);
+        setPayload(new byte[]{b});
+    }
+
+    @Override
+    public BaseMessage onReceive(HmDevice device, Command receivedCommand) {
+        byte[] payload = receivedCommand.getPayload();
+        if (receivedCommand.getCommand() == 0 && payload != null && 21 == payload[0] && payload[1] == 0) {
+            device.setLightStatus(getPayload()[0]);
+        }
+        return new BaseMessage();
+    }
+}
+""",
+    "control/DeviceControl.java": """package com.example.sdk.control;
+public interface DeviceControl {
+    void setFeedbackToneStatus(HmDevice device, byte status, DeviceListener listener);
+}
+""",
+    "control/DeviceControlImpl.java": """package com.example.sdk.control;
+public final class DeviceControlImpl implements DeviceControl {
+    @Override
+    public void setFeedbackToneStatus(HmDevice device, byte status, DeviceListener listener) {
+        sendCommand(device, new SetFeedbackToneCommand(status), listener);
+    }
+
+    public final void sendEQModeCmd(byte eqMode) {
+        sendCommand(this.device, new SetEQModeCommand(eqMode), null);
+    }
+
+    public final void refreshLights() {
+        sendCommand(this.device, new SetLightStatusCommand(this.brightStatus), null);
+    }
+
+    public final void lightsOn() {
+        sendCommand(this.device, new SetLightStatusCommand((byte) 1), null);
+    }
+}
+""",
+    "ui/FeedbackCard.java": """package com.example.ui;
+public final class FeedbackCard {
+    public void onActionOn() {
+        this.control.setFeedbackToneStatus(this.device, (byte) 1, null);
+    }
+
+    public void onActionOff() {
+        this.control.setFeedbackToneStatus(this.device, (byte) 0, null);
+    }
+}
+""",
+    "ui/SoundModeActivity.java": """package com.example.ui;
+public final class SoundModeActivity {
+    public /* synthetic */ class WhenMappings {
+        public static final /* synthetic */ int[] $EnumSwitchMapping$0;
+
+        static {
+            int[] iArr = new int[ClickEventType.values().length];
+            try {
+                iArr[ClickEventType.ACTION_INDOOR.ordinal()] = 1;
+            } catch (NoSuchFieldError unused) {
+            }
+            try {
+                iArr[ClickEventType.ACTION_OUTDOOR.ordinal()] = 2;
+            } catch (NoSuchFieldError unused2) {
+            }
+            $EnumSwitchMapping$0 = iArr;
+        }
+    }
+
+    public void onAction(ClickEventType actionName) {
+        switch (actionName == null ? -1 : WhenMappings.$EnumSwitchMapping$0[actionName.ordinal()]) {
+            case 1:
+                this.control.sendEQModeCmd((byte) 0);
+                break;
+            case 2:
+                this.control.sendEQModeCmd((byte) 1);
+                break;
+        }
+    }
 }
 """,
     "command/ReqMFBCommand.java": """package com.example.sdk.command;
@@ -185,6 +321,10 @@ public final class CommandProcessor {
         }
         if (command == 98 || command == 100) {
             device.setEqMode(Byte.parseByte(strEncodeHexStr, CharsKt.checkRadix(16)));
+            return null;
+        }
+        if (command == 102) {
+            device.setFeedbackToneStatus(Byte.parseByte(strEncodeHexStr, CharsKt.checkRadix(16)));
             return null;
         }
         return null;
@@ -335,6 +475,33 @@ def test_unresolved_payloads_are_marked_not_guessed(proto: framed_scanner.Framed
     assert {"unknown": "(byte) (authentication.ordinal() + 1)"} in auth["payload"]
 
 
+def test_settings_ack_and_changed_field(proto: framed_scanner.FramedProtocol) -> None:
+    tone = _cmd(proto, "SetFeedbackTone")
+    assert tone["ack"] == {"opcode": 0, "ok": 0}
+    assert tone["field"] == "feedback_tone_status"
+    assert _cmd(proto, "SetEQMode")["field"] == "eq_mode"
+    # its ack test is for another opcode (21), so it isn't this command's ack
+    assert "ack" not in _cmd(proto, "SetLightStatus")
+
+
+def test_setting_values_traced_through_wrappers_with_ui_labels(
+    proto: framed_scanner.FramedProtocol,
+) -> None:
+    # onActionOn/Off → FeedbackCard → DeviceControl.setFeedbackToneStatus (3rd arg)
+    # → new SetFeedbackToneCommand(status); the interface declaration isn't a call.
+    tone = _cmd(proto, "SetFeedbackTone")
+    assert (tone["values"], tone["values_complete"]) == ([0, 1], True)
+    assert tone["value_labels"] == {"0": "off", "1": "on"}
+    # case 1/2 of a `when` over ClickEventType.ACTION_INDOOR / ACTION_OUTDOOR
+    eq = _cmd(proto, "SetEQMode")
+    assert eq["value_labels"] == {"0": "indoor", "1": "outdoor"}
+
+
+def test_setting_values_from_fields_are_not_guessed(proto: framed_scanner.FramedProtocol) -> None:
+    light = _cmd(proto, "SetLightStatus")  # (byte) 1 in one place, this.brightStatus in another
+    assert (light["values"], light["values_complete"]) == ([1], False)
+
+
 def test_reply_decoders(proto: framed_scanner.FramedProtocol) -> None:
     replies = {r["opcode"]: r for r in proto.replies}
     assert replies[0x12] == {"opcode": 0x12, "decode": "tokens"}
@@ -470,7 +637,7 @@ def test_reply_decoders_codec() -> None:
     assert codec.decode_reply(version, bytes.fromhex("10"), {}) == {"firmware_version": "10"}
 
 
-def test_emit_is_blocked_until_framed_templates_exist() -> None:
+def test_emit_is_blocked_without_an_entity_to_back() -> None:
     commands, events = framed_scanner.endpoints(
         framed_scanner.FramedProtocol(
             frame=_FRAME,
@@ -503,3 +670,150 @@ def test_emit_is_blocked_until_framed_templates_exist() -> None:
     )
     blocker = _emit_blocker(ir)
     assert blocker is not None and blocker[0] == "unsupported-transport"
+    assert "no entity" in blocker[1]
+
+
+# ── emission ──────────────────────────────────────────────────────────────────
+
+
+def _ir(proto: framed_scanner.FramedProtocol) -> ProtocolIR:
+    commands, events = framed_scanner.endpoints(proto)
+    return ProtocolIR(
+        apk_path="speaker.apk",
+        package_name="com.example.speaker",
+        app_name="Speaker",
+        framework=Framework.NATIVE,
+        transport=TransportContract(type=TransportType.BLE),
+        discovery=DiscoveryMechanism(
+            type=DiscoveryType.BLUETOOTH, manufacturer_ids=proto.manufacturer_ids
+        ),
+        auth=AuthScheme(type=AuthType.NONE),
+        state=StateSchema(),
+        commands=commands,
+        events=events,
+        extra={"framed": framed_scanner.to_extra(proto)},
+    )
+
+
+def test_entities_from_extraction(proto: framed_scanner.FramedProtocol) -> None:
+    ctx = framed_emit.build(_ir(proto), "speaker")
+    assert ctx is not None
+
+    assert [(s["key"], s["field"]) for s in ctx["sensors"]] == [("battery", "battery_status")]
+    assert [b["field"] for b in ctx["binary_sensors"]] == ["battery_status_charging"]
+    [tone] = ctx["switches"]
+    assert (tone["key"], tone["on"], tone["off"], tone["read"]) == (
+        "feedback_tone",
+        1,
+        0,
+        "ReqFeedbackTone",
+    )
+    [eq] = ctx["selects"]
+    assert (eq["key"], eq["options"]) == ("eq_mode", {0: "indoor", 1: "outdoor"})
+    assert {r["name"] for r in ctx["poll"]} == {"ReqBattery", "ReqEQMode", "ReqFeedbackTone"}
+    assert ctx["info_request"]["name"] == "GetDevInfo"
+    assert ctx["version_request"]["name"] == "ReqVer"
+    assert {u["cmd"]: u["reason"] for u in ctx["unmapped"]}["SetLightStatus"] == (
+        "doesn't change one device field"
+    )
+    assert ctx["platforms"] == ["binary_sensor", "select", "sensor", "switch"]
+    assert _emit_blocker(_ir(proto)) is None
+
+
+def test_classic_bluetooth_models_are_marked(proto: framed_scanner.FramedProtocol) -> None:
+    ctx = framed_emit.build(_ir(proto), "speaker")
+    assert ctx is not None
+
+    assert ctx["models"]["20ab"] == {"name": "Speaker A", "ble": True}
+    assert ctx["models"]["204f"] == {"name": "Speaker B", "ble": False}
+    assert ctx["unsupported_models"] == ["Speaker B"]
+
+
+def test_unnamed_setting_values_get_no_entity(proto: framed_scanner.FramedProtocol) -> None:
+    ir = _ir(proto)
+    framed = ir.extra["framed"]
+    for c in framed["commands"]:
+        c.pop("value_labels", None)
+    ctx = framed_emit.build(ir, "speaker")
+    assert ctx is not None
+
+    assert not ctx["switches"] and not ctx["selects"]
+    reasons = {u["cmd"]: u["reason"] for u in ctx["unmapped"]}
+    assert reasons["SetFeedbackTone"] == "the app doesn't name its values"
+
+
+@pytest.fixture
+def generated(proto: framed_scanner.FramedProtocol, tmp_path: Path) -> Any:
+    """The generated SDK's protocol module (pure Python, imported from the emitted tree)."""
+    ctx = emitter_context.build(_ir(proto))
+    pkg = sdk_emitter.emit(ctx, tmp_path)
+    spec = importlib.util.spec_from_file_location("generated_protocol", pkg / "protocol.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    yield module
+    del sys.modules[spec.name]
+
+
+def test_generated_codec_agrees_with_reference(
+    proto: framed_scanner.FramedProtocol, generated: Any
+) -> None:
+    tokens = {t["id"]: t for t in proto.tokens}
+    payloads = [
+        bytes.fromhex("0044d0"),  # charging, 80 %
+        bytes.fromhex("0042204f44500107") + b"\xc1\x04Lorka",
+        bytes.fromhex("01445a"),  # the other speaker of a pair
+    ]
+    for payload in payloads:
+        assert generated.decode_tokens(payload) == codec.decode_tokens(payload, tokens)
+    version = {"decode": "version", "field": "firmware_version"}
+    assert generated.decode(0x42, bytes.fromhex("00060906")) == codec.decode_reply(
+        version, bytes.fromhex("00060906"), tokens
+    )
+    battery = next(c for c in proto.commands if c["name"] == "ReqBattery")
+    req = next(r for r in generated.POLL if r.name == "ReqBattery")
+    assert generated.encode(req.opcode, req.payload) == codec.encode(
+        proto.frame, battery["opcode"], codec.command_payload(battery)
+    )
+    data = codec.encode(proto.frame, 0x62, b"\x01") + codec.encode(proto.frame, 0x41, b"")
+    assert list(generated.frames(b"\x00" + data)) == list(codec.frames(proto.frame, data))
+
+
+async def test_generated_session_reads_and_applies(generated: Any) -> None:
+    status = {"ack": 0}
+
+    async def write(frame: bytes) -> None:
+        (opcode, _), *_ = generated.frames(frame)
+        replies = {
+            0x13: (0x12, bytes.fromhex("01445a")),  # the paired speaker answers first
+            0x61: (0x62, b"\x01"),
+            0x65: (0x66, b"\x00"),
+        }
+        if opcode in replies:
+            if opcode == 0x13:
+                session.feed(generated.encode(*replies[0x13]))
+                session.feed(generated.encode(0x12, bytes.fromhex("0044d0")))
+            else:
+                session.feed(generated.encode(*replies[opcode]))
+        elif opcode == 0x67:
+            session.feed(generated.encode(0x00, bytes([0x67, status["ack"]])))
+
+    session = generated.Session(write)
+    generated.REPLY_TIMEOUT = 0.05
+
+    state = await session.read_state()
+    assert state == {
+        "battery_status": 80,
+        "battery_status_charging": True,
+        "eq_mode": 1,
+        "feedback_tone_status": 0,
+    }
+    await session.apply("feedback_tone", 1)
+    status["ack"] = 1
+    with pytest.raises(generated.RejectedError):
+        await session.apply("feedback_tone", 0)
+    with pytest.raises(ValueError):
+        await session.apply("feedback_tone", 7)
+    with pytest.raises(generated.ProtocolError, match="no acknowledgement"):
+        await session.apply("eq_mode", 0)  # the fake never acknowledges this one

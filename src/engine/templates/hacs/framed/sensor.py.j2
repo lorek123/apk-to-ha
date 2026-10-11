@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: MIT
+"""Sensor platform for {{ name }}."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from . import {{ class_prefix }}ConfigEntry
+from .coordinator import {{ class_prefix }}Coordinator
+from .entity_base import {{ class_prefix }}Entity
+
+PARALLEL_UPDATES = 0
+
+
+@dataclass(frozen=True, kw_only=True)
+class {{ class_prefix }}SensorDescription(SensorEntityDescription):
+    field: str
+
+
+SENSORS: tuple[{{ class_prefix }}SensorDescription, ...] = (
+{% for s in framed.sensors %}
+    {{ class_prefix }}SensorDescription(
+        key="{{ s.key }}",
+        field="{{ s.field }}",
+        device_class=SensorDeviceClass.{{ s.device_class | upper }},
+        native_unit_of_measurement="{{ s.unit }}",
+        state_class=SensorStateClass.{{ s.state_class | upper }},
+    ),
+{% endfor %}
+)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: {{ class_prefix }}ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    # Models answer different subsets of the protocol: only what this one answered.
+    async_add_entities(
+        {{ class_prefix }}Sensor(coordinator, d) for d in SENSORS if d.field in coordinator.data
+    )
+
+
+class {{ class_prefix }}Sensor({{ class_prefix }}Entity, SensorEntity):
+    entity_description: {{ class_prefix }}SensorDescription
+
+    def __init__(
+        self, coordinator: {{ class_prefix }}Coordinator, description: {{ class_prefix }}SensorDescription
+    ) -> None:
+        super().__init__(coordinator, description.key, description.field)
+        self.entity_description = description
+        self._attr_translation_key = None  # named by its device class
+
+    @property
+    def native_value(self) -> int | None:
+        value = self.value
+        return value if isinstance(value, int) else None

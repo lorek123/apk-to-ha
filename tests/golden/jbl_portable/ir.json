@@ -1,0 +1,4390 @@
+{
+  "apk_path": "jbl_portable.apk",
+  "package_name": "com.harman.ble.jbllink",
+  "app_name": "JBL Portable",
+  "version_name": "6.9.33",
+  "framework": "native",
+  "transport": {
+    "type": "ble",
+    "port": null,
+    "host_source": "manual",
+    "url_template": null,
+    "tls": false
+  },
+  "discovery": {
+    "type": "bluetooth",
+    "port": null,
+    "broadcast_cmd": null,
+    "service_type": null,
+    "hostname_pattern": null,
+    "local_name": null,
+    "manufacturer_ids": [
+      87,
+      3787
+    ],
+    "response_fields": []
+  },
+  "auth": {
+    "type": "none",
+    "handshake_cmd": null,
+    "fields": [],
+    "description": null,
+    "challenge": null
+  },
+  "state": {
+    "push_cmd": null,
+    "poll_endpoint": null,
+    "poll_endpoints": [],
+    "fields": [
+      {
+        "name": "imageUri",
+        "serialized_name": "imageUri",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor",
+        "location": null
+      },
+      {
+        "name": "isPlaying",
+        "serialized_name": "isPlaying",
+        "kind": "boolean",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "binary_sensor",
+        "location": null
+      },
+      {
+        "name": "songName",
+        "serialized_name": "songName",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor",
+        "location": null
+      },
+      {
+        "name": "songUri",
+        "serialized_name": "songUri",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor",
+        "location": null
+      },
+      {
+        "name": "title",
+        "serialized_name": "title",
+        "kind": "string",
+        "required": true,
+        "nullable": false,
+        "enum_values": null,
+        "description": null,
+        "entity_hint": "sensor",
+        "location": null
+      }
+    ]
+  },
+  "commands": [
+    {
+      "cmd": "BaseP4",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x01",
+      "source_class": "BaseP4Command",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ClearDeviceAnalyticsBrEdr",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x01",
+      "source_class": "ClearDeviceAnalyticsBrEdrCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ClearDeviceAnalytics",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x01",
+      "source_class": "ClearDeviceAnalyticsCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ClearDevicePlayAnalyticsBrEdr",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x01",
+      "source_class": "ClearDevicePlayAnalyticsBrEdrCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ControlDeviceFeature",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xac",
+      "source_class": "ControlDeviceFeatureCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "DisconnectDevice",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x35",
+      "source_class": "DisconnectDeviceCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "EnableNotifyLedPatternInfo",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x89",
+      "source_class": "EnableNotifyLedPatternInfoCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "GetDevInfo",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x11",
+      "source_class": "GetDevInfoCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "Identification",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x31",
+      "source_class": "IdentificationCommand",
+      "document": null,
+      "confidence": 0.5,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "NotifyDfuCancel",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x47",
+      "source_class": "NotifyDfuCancelCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "NotifySectStart",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x45",
+      "source_class": "NotifySectStartCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "PartyBoxAuraCast",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x13",
+      "source_class": "PartyBoxAuraCastCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "PreviewPattern",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x91",
+      "source_class": "PreviewPatternCommand",
+      "document": null,
+      "confidence": 0.5,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqAnalyticsBrEdr",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x93",
+      "source_class": "ReqAnalyticsBrEdrCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqAnalytics",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x81",
+      "source_class": "ReqAnalyticsCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqAuracastGroup",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xa1",
+      "source_class": "ReqAuracastGroupCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqAuracastGroupNonLLS",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xa1",
+      "source_class": "ReqAuracastGroupNonLLSCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqAuthentication",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xf1",
+      "source_class": "ReqAuthenticationCommand",
+      "document": null,
+      "confidence": 0.5,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqBassVolume",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x77",
+      "source_class": "ReqBassVolumeCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqBattery",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "i",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x13",
+      "source_class": "ReqBatteryCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqBatteryStatus",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x9d",
+      "source_class": "ReqBatteryStatusCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqBrightness",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x56",
+      "source_class": "ReqBrightnessCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqBtAddressCrc16",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "i",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x13",
+      "source_class": "ReqBtAddressCrc16Command",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqChannel",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "i",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x13",
+      "source_class": "ReqChannelCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqDfuStart",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x43",
+      "source_class": "ReqDfuStartCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqDfuVer",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x4a",
+      "source_class": "ReqDfuVerCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqEQMode",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x61",
+      "source_class": "ReqEQModeCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqFeedbackTone",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x65",
+      "source_class": "ReqFeedbackToneCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqHFP",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x68",
+      "source_class": "ReqHFPCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqLeAudioStatus",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xa4",
+      "source_class": "ReqLeAudioStatusCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqLedBrightness",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x8b",
+      "source_class": "ReqLedBrightnessCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqLedMovementSpeed",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x8e",
+      "source_class": "ReqLedMovementSpeedCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqLedPackageInfo",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x83",
+      "source_class": "ReqLedPackageInfoCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqLightStatus",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x71",
+      "source_class": "ReqLightStatusCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqMFB",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x33",
+      "source_class": "ReqMFBCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqMicStatus",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "i",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x13",
+      "source_class": "ReqMicStatusCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqPatternList",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x51",
+      "source_class": "ReqPatternListCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqPlayAnalyticsBrEdr",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x95",
+      "source_class": "ReqPlayAnalyticsBrEdrCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqPlayerSettings",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xa8",
+      "source_class": "ReqPlayerSettingsCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqPlaytimeBoost",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xb1",
+      "source_class": "ReqPlaytimeBoostCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqRadioInfo",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xb4",
+      "source_class": "ReqRadioInfoCommand",
+      "document": null,
+      "confidence": 0.5,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqSerialNumber",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x7a",
+      "source_class": "ReqSerialNumberCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqSimpleEq",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x6c",
+      "source_class": "ReqSimpleEqCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqTriggerUpgrade",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x4d",
+      "source_class": "ReqTriggerUpgradeCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqTwsLedPattern",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x51",
+      "source_class": "ReqTwsLedPatternCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqVendorCodesAndDisabledFeatures",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xab",
+      "source_class": "ReqVendorCodesAndDisabledFeaturesCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "ReqVer",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x41",
+      "source_class": "ReqVerCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "RequestScreenDisplay",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xb7",
+      "source_class": "RequestScreenDisplayCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "RoleCheck",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x17",
+      "source_class": "RoleCheckCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetAppAck",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x01",
+      "source_class": "SetAppAckCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetAuraCastGroup",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xa0",
+      "source_class": "SetAuraCastGroupCommand",
+      "document": null,
+      "confidence": 0.5,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetAuracastGroupNonLLS",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xa0",
+      "source_class": "SetAuracastGroupNonLLSCommand",
+      "document": null,
+      "confidence": 0.5,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetBrightness",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "i",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x55",
+      "source_class": "SetBrightnessCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetChannel",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "i",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x15",
+      "source_class": "SetChannelCommand",
+      "document": null,
+      "confidence": 0.5,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetChannelLock",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "i",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x15",
+      "source_class": "SetChannelLockCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetChannelPulse2",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x15",
+      "source_class": "SetChannelPulse2Command",
+      "document": null,
+      "confidence": 0.5,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetDeviceName",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x15",
+      "source_class": "SetDeviceNameCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetDfuData",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x44",
+      "source_class": "SetDfuDataCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetEQMode",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x63",
+      "source_class": "SetEQModeCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetFeedbackTone",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x67",
+      "source_class": "SetFeedbackToneCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetHFP",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x70",
+      "source_class": "SetHFPCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetLeAudioStatus",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0xa3",
+      "source_class": "SetLeAudioStatusCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetLedBrightness",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "b2",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "b3",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x8a",
+      "source_class": "SetLedBrightnessCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetLedMovementSpeed",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x8d",
+      "source_class": "SetLedMovementSpeedCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetLedPackage",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x85",
+      "source_class": "SetLedPackageCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetLightStatus",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x73",
+      "source_class": "SetLightStatusCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetLinkMode",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x6a",
+      "source_class": "SetLinkModeCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetMFB",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x32",
+      "source_class": "SetMFBCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetNormalPattern",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x53",
+      "source_class": "SetNormalPatternCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetPlayerSettings",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "b2",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0xa7",
+      "source_class": "SetPlayerSettingsCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetPlaytimeBoost",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0xb2",
+      "source_class": "SetPlaytimeBoostCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetRadioInfo",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0xb6",
+      "source_class": "SetRadioInfoCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetSQ",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0xaf",
+      "source_class": "SetSQCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetScreenDisplay",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": false,
+      "request_fields": [
+        {
+          "name": "b",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0xb9",
+      "source_class": "SetScreenDisplayCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetSimpleEq",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x6e",
+      "source_class": "SetSimpleEqCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SetTwsLedPattern",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [],
+      "response_fields": [],
+      "description": "opcode 0x53",
+      "source_class": "SetTwsLedPatternCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    },
+    {
+      "cmd": "SwitchLEDPackage",
+      "transport": "ble",
+      "direction": "to_device",
+      "awaits_response": true,
+      "request_fields": [
+        {
+          "name": "i",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "response_fields": [],
+      "description": "opcode 0x90",
+      "source_class": "SwitchLEDPackageCommand",
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "switch"
+    }
+  ],
+  "events": [
+    {
+      "cmd": "RET_DEV_INFO",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "product_id",
+          "serialized_name": null,
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "model_id",
+          "serialized_name": null,
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "battery_status",
+          "serialized_name": null,
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "linked_device_count",
+          "serialized_name": null,
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "active_channel",
+          "serialized_name": null,
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "audio_source",
+          "serialized_name": null,
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "mac_address",
+          "serialized_name": null,
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        },
+        {
+          "name": "device_name",
+          "serialized_name": null,
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0x12",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "RET_MFB_STATUS",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "mfb_status",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0x34",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "REP_VER",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "firmware_version",
+          "serialized_name": null,
+          "kind": "string",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0x42",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "REP_EQ_MODE_SETTING",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "eq_mode",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0x62",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "REP_NOTIFY_EQ_SETTING_CHANGE",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "eq_mode",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0x64",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "REP_FEEDBACK_STATUS",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "feedback_tone_status",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0x66",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "REP_HFP_STATUS",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "hfp_status",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0x69",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "RET_LIGHT_STATUS",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "light_status",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0x72",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "RET_SQ_STATUS",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "sq_status",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0xb0",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    },
+    {
+      "cmd": "RET_PLAYTIME_BOOST_STATUS",
+      "transport": "ble",
+      "direction": "from_device",
+      "awaits_response": false,
+      "request_fields": [],
+      "response_fields": [
+        {
+          "name": "playtime_boost_status",
+          "serialized_name": null,
+          "kind": "integer",
+          "required": true,
+          "nullable": false,
+          "enum_values": null,
+          "description": null,
+          "entity_hint": null,
+          "location": null
+        }
+      ],
+      "description": "opcode 0xb3",
+      "source_class": null,
+      "document": null,
+      "confidence": 1.0,
+      "entity_hint": "sensor"
+    }
+  ],
+  "streaming": null,
+  "crypto": [
+    {
+      "algorithm": "MD5",
+      "call_site": "com.airbnb.lottie.network.NetworkCache",
+      "context_snippet": "        try {\n            byte[] bArrDigest = MessageDigest.getInstance(\"MD5\").digest(str.getBytes());\n            StringBuilder sb = new StringBuilder();\n            for (byte b : bArrDigest) {",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "SHA-256",
+      "call_site": "com.harman.sdk.utils.SHA256Util",
+      "context_snippet": "    private static String encryptSHA256ToString(byte[] bArr) {\n        return toHexString(hashTemplate(bArr, \"SHA-256\"));\n    }\n",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "MD5",
+      "call_site": "com.harman.sdk.utils.MD5Util",
+      "context_snippet": "            FileInputStream fileInputStream = new FileInputStream(str);\n            MessageDigest messageDigest = MessageDigest.getInstance(\"MD5\");\n            while (true) {\n                int i = fileInputStream.read(bArr);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "MD5",
+      "call_site": "com.harman.sdk.protocol4.cmd.analytics.Analytics4Cmd",
+      "context_snippet": "            try {\n                MessageDigest messageDigest = MessageDigest.getInstance(\"MD5\");\n                messageDigest.update(buffer);\n                Logger.m280d(TAG, \"getStringMD5, \" + HexUtil.encodeHexStr(buffer));",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "SHA-256",
+      "call_site": "com.harman.jbl.portable.p002ui.activities.NewDashboardActivityViewModel",
+      "context_snippet": "            try {\n                messageDigest = MessageDigest.getInstance(\"SHA-256\");\n            } catch (NoSuchAlgorithmException e) {\n                e.printStackTrace();",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "unknown",
+      "call_site": "com.amazonaws.internal.SdkDigestInputStream",
+      "context_snippet": "import java.security.MessageDigest",
+      "confidence": 0.4
+    },
+    {
+      "algorithm": "SHA-256",
+      "call_site": "com.amazonaws.auth.AbstractAWSSigner",
+      "context_snippet": "            try {\n                return MessageDigest.getInstance(\"SHA-256\");\n            } catch (NoSuchAlgorithmException e) {\n                throw new AmazonClientException(\"Unable to get SHA256 Function\" + e.getMessage(), e);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "MD5",
+      "call_site": "com.amazonaws.util.Md5Utils",
+      "context_snippet": "            try {\n                MessageDigest messageDigest = MessageDigest.getInstance(\"MD5\");\n                byte[] bArr = new byte[16384];\n                while (true) {",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES/GCM/NOPADDING",
+      "call_site": "com.amazonaws.internal.keyvaluestore.AWSKeyValueStore",
+      "context_snippet": "    private static final String CHARSET_NAME = \"UTF-8\";\n    private static final String CIPHER_AES_GCM_NOPADDING = \"AES/GCM/NoPadding\";\n    private static final int CIPHER_AES_GCM_NOPADDING_IV_LENGTH_IN_BYTES = 12;\n    private static final int CIPHER_AES_GCM_NOPADDING_TAG_LENGTH_LENGTH_IN_BITS = 128;",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "com.amazonaws.internal.keyvaluestore.KeyProvider10",
+      "context_snippet": "class KeyProvider10 implements KeyProvider {\n    private static final String AES_KEY_ALGORITHM = \"AES\";\n    private static final int CIPHER_AES_GCM_NOPADDING_KEY_LENGTH_IN_BITS = 256;\n    static final String KEY_ALIAS = \"AesGcmNoPaddingEncryption10-encryption-key\";",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "com.amazonaws.internal.keyvaluestore.KeyProvider23",
+      "context_snippet": "class KeyProvider23 implements KeyProvider {\n    private static final String AES_KEY_ALGORITHM = \"AES\";\n    private static final String ANDROID_KEY_STORE_NAME = \"AndroidKeyStore\";\n    static final String AWS_KEY_VALUE_STORE_VERSION_1_KEY_STORE_ALIAS_FOR_AES_SUFFIX = \".aesKeyStoreAlias\";",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "RSA/ECB/PKCS1PADDING",
+      "call_site": "com.amazonaws.internal.keyvaluestore.KeyProvider18",
+      "context_snippet": "    static final String CIPHER_PROVIDER_NAME_FOR_RSA = \"AndroidOpenSSL\";\n    static final String CIPHER_RSA_MODE = \"RSA/ECB/PKCS1Padding\";\n    static final String ENCRYPTED_AES_KEY = \"AesGcmNoPadding18-encrypted-encryption-key\";\n    static final String KEY_ALGORITHM_AES = \"AES\";",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "AES",
+      "call_site": "com.amazonaws.internal.keyvaluestore.KeyProvider18",
+      "context_snippet": "    static final String ENCRYPTED_AES_KEY = \"AesGcmNoPadding18-encrypted-encryption-key\";\n    static final String KEY_ALGORITHM_AES = \"AES\";\n    static final String KEY_ALGORITHM_RSA = \"RSA\";\n    private static final Log logger = LogFactory.getLog(KeyProvider18.class);",
+      "confidence": 1.0
+    },
+    {
+      "algorithm": "RSA",
+      "call_site": "com.amazonaws.internal.keyvaluestore.KeyProvider18",
+      "context_snippet": "    static final String KEY_ALGORITHM_AES = \"AES\";\n    static final String KEY_ALGORITHM_RSA = \"RSA\";\n    private static final Log logger = LogFactory.getLog(KeyProvider18.class);\n    private Context context;",
+      "confidence": 1.0
+    }
+  ],
+  "signing_traces": [
+    {
+      "algorithm": "MD5",
+      "components": [],
+      "key_source": null,
+      "source_method": "com.airbnb.lottie.network.NetworkCache",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "SHA-256",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "com.harman.sdk.utils.SHA256Util.hashTemplate",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "MD5",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr, 0, i",
+          "value": null,
+          "confidence": 0.2
+        }
+      ],
+      "key_source": null,
+      "source_method": "com.harman.sdk.utils.MD5Util.md5ForFile",
+      "confidence": 0.12,
+      "unresolved": [
+        "bArr, 0, i"
+      ]
+    },
+    {
+      "algorithm": "MD5",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "buffer",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "com.harman.sdk.protocol4.cmd.analytics.Analytics4Cmd.getStringMD5",
+      "confidence": 0.21,
+      "unresolved": [
+        "buffer"
+      ]
+    },
+    {
+      "algorithm": "SHA-256",
+      "components": [],
+      "key_source": null,
+      "source_method": "com.harman.jbl.portable.p002ui.activities.NewDashboardActivityViewModel",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "SHA-256",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": "bArr2",
+      "source_method": "com.amazonaws.auth.AbstractAWSSigner.sign",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "MD5",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr, 0, i",
+          "value": null,
+          "confidence": 0.2
+        }
+      ],
+      "key_source": null,
+      "source_method": "com.amazonaws.util.Md5Utils.computeMD5Hash",
+      "confidence": 0.12,
+      "unresolved": [
+        "bArr, 0, i"
+      ]
+    },
+    {
+      "algorithm": "AES/GCM/NOPADDING",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "str",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "com.amazonaws.internal.keyvaluestore.AWSKeyValueStore.encrypt",
+      "confidence": 0.21,
+      "unresolved": [
+        "str"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [],
+      "key_source": null,
+      "source_method": "com.amazonaws.internal.keyvaluestore.KeyProvider10",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [],
+      "key_source": null,
+      "source_method": "com.amazonaws.internal.keyvaluestore.KeyProvider23",
+      "confidence": 0.1,
+      "unresolved": [
+        "method containing crypto call not found"
+      ]
+    },
+    {
+      "algorithm": "RSA/ECB/PKCS1PADDING",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "com.amazonaws.internal.keyvaluestore.KeyProvider18.rsaEncrypt",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "AES",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "com.amazonaws.internal.keyvaluestore.KeyProvider18.rsaEncrypt",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    },
+    {
+      "algorithm": "RSA",
+      "components": [
+        {
+          "kind": "unknown",
+          "variable_name": "bArr",
+          "value": null,
+          "confidence": 0.35
+        }
+      ],
+      "key_source": null,
+      "source_method": "com.amazonaws.internal.keyvaluestore.KeyProvider18.rsaEncrypt",
+      "confidence": 0.21,
+      "unresolved": [
+        "bArr"
+      ]
+    }
+  ],
+  "play_store": {
+    "title": "JBL Portable",
+    "description": "Download the JBL Portable app to get the most out of your JBL portable speakers and unlock more features. Compatible with the following speakers: - Clip 5 - Go 4, Go 4 DUO - Grip - Flip 7, Flip 6, Flip 5, Flip 4, Flip 3 - Charge 6, Charge 5, Charge 4, Charge 3 - Pulse 5, Pulse 4, Pulse 3, Pulse 2 - Tuner 3 - Xtreme 4, Xtreme 3, Xtreme 2, Xtreme - Boombox 4, Boombox 3, Boombox 2, Boombox App features: - Connect to compatible JBL portable speakers for Stereo to amplify sound or Party mode for a bigger party - Personalize and control your speaker straight from the app - Get additional software updates and product support",
+    "summary": "The JBL Portable app works with JBL portable Bluetooth speakers.",
+    "category": "Entertainment",
+    "developer": "Harman Consumer, Inc.",
+    "developer_id": "Harman+Consumer,+Inc.",
+    "rating": 4.6820107,
+    "installs": "10,000,000+",
+    "play_store_url": "https://play.google.com/store/apps/details?id=com.harman.ble.jbllink"
+  },
+  "duplicate_check": {
+    "found": true,
+    "location": "core",
+    "name": "spotify",
+    "repo_url": null,
+    "coverage_estimate": "partial"
+  },
+  "extraction_confidence": 0.95,
+  "extractor_notes": [
+    "low confidence (<0.7): Identification, PreviewPattern, ReqAuthentication, ReqRadioInfo, SetAuraCastGroup, SetAuracastGroupNonLLS, SetChannel, SetChannelPulse2"
+  ],
+  "raw_permissions": [
+    "android.permission.INTERNET",
+    "android.permission.BLUETOOTH",
+    "android.permission.BLUETOOTH_ADMIN",
+    "android.permission.BLUETOOTH_SCAN",
+    "android.permission.BLUETOOTH_CONNECT",
+    "android.permission.CHANGE_NETWORK_STATE",
+    "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_COARSE_LOCATION",
+    "android.permission.MODIFY_AUDIO_SETTINGS",
+    "android.permission.SYSTEM_ALERT_WINDOW",
+    "android.permission.FOREGROUND_SERVICE",
+    "android.permission.ACCESS_WIFI_STATE",
+    "android.permission.VIBRATE",
+    "android.permission.WAKE_LOCK",
+    "android.permission.EXPAND_STATUS_BAR",
+    "android.permission.READ_EXTERNAL_STORAGE",
+    "android.permission.WRITE_EXTERNAL_STORAGE",
+    "android.permission.POST_NOTIFICATIONS",
+    "com.google.android.c2dm.permission.RECEIVE",
+    "com.google.android.gms.permission.AD_ID",
+    "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE",
+    "com.harman.ble.jbllink.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "extra": {
+    "framed": {
+      "frame": [
+        {
+          "kind": "const",
+          "value": 170
+        },
+        {
+          "kind": "opcode"
+        },
+        {
+          "kind": "length"
+        },
+        {
+          "kind": "payload"
+        }
+      ],
+      "commands": [
+        {
+          "name": "BaseP4",
+          "class": "BaseP4Command",
+          "opcode": 1,
+          "payload": [],
+          "params": [],
+          "replies": [],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "ClearDeviceAnalyticsBrEdr",
+          "class": "ClearDeviceAnalyticsBrEdrCommand",
+          "opcode": 1,
+          "payload": [
+            {
+              "value": 148
+            },
+            {
+              "value": 0
+            }
+          ],
+          "params": [],
+          "replies": [],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "ClearDeviceAnalytics",
+          "class": "ClearDeviceAnalyticsCommand",
+          "opcode": 1,
+          "payload": [
+            {
+              "value": 130
+            },
+            {
+              "value": 0
+            }
+          ],
+          "params": [],
+          "replies": [],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "ClearDevicePlayAnalyticsBrEdr",
+          "class": "ClearDevicePlayAnalyticsBrEdrCommand",
+          "opcode": 1,
+          "payload": [
+            {
+              "value": 150
+            },
+            {
+              "value": 0
+            }
+          ],
+          "params": [],
+          "replies": [],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "ControlDeviceFeature",
+          "class": "ControlDeviceFeatureCommand",
+          "opcode": 172,
+          "payload": [],
+          "params": [],
+          "replies": [
+            173
+          ],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "DisconnectDevice",
+          "class": "DisconnectDeviceCommand",
+          "opcode": 53,
+          "payload": [],
+          "params": [],
+          "replies": [
+            0
+          ],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "EnableNotifyLedPatternInfo",
+          "class": "EnableNotifyLedPatternInfoCommand",
+          "opcode": 137,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            136
+          ],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "GetDevInfo",
+          "class": "GetDevInfoCommand",
+          "opcode": 17,
+          "payload": [],
+          "params": [],
+          "replies": [
+            18
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "Identification",
+          "class": "IdentificationCommand",
+          "opcode": 49,
+          "payload": [
+            {
+              "unknown": "b"
+            }
+          ],
+          "params": [],
+          "replies": [],
+          "kind": "other",
+          "complete": false
+        },
+        {
+          "name": "NotifyDfuCancel",
+          "class": "NotifyDfuCancelCommand",
+          "opcode": 71,
+          "payload": [
+            {
+              "value": 1
+            }
+          ],
+          "params": [],
+          "replies": [
+            0
+          ],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "NotifySectStart",
+          "class": "NotifySectStartCommand",
+          "opcode": 69,
+          "payload": [],
+          "params": [],
+          "replies": [
+            0
+          ],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "PartyBoxAuraCast",
+          "class": "PartyBoxAuraCastCommand",
+          "opcode": 19,
+          "payload": [
+            {
+              "value": 0
+            },
+            {
+              "value": 60
+            },
+            {
+              "value": 1
+            },
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            0
+          ],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "PreviewPattern",
+          "class": "PreviewPatternCommand",
+          "opcode": 145,
+          "payload": [
+            {
+              "unknown": "(byte) Integer.parseInt(this.packageId, CharsKt.checkRadix(16))"
+            },
+            {
+              "unknown": "Byte.parseByte(this.patternId, CharsKt.checkRadix(16))"
+            }
+          ],
+          "params": [],
+          "replies": [
+            136
+          ],
+          "kind": "other",
+          "complete": false
+        },
+        {
+          "name": "ReqAnalyticsBrEdr",
+          "class": "ReqAnalyticsBrEdrCommand",
+          "opcode": 147,
+          "payload": [],
+          "params": [],
+          "replies": [
+            148
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqAnalytics",
+          "class": "ReqAnalyticsCommand",
+          "opcode": 129,
+          "payload": [],
+          "params": [],
+          "replies": [
+            130
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqAuracastGroup",
+          "class": "ReqAuracastGroupCommand",
+          "opcode": 161,
+          "payload": [],
+          "params": [],
+          "replies": [],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqAuracastGroupNonLLS",
+          "class": "ReqAuracastGroupNonLLSCommand",
+          "opcode": 161,
+          "payload": [],
+          "params": [],
+          "replies": [
+            162
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqAuthentication",
+          "class": "ReqAuthenticationCommand",
+          "opcode": 241,
+          "payload": [
+            {
+              "unknown": "(byte) (authentication.ordinal() + 1)"
+            },
+            {
+              "unknown": "(byte) (authentication == AuthenticationAction.Cancel ? 0 : i)"
+            }
+          ],
+          "params": [],
+          "replies": [],
+          "kind": "request",
+          "complete": false
+        },
+        {
+          "name": "ReqBassVolume",
+          "class": "ReqBassVolumeCommand",
+          "opcode": 119,
+          "payload": [],
+          "params": [],
+          "replies": [
+            120
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqBattery",
+          "class": "ReqBatteryCommand",
+          "opcode": 19,
+          "payload": [
+            {
+              "param": "i",
+              "type": "int",
+              "default": 0
+            },
+            {
+              "value": 68
+            }
+          ],
+          "params": [
+            {
+              "name": "i",
+              "type": "int"
+            }
+          ],
+          "replies": [
+            18
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqBatteryStatus",
+          "class": "ReqBatteryStatusCommand",
+          "opcode": 157,
+          "payload": [
+            {
+              "value": 12
+            },
+            {
+              "value": 11
+            }
+          ],
+          "params": [],
+          "replies": [
+            158
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqBrightness",
+          "class": "ReqBrightnessCommand",
+          "opcode": 86,
+          "payload": [],
+          "params": [],
+          "replies": [
+            87
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqBtAddressCrc16",
+          "class": "ReqBtAddressCrc16Command",
+          "opcode": 19,
+          "payload": [
+            {
+              "param": "i",
+              "type": "int"
+            },
+            {
+              "value": 74
+            }
+          ],
+          "params": [
+            {
+              "name": "i",
+              "type": "int"
+            }
+          ],
+          "replies": [
+            18
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqChannel",
+          "class": "ReqChannelCommand",
+          "opcode": 19,
+          "payload": [
+            {
+              "param": "i",
+              "type": "int",
+              "default": 0
+            },
+            {
+              "value": 70
+            }
+          ],
+          "params": [
+            {
+              "name": "i",
+              "type": "int"
+            }
+          ],
+          "replies": [
+            18
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqDfuStart",
+          "class": "ReqDfuStartCommand",
+          "opcode": 67,
+          "payload": [],
+          "params": [],
+          "replies": [
+            0,
+            69
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqDfuVer",
+          "class": "ReqDfuVerCommand",
+          "opcode": 74,
+          "payload": [],
+          "params": [],
+          "replies": [
+            75
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqEQMode",
+          "class": "ReqEQModeCommand",
+          "opcode": 97,
+          "payload": [],
+          "params": [],
+          "replies": [
+            98
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqFeedbackTone",
+          "class": "ReqFeedbackToneCommand",
+          "opcode": 101,
+          "payload": [],
+          "params": [],
+          "replies": [
+            102
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqHFP",
+          "class": "ReqHFPCommand",
+          "opcode": 104,
+          "payload": [],
+          "params": [],
+          "replies": [
+            105
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqLeAudioStatus",
+          "class": "ReqLeAudioStatusCommand",
+          "opcode": 164,
+          "payload": [],
+          "params": [],
+          "replies": [
+            165
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqLedBrightness",
+          "class": "ReqLedBrightnessCommand",
+          "opcode": 139,
+          "payload": [],
+          "params": [],
+          "replies": [
+            140
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqLedMovementSpeed",
+          "class": "ReqLedMovementSpeedCommand",
+          "opcode": 142,
+          "payload": [],
+          "params": [],
+          "replies": [
+            143
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqLedPackageInfo",
+          "class": "ReqLedPackageInfoCommand",
+          "opcode": 131,
+          "payload": [],
+          "params": [],
+          "replies": [
+            132
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqLightStatus",
+          "class": "ReqLightStatusCommand",
+          "opcode": 113,
+          "payload": [],
+          "params": [],
+          "replies": [
+            114
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqMFB",
+          "class": "ReqMFBCommand",
+          "opcode": 51,
+          "payload": [],
+          "params": [],
+          "replies": [
+            52
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqMicStatus",
+          "class": "ReqMicStatusCommand",
+          "opcode": 19,
+          "payload": [
+            {
+              "param": "i",
+              "type": "int",
+              "default": 0
+            },
+            {
+              "value": 83
+            }
+          ],
+          "params": [
+            {
+              "name": "i",
+              "type": "int"
+            }
+          ],
+          "replies": [
+            18
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqPatternList",
+          "class": "ReqPatternListCommand",
+          "opcode": 81,
+          "payload": [],
+          "params": [],
+          "replies": [
+            82,
+            84,
+            90
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqPlayAnalyticsBrEdr",
+          "class": "ReqPlayAnalyticsBrEdrCommand",
+          "opcode": 149,
+          "payload": [],
+          "params": [],
+          "replies": [
+            150
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqPlayerSettings",
+          "class": "ReqPlayerSettingsCommand",
+          "opcode": 168,
+          "payload": [
+            {
+              "value": 1
+            },
+            {
+              "value": 2
+            },
+            {
+              "value": 3
+            }
+          ],
+          "params": [],
+          "replies": [
+            166
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqPlaytimeBoost",
+          "class": "ReqPlaytimeBoostCommand",
+          "opcode": 177,
+          "payload": [],
+          "params": [],
+          "replies": [
+            179
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqRadioInfo",
+          "class": "ReqRadioInfoCommand",
+          "opcode": 180,
+          "payload": [
+            {
+              "unknown": "(byte) requestType.getType()"
+            }
+          ],
+          "params": [],
+          "replies": [],
+          "kind": "request",
+          "complete": false
+        },
+        {
+          "name": "ReqSerialNumber",
+          "class": "ReqSerialNumberCommand",
+          "opcode": 122,
+          "payload": [],
+          "params": [],
+          "replies": [
+            123
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqSimpleEq",
+          "class": "ReqSimpleEqCommand",
+          "opcode": 108,
+          "payload": [
+            {
+              "value": 0
+            }
+          ],
+          "params": [],
+          "replies": [
+            109
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqTriggerUpgrade",
+          "class": "ReqTriggerUpgradeCommand",
+          "opcode": 77,
+          "payload": [],
+          "params": [],
+          "replies": [
+            76
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqTwsLedPattern",
+          "class": "ReqTwsLedPatternCommand",
+          "opcode": 81,
+          "payload": [],
+          "params": [],
+          "replies": [
+            82
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqVendorCodesAndDisabledFeatures",
+          "class": "ReqVendorCodesAndDisabledFeaturesCommand",
+          "opcode": 171,
+          "payload": [],
+          "params": [],
+          "replies": [
+            173
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "ReqVer",
+          "class": "ReqVerCommand",
+          "opcode": 65,
+          "payload": [],
+          "params": [],
+          "replies": [
+            66
+          ],
+          "kind": "request",
+          "complete": true
+        },
+        {
+          "name": "RequestScreenDisplay",
+          "class": "RequestScreenDisplayCommand",
+          "opcode": 183,
+          "payload": [],
+          "params": [],
+          "replies": [],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "RoleCheck",
+          "class": "RoleCheckCommand",
+          "opcode": 23,
+          "payload": [],
+          "params": [],
+          "replies": [
+            22
+          ],
+          "kind": "other",
+          "complete": true
+        },
+        {
+          "name": "SetAppAck",
+          "class": "SetAppAckCommand",
+          "opcode": 1,
+          "payload": [
+            {
+              "value": 18
+            },
+            {
+              "value": 0
+            }
+          ],
+          "params": [],
+          "replies": [],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetAuraCastGroup",
+          "class": "SetAuraCastGroupCommand",
+          "opcode": 160,
+          "payload": [
+            {
+              "value": 1
+            },
+            {
+              "value": 1
+            },
+            {
+              "unknown": "(byte) groupTypeInfo.getAction().getValue()"
+            },
+            {
+              "value": 2
+            },
+            {
+              "value": 1
+            },
+            {
+              "unknown": "(byte) groupTypeInfo.getType().getValue()"
+            },
+            {
+              "value": 3
+            },
+            {
+              "value": 1
+            },
+            {
+              "unknown": "(byte) groupTypeInfo.getRole().getValue()"
+            },
+            {
+              "value": 4
+            },
+            {
+              "value": 1
+            },
+            {
+              "unknown": "(byte) groupTypeInfo.getChannel().getValue()"
+            }
+          ],
+          "params": [],
+          "replies": [],
+          "kind": "set",
+          "complete": false
+        },
+        {
+          "name": "SetAuracastGroupNonLLS",
+          "class": "SetAuracastGroupNonLLSCommand",
+          "opcode": 160,
+          "payload": [
+            {
+              "value": 1
+            },
+            {
+              "value": 1
+            },
+            {
+              "unknown": "(byte) groupTypeInfo.getAction().getValue()"
+            },
+            {
+              "value": 2
+            },
+            {
+              "value": 1
+            },
+            {
+              "unknown": "(byte) groupTypeInfo.getType().getValue()"
+            },
+            {
+              "value": 4
+            },
+            {
+              "value": 1
+            },
+            {
+              "unknown": "(byte) groupTypeInfo.getChannel().getValue()"
+            }
+          ],
+          "params": [],
+          "replies": [
+            162
+          ],
+          "kind": "set",
+          "complete": false
+        },
+        {
+          "name": "SetBrightness",
+          "class": "SetBrightnessCommand",
+          "opcode": 85,
+          "payload": [
+            {
+              "param": "i",
+              "type": "int"
+            }
+          ],
+          "params": [
+            {
+              "name": "i",
+              "type": "int"
+            }
+          ],
+          "replies": [],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetChannel",
+          "class": "SetChannelCommand",
+          "opcode": 21,
+          "payload": [
+            {
+              "param": "i",
+              "type": "int",
+              "default": 0
+            },
+            {
+              "unknown": "b"
+            },
+            {
+              "value": 0
+            }
+          ],
+          "params": [
+            {
+              "name": "i",
+              "type": "int"
+            }
+          ],
+          "replies": [
+            0
+          ],
+          "kind": "set",
+          "complete": false
+        },
+        {
+          "name": "SetChannelLock",
+          "class": "SetChannelLockCommand",
+          "opcode": 21,
+          "payload": [
+            {
+              "param": "i",
+              "type": "int",
+              "default": 0
+            },
+            {
+              "value": 73
+            },
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "i",
+              "type": "int"
+            },
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            0
+          ],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetChannelPulse2",
+          "class": "SetChannelPulse2Command",
+          "opcode": 21,
+          "payload": [
+            {
+              "value": 0
+            },
+            {
+              "unknown": "b"
+            },
+            {
+              "value": 0
+            }
+          ],
+          "params": [],
+          "replies": [],
+          "kind": "set",
+          "complete": false
+        },
+        {
+          "name": "SetDeviceName",
+          "class": "SetDeviceNameCommand",
+          "opcode": 21,
+          "payload": [],
+          "params": [],
+          "replies": [
+            0
+          ],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetDfuData",
+          "class": "SetDfuDataCommand",
+          "opcode": 68,
+          "payload": [],
+          "params": [],
+          "replies": [
+            69
+          ],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetEQMode",
+          "class": "SetEQModeCommand",
+          "opcode": 99,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            0
+          ],
+          "kind": "set",
+          "complete": true,
+          "ack": {
+            "opcode": 0,
+            "ok": 0
+          },
+          "field": "eq_mode",
+          "values": [
+            0,
+            1
+          ],
+          "values_complete": true,
+          "value_labels": {
+            "0": "indoor",
+            "1": "outdoor"
+          }
+        },
+        {
+          "name": "SetFeedbackTone",
+          "class": "SetFeedbackToneCommand",
+          "opcode": 103,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [],
+          "kind": "set",
+          "complete": true,
+          "ack": {
+            "opcode": 0,
+            "ok": 0
+          },
+          "field": "feedback_tone_status",
+          "values": [
+            0,
+            1
+          ],
+          "values_complete": true,
+          "value_labels": {
+            "0": "off",
+            "1": "on"
+          }
+        },
+        {
+          "name": "SetHFP",
+          "class": "SetHFPCommand",
+          "opcode": 112,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            0
+          ],
+          "kind": "set",
+          "complete": true,
+          "ack": {
+            "opcode": 0,
+            "ok": 0
+          },
+          "field": "hfp_status",
+          "values": [
+            0,
+            1
+          ],
+          "values_complete": true,
+          "value_labels": {
+            "0": "off",
+            "1": "on"
+          }
+        },
+        {
+          "name": "SetLeAudioStatus",
+          "class": "SetLeAudioStatusCommand",
+          "opcode": 163,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            165
+          ],
+          "kind": "set",
+          "complete": true,
+          "values": [
+            0,
+            1
+          ],
+          "values_complete": false
+        },
+        {
+          "name": "SetLedBrightness",
+          "class": "SetLedBrightnessCommand",
+          "opcode": 138,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            },
+            {
+              "param": "b2",
+              "type": "byte"
+            },
+            {
+              "param": "b3",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            },
+            {
+              "name": "b2",
+              "type": "byte"
+            },
+            {
+              "name": "b3",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            140
+          ],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetLedMovementSpeed",
+          "class": "SetLedMovementSpeedCommand",
+          "opcode": 141,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            143
+          ],
+          "kind": "set",
+          "complete": true,
+          "values": [
+            1
+          ],
+          "values_complete": false
+        },
+        {
+          "name": "SetLedPackage",
+          "class": "SetLedPackageCommand",
+          "opcode": 133,
+          "payload": [],
+          "params": [],
+          "replies": [
+            135
+          ],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetLightStatus",
+          "class": "SetLightStatusCommand",
+          "opcode": 115,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            0
+          ],
+          "kind": "set",
+          "complete": true,
+          "ack": {
+            "opcode": 0,
+            "ok": 0
+          },
+          "field": "light_status",
+          "values": [
+            0,
+            1
+          ],
+          "values_complete": false
+        },
+        {
+          "name": "SetLinkMode",
+          "class": "SetLinkModeCommand",
+          "opcode": 106,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            107
+          ],
+          "kind": "set",
+          "complete": true,
+          "values": [
+            0,
+            1,
+            2
+          ],
+          "values_complete": false
+        },
+        {
+          "name": "SetMFB",
+          "class": "SetMFBCommand",
+          "opcode": 50,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            0
+          ],
+          "kind": "set",
+          "complete": true,
+          "ack": {
+            "opcode": 0,
+            "ok": 0
+          },
+          "field": "mfb_status",
+          "values": [
+            0,
+            1
+          ],
+          "values_complete": true,
+          "value_labels": {
+            "0": "play_pause",
+            "1": "voice"
+          }
+        },
+        {
+          "name": "SetNormalPattern",
+          "class": "SetNormalPatternCommand",
+          "opcode": 83,
+          "payload": [],
+          "params": [],
+          "replies": [
+            84
+          ],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetPlayerSettings",
+          "class": "SetPlayerSettingsCommand",
+          "opcode": 167,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            },
+            {
+              "value": 1
+            },
+            {
+              "param": "b2",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            },
+            {
+              "name": "b2",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            166
+          ],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetPlaytimeBoost",
+          "class": "SetPlaytimeBoostCommand",
+          "opcode": 178,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            179
+          ],
+          "kind": "set",
+          "complete": true,
+          "values": [
+            0,
+            1
+          ],
+          "values_complete": true
+        },
+        {
+          "name": "SetRadioInfo",
+          "class": "SetRadioInfoCommand",
+          "opcode": 182,
+          "payload": [],
+          "params": [],
+          "replies": [],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetSQ",
+          "class": "SetSQCommand",
+          "opcode": 175,
+          "payload": [
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [
+            176
+          ],
+          "kind": "set",
+          "complete": true,
+          "values": [
+            0,
+            1
+          ],
+          "values_complete": false
+        },
+        {
+          "name": "SetScreenDisplay",
+          "class": "SetScreenDisplayCommand",
+          "opcode": 185,
+          "payload": [
+            {
+              "value": 203
+            },
+            {
+              "value": 1
+            },
+            {
+              "param": "b",
+              "type": "byte"
+            }
+          ],
+          "params": [
+            {
+              "name": "b",
+              "type": "byte"
+            }
+          ],
+          "replies": [],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetSimpleEq",
+          "class": "SetSimpleEqCommand",
+          "opcode": 110,
+          "payload": [],
+          "params": [],
+          "replies": [
+            0
+          ],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SetTwsLedPattern",
+          "class": "SetTwsLedPatternCommand",
+          "opcode": 83,
+          "payload": [],
+          "params": [],
+          "replies": [
+            0
+          ],
+          "kind": "set",
+          "complete": true
+        },
+        {
+          "name": "SwitchLEDPackage",
+          "class": "SwitchLEDPackageCommand",
+          "opcode": 144,
+          "payload": [
+            {
+              "param": "i",
+              "type": "int"
+            }
+          ],
+          "params": [
+            {
+              "name": "i",
+              "type": "int"
+            }
+          ],
+          "replies": [
+            135
+          ],
+          "kind": "other",
+          "complete": true
+        }
+      ],
+      "replies": [
+        {
+          "opcode": 18,
+          "decode": "tokens"
+        },
+        {
+          "opcode": 52,
+          "decode": "uint8",
+          "field": "mfb_status"
+        },
+        {
+          "opcode": 66,
+          "decode": "version",
+          "field": "firmware_version"
+        },
+        {
+          "opcode": 98,
+          "decode": "uint8",
+          "field": "eq_mode"
+        },
+        {
+          "opcode": 100,
+          "decode": "uint8",
+          "field": "eq_mode"
+        },
+        {
+          "opcode": 102,
+          "decode": "uint8",
+          "field": "feedback_tone_status"
+        },
+        {
+          "opcode": 105,
+          "decode": "uint8",
+          "field": "hfp_status"
+        },
+        {
+          "opcode": 114,
+          "decode": "uint8",
+          "field": "light_status"
+        },
+        {
+          "opcode": 176,
+          "decode": "uint8",
+          "field": "sq_status"
+        },
+        {
+          "opcode": 179,
+          "decode": "uint8",
+          "field": "playtime_boost_status"
+        }
+      ],
+      "tokens": [
+        {
+          "id": 66,
+          "name": "product_id",
+          "size": 2,
+          "encoding": "hex"
+        },
+        {
+          "id": 67,
+          "name": "model_id",
+          "size": 1,
+          "encoding": "hex"
+        },
+        {
+          "id": 68,
+          "name": "battery_status",
+          "size": 1,
+          "encoding": "level_charging_bit7"
+        },
+        {
+          "id": 69,
+          "name": "linked_device_count",
+          "size": 1,
+          "encoding": "hex"
+        },
+        {
+          "id": 70,
+          "name": "active_channel",
+          "size": 1,
+          "encoding": "hex"
+        },
+        {
+          "id": 71,
+          "name": "audio_source",
+          "size": 1,
+          "encoding": "hex"
+        },
+        {
+          "id": 72,
+          "name": "mac_address",
+          "size": 6,
+          "encoding": "hex"
+        },
+        {
+          "id": 193,
+          "name": "device_name",
+          "size": null,
+          "encoding": "utf8"
+        }
+      ],
+      "opcode_names": {
+        "0x01": "ENABLE_SQ",
+        "0x02": "RET_DEV_BYE_BYE",
+        "0x11": "REQ_DEV_INFO",
+        "0x12": "RET_DEV_INFO",
+        "0x13": "REQ_DEV_INFO_TOKEN",
+        "0x15": "SET_DEV_INFO",
+        "0x16": "ROLE_INFO",
+        "0x17": "ROLE_CHECK",
+        "0x22": "NOTIFY_LINK_DEV_DROP",
+        "0x31": "IDENT_DEV",
+        "0x32": "SET_MFB_STATUS",
+        "0x33": "REQ_MFB_STATUS",
+        "0x34": "RET_MFB_STATUS",
+        "0x35": "DISCONNECT_DEVICE",
+        "0x41": "REQ_VER",
+        "0x42": "REP_VER",
+        "0x43": "REQ_DFU_START",
+        "0x44": "SET_DFU_DATA",
+        "0x45": "NOTIFY_DFU_STATUS_CHANGE",
+        "0x47": "NOTIFY_DFU_CANCEL",
+        "0x4a": "REQ_DFU_VERSION",
+        "0x4b": "RET_DFU_VERSION",
+        "0x4c": "RET_TRIGGER_UPDATE",
+        "0x4d": "REQ_SERIAL_NUMBER_SECONDARY",
+        "0x4e": "REQ_FIRMWARE_VERSION_SECONDARY",
+        "0x51": "REQ_LED_PATTERN_INFO",
+        "0x52": "RET_LED_PATTERN_INFO",
+        "0x53": "SET_LED_PATTERN_INFO",
+        "0x54": "NOTIFY_LED_INTENSITY_LEVEL_CHANGE",
+        "0x55": "NOTIFY_LED_PATTERN",
+        "0x56": "REQ_BRIGHTNESS",
+        "0x57": "RET_BRIGHTNESS",
+        "0x58": "RET_SET_LED_VALUE",
+        "0x59": "SET_LED_PATTERN_INFO_CUSTOM",
+        "0x5a": "NOTIFY_LED_PATTERN_CUSTOM",
+        "0x61": "REQ_EQ_MODE_SETTING",
+        "0x62": "REP_EQ_MODE_SETTING",
+        "0x63": "SET_EQ_MODE_SETTING",
+        "0x64": "REP_NOTIFY_EQ_SETTING_CHANGE",
+        "0x65": "REQ_FEEDBACK_STATUS",
+        "0x66": "REP_FEEDBACK_STATUS",
+        "0x67": "SET_FEEDBACK_STATUS",
+        "0x68": "REQ_HFP_STATUS",
+        "0x69": "REP_HFP_STATUS",
+        "0x6a": "SET_LINK_MODE",
+        "0x6b": "RET_LINK_MODE",
+        "0x6c": "REQ_SIMPLE_EQ",
+        "0x6d": "RET_SIMPLE_EQ",
+        "0x6e": "SET_SIMPLE_EQ",
+        "0x70": "SET_HFP_STATUS",
+        "0x71": "REQ_LIGHT_STATUS",
+        "0x72": "RET_LIGHT_STATUS",
+        "0x73": "SET_LIGHT_STATUS",
+        "0x76": "SET_BASS_VOLUME",
+        "0x77": "REQ_BASS_VOLUME",
+        "0x78": "RET_BASS_VOLUME",
+        "0x7a": "REQ_SERIAL_NUMBER",
+        "0x7b": "RET_SERIAL_NUMBER",
+        "0x81": "REQ_ANALYTICS_DATA",
+        "0x82": "RET_ANALYTICS_CMD",
+        "0x83": "REQ_LED_PACKAGE_INFO",
+        "0x84": "RET_LED_PACKAGE_INFO",
+        "0x85": "SET_LED_PACKAGE",
+        "0x86": "SET_LED_CANVAS_PACKAGE",
+        "0x87": "NOTIFY_LED_PACKAGE_INFO",
+        "0x88": "NOTIFY_LED_PATTERN_INFO",
+        "0x89": "ENABLE_NOTIFY_LED_PATTERN_INFO",
+        "0x8a": "SET_LED_BRIGHTNESS",
+        "0x8b": "REQ_LED_BRIGHTNESS",
+        "0x8c": "RET_LED_BRIGHTNESS",
+        "0x8d": "SET_LED_MOVEMENT_SPEED",
+        "0x8e": "REQ_LED_MOVEMENT_SPEED",
+        "0x8f": "RET_LED_MOVEMENT_SPEED",
+        "0x90": "SWITCH_LED_PACKAGE",
+        "0x91": "PREVIEW_PATTERN",
+        "0x92": "PREVIEW_CANVAS_PATTERN",
+        "0x93": "REQ_ANALYTICS_DATA_BR_EDR",
+        "0x94": "RET_ANALYTICS_DATA_BR_EDR",
+        "0x95": "REQ_PLAY_ANALYTICS_DATA_BR_EDR",
+        "0x96": "RET_PLAY_ANALYTICS_DATA_BR_EDR",
+        "0x97": "SET_ADVANCE_EQ",
+        "0x98": "REQ_ADVANCE_EQ",
+        "0x99": "RET_ADVANCE_EQ",
+        "0x9d": "REQ_DEVICE_USAGE_BATTERY_STATUS",
+        "0x9e": "RET_DEVICE_USAGE_BATTERY_STATUS",
+        "0xa0": "SET_AURA_CAST_GROUP",
+        "0xa1": "REQ_AURA_CAST_GROUP",
+        "0xa2": "RET_AURA_CAST_GROUP",
+        "0xa3": "SET_LE_AUDIO_STATUS",
+        "0xa4": "REQ_LE_AUDIO_STATUS",
+        "0xa5": "RET_LE_AUDIO_STATUS",
+        "0xa6": "RET_PLAYER_SETTINGS_STATUS",
+        "0xa7": "SET_PLAYER_SETTINGS_STATUS",
+        "0xa8": "REQ_PLAYER_SETTINGS_STATUS",
+        "0xab": "REQ_VENDOR_CODES_DISABLED_FEATURES",
+        "0xac": "CONTROL_DEVICE_FEATURE",
+        "0xad": "RET_VENDOR_CODES_DISABLED_FEATURES",
+        "0xaf": "SET_SQ_STATUS",
+        "0xb0": "RET_SQ_STATUS",
+        "0xb1": "REQ_PLAYTIME_BOOST_STATUS",
+        "0xb2": "SET_PLAYTIME_BOOST_STATUS",
+        "0xb3": "RET_PLAYTIME_BOOST_STATUS",
+        "0xb4": "REQ_RADIO_INFO",
+        "0xb5": "RET_RADIO_INFO",
+        "0xb6": "SET_RADIO_INFO",
+        "0xb7": "REQ_SCREEN_DISPLAY_STATUS",
+        "0xb8": "RET_SCREEN_DISPLAY_STATUS",
+        "0xb9": "SET_SCREEN_DISPLAY_STATUS",
+        "0xee": "RET_UNSUPPORTED_CMD",
+        "0xf1": "REQ_AUTHENTICATION",
+        "0xf2": "RET_AUTHENTICATION"
+      },
+      "transport": {
+        "source": "assets/AppConfig.json",
+        "service": "65786365-6c70-6f69-6e74-2e636f6d0000",
+        "notify": "65786365-6c70-6f69-6e74-2e636f6d0001",
+        "write": "65786365-6c70-6f69-6e74-2e636f6d0002",
+        "keys": {
+          "notify": "rxUUID",
+          "write": "txUUID"
+        }
+      },
+      "models": {
+        "0023": {
+          "name": "JBL Flip 3",
+          "protocol": "PROTOCOL_SPP",
+          "features": [
+            "MFB_SUPPORT"
+          ]
+        },
+        "0024": {
+          "name": "JBL Xtreme",
+          "protocol": "PROTOCOL_SPP",
+          "features": [
+            "MFB_SUPPORT"
+          ]
+        },
+        "1ebc": {
+          "name": "JBL Charge 3",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "MFB_SUPPORT",
+            "HFP_SUPPORT",
+            "FEEDBACK_SUPPORT"
+          ]
+        },
+        "1ed1": {
+          "name": "JBL Flip 4",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "MFB_SUPPORT",
+            "HFP_SUPPORT",
+            "FEEDBACK_SUPPORT"
+          ]
+        },
+        "1ed2": {
+          "name": "pulse3",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "MFB_SUPPORT",
+            "HFP_SUPPORT",
+            "FEEDBACK_SUPPORT",
+            "LED_SUPPORT",
+            "BRIGHTNESS_SUPPORT"
+          ]
+        },
+        "1ee7": {
+          "name": "JBL Boombox",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "MFB_SUPPORT",
+            "HFP_SUPPORT",
+            "FEEDBACK_SUPPORT",
+            "EQ_OUTDOOR_INDOOR_SUPPORT"
+          ]
+        },
+        "1efc": {
+          "name": "JBL Xtreme 2",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "MFB_SUPPORT",
+            "HFP_SUPPORT",
+            "FEEDBACK_SUPPORT"
+          ]
+        },
+        "1f17": {
+          "name": "JBL Charge 4",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT"
+          ]
+        },
+        "1f26": {
+          "name": "JBL Xtreme 2(QCC)",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "MFB_SUPPORT",
+            "HFP_SUPPORT",
+            "FEEDBACK_SUPPORT"
+          ]
+        },
+        "1f27": {
+          "name": "JBL BoomBox(QCC)",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "MFB_SUPPORT",
+            "HFP_SUPPORT",
+            "FEEDBACK_SUPPORT",
+            "EQ_OUTDOOR_INDOOR_SUPPORT"
+          ]
+        },
+        "1f29": {
+          "name": "JBL Charge 4(QCC)",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT"
+          ]
+        },
+        "1f31": {
+          "name": "JBL Flip 5",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT"
+          ]
+        },
+        "1f53": {
+          "name": "JBL Boombox 2",
+          "protocol": "PROTOCOL_GATT_BR_EDR",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "EQ_BALANCE_SUPPORT"
+          ]
+        },
+        "1f56": {
+          "name": "pulse4",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "LED_SUPPORT",
+            "BRIGHTNESS_STATUS_SUPPORT",
+            "BRIGHTNESS_SUPPORT"
+          ]
+        },
+        "202f": {
+          "name": "JBL Xtreme 3 ",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "EQ_BALANCE_SUPPORT"
+          ]
+        },
+        "2038": {
+          "name": "JBL Xtreme 2(GM)",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT"
+          ]
+        },
+        "2040": {
+          "name": "JBL Charge 5",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "EQ_BALANCE_SUPPORT"
+          ]
+        },
+        "204f": {
+          "name": "JBL Flip 6",
+          "protocol": "PROTOCOL_GATT_BR_EDR",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "EQ_BALANCE_SUPPORT"
+          ]
+        },
+        "2050": {
+          "name": "JBL Pulse 5",
+          "protocol": "PROTOCOL_GATT_BR_EDR",
+          "features": [
+            "LED_PACKAGE_SUPPORT",
+            "LED_BRIGHTNESS_SUPPORT",
+            "LED_MOVEMENT_SPEED_SUPPORT",
+            "EQ_BALANCE_SUPPORT",
+            "LED_AMBIENT_SOUND_SUPPORT",
+            "FEEDBACK_SUPPORT",
+            "FACTORY_RESET_SUPPORT"
+          ]
+        },
+        "206d": {
+          "name": "JBL Boombox 3",
+          "protocol": "PROTOCOL_GATT_BR_EDR",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "EQ_BALANCE_SUPPORT",
+            "AURACAST_SUPPORT",
+            "HORIZONTAL_DEVICE",
+            "PARTYBOOST_BUTTON_SUPPORT"
+          ]
+        },
+        "2075": {
+          "name": "JBL Boombox 3 Wi-Fi",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "REDIRECT_JBL_ONE"
+          ]
+        },
+        "208c": {
+          "name": "JBL Charge 5 Wi-Fi",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "REDIRECT_JBL_ONE"
+          ]
+        },
+        "20dc": {
+          "name": "JBL Xtreme 4 ",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "LONG_LASTING_STEREO",
+            "HORIZONTAL_DEVICE",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "20e3": {
+          "name": "JBL Charge 6",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "HORIZONTAL_DEVICE",
+            "7_BANDS_EQ",
+            "SQ_SUPPORT",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "20e4": {
+          "name": "JBL GO 4",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "20f5": {
+          "name": "JBL CLIP 5",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "2107": {
+          "name": "JBL Flip 7",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "HORIZONTAL_DEVICE",
+            "7_BANDS_EQ",
+            "SQ_SUPPORT",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "210a": {
+          "name": "JBL GO 4",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "LONG_LASTING_STEREO"
+          ]
+        },
+        "2132": {
+          "name": "JBL Grip",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "FACTORY_RESET_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "SQ_SUPPORT",
+            "FACTORY_RESET_SUPPORT",
+            "LIGHT_SHOW",
+            "BRIGHTNESS",
+            "TEMPO",
+            "TEMPERATURE",
+            "COLOR_MODE_PRESETS",
+            "7_BANDS_EQ",
+            "AMBIENT_SOUNDS",
+            "PROTOCOL_4",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "214c": {
+          "name": "JBL Tuner 3",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "HORIZONTAL_DEVICE",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "SQ_SUPPORT",
+            "RADIO_SUPPORT",
+            "SCREEN_DISPLAY_BRIGHTNESS",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "214e": {
+          "name": "JBL Boombox 4",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "HORIZONTAL_DEVICE",
+            "SQ_SUPPORT",
+            "7_BANDS_EQ",
+            "BASS_BOOST_SUPPORT",
+            "LE_AUDIO_CONNECTION_SUPPORT",
+            "PROTOCOL_4",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "215c": {
+          "name": "JBL Go 4 DUO",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "AIR_TOUCH_STEREO",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "2168": {
+          "name": "JBL GO 5",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "FACTORY_RESET_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "SQ_SUPPORT",
+            "DUAL_LLS_SUPPORT",
+            "FACTORY_RESET_SUPPORT",
+            "LIGHT_SHOW",
+            "7_BANDS_EQ",
+            "PROTOCOL_4",
+            "AIR_TOUCH_SUPPORT",
+            "AUTO_POWER_OFF_SUPPORT",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "2169": {
+          "name": "JBL Xtreme 5",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "HORIZONTAL_DEVICE",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "FACTORY_RESET_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "SQ_SUPPORT",
+            "FACTORY_RESET_SUPPORT",
+            "LIGHT_SHOW",
+            "COLOR_MODE",
+            "7_BANDS_EQ",
+            "PROTOCOL_4",
+            "AUTO_POWER_OFF_SUPPORT",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "2181": {
+          "name": "JBLGo4DUOR",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "AIR_TOUCH_STEREO",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "PLAY_TIME_BOOST",
+            "FACTORY_RESET_SUPPORT",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "2185": {
+          "name": "JBL Flip Essential 3 SE",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "FACTORY_RESET_SUPPORT",
+            "HORIZONTAL_DEVICE",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "7_BANDS_EQ",
+            "SQ_SUPPORT",
+            "PROTOCOL_4",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "218a": {
+          "name": "JBL Charge Essential 3 SE",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "FEEDBACK_SUPPORT",
+            "PRESET_EQ",
+            "NON_PARTY_BOOST_SUPPORT",
+            "AURACAST_SUPPORT",
+            "ONE_TOUCH_BACK_SUPPORT",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "DEVICE_USAGE_SUMMARY_SUPPORT",
+            "FACTORY_RESET_SUPPORT",
+            "HORIZONTAL_DEVICE",
+            "BLE_DISCOVERY_CONNECT_ONLY",
+            "7_BANDS_EQ",
+            "SQ_SUPPORT",
+            "PROTOCOL_4",
+            "BATTERY_NOTIFICATION_SUPPORT"
+          ]
+        },
+        "218b": {
+          "name": "JBL Pulse 6",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "PROTOCOL_4"
+          ]
+        },
+        "21a2": {
+          "name": "JBL CLIP 6",
+          "protocol": "PROTOCOL_BLE",
+          "features": [
+            "PROTOCOL_4"
+          ]
+        }
+      },
+      "manufacturer_ids": [
+        3787,
+        87
+      ],
+      "base_class": "BaseCommand"
+    },
+    "android_strings": {
+      "OTA_Upgrade_Fail_ButtonTitle": "Reconnect",
+      "alert_VRbtn_tips_ok": "Got it",
+      "camera_error": "This device doesn\\'t support Camera2 API.",
+      "cant_connect_product": "Can’t Connect Your Product?",
+      "cant_connect_text": "Move your phone closer to",
+      "cant_connect_text_second_part": "and close the JBL Portable app on other phones.",
+      "cant_connect_title": "Can\\'t Connect to Speaker",
+      "charge3_only_successful_tips_1": "The speaker will restart automatically.\\n Please do not unplug.",
+      "charge3_only_successful_tips_3": "Disable Bluetooth on the phone and\\nreconnect,if the app cannot find\\nyour speaker.",
+      "charge3_only_upgrade_successful": "Upgrade Successful",
+      "connect_play": "Connect speakers to play together",
+      "connect_plus": "ConnectPlus",
+      "connect_plus_series": "Connect+",
+      "connect_plus_title_one_content": "JBL Connect+",
+      "connect_plus_title_two_content": "Link more than 100 speakers",
+      "connect_series": "Connect",
+      "connect_speaker": "Connect Speaker",
+      "connect_speakers_title": "Please Connect Speakers to App",
+      "connect_spotify_account": "Connect your Spotify account",
+      "connect_stereo_desc": "Connect 2 speakers to stream stereo channel",
+      "connect_timeout": "Connect timeout, please try again.",
+      "connect_tip": "The speaker can only connect to 2 BT devices at the same time. Please disconnect one to enable another device to connect.",
+      "connect_title_content": "Connect",
+      "connect_title_one_content": "JBL Connect",
+      "connect_title_two_content": "JBL Charge3(firmware v2.0 and below),JBL Pulse 2,JBL Xtreme,JBL Flip 3",
+      "connected": "Connected",
+      "connected_tips": "Your speaker is successfully connected.",
+      "connecting": "Connecting...",
+      "connecting_product": "Connecting product...",
+      "connecting_status": "Connecting",
+      "connection_failed": "Connection failed",
+      "create_fail_desc": "Sorry, cannot create the stereo group at the moment. Please try again.",
+      "d_fail_msg": "Please check your Internet connection  \\n and try again.",
+      "des_connect_plus_text": "JBL Connect+ \\n 1 + 100",
+      "des_connect_text": "JBL Connect \\n 1 + 1",
+      "disconnect_product": "Disconnect Product",
+      "disconnect_product_desc": "Disconnect your product and mobile phone with other Bluetooth devices.",
+      "disconnect_speaker_alert_tips": "Are you sure you want to disconnect this speaker?",
+      "download_fail": "Download failed",
+      "download_unsuccess": "Download \\nunsuccessful",
+      "downloading_failed": "Download failed",
+      "error_a11y_label": "Error: invalid",
+      "error_icon_content_description": "Error",
+      "fail_connect": "Fail to connect speaker, please try again.",
+      "fail_stereo_resume_desc": "Sorry, cannot resume stereo at the moment. Please try again or turn off Auracast manually by pressing the button on your products.",
+      "file_download_failure_tips": "No Internet Connection",
+      "firmware_download_failed": "FIRMWARE_DOWNLOAD_FAILED",
+      "firmware_restart_success": "FIRMWARE_RESTART_SUCCESS",
+      "forget_and_reconnect": "FORGET AND RECONNECT",
+      "grouping_successful": "Grouping Successful",
+      "how_connect": "How to connect speaker",
+      "jbllink_upgrade_successful": "Upgrade Successful",
+      "label_connecting_wait": "Connecting, please wait",
+      "le_audio_connection": "LE Audio Connection",
+      "mtrl_checkbox_state_description_checked": "Checked",
+      "mtrl_checkbox_state_description_indeterminate": "Partially checked",
+      "mtrl_checkbox_state_description_unchecked": "Not checked",
+      "my_speaker_is_not_found_context_one": "Ensure all the PartyBoost speakers are up-to-date the latest firmware.\\n\\nOr press PartyBoot button on the speaker to pair manually.",
+      "my_speaker_is_not_found_title": "My speaker doesn\\'t show up",
+      "nearby_found": "Nearby speaker found!",
+      "new_uis_ota_bluetooth_connection_details_msg": "Make sure your speaker is connected and try again.",
+      "new_uis_ota_internet_connection_details_msg": "Check your internet connection and try again.",
+      "new_uis_ota_unsuccessful": "Update\\nunsuccessful",
+      "no_content_found_for_whats_new": "NO CONTENT FOUND",
+      "no_jbl_speaker_found": "No JBL speaker can be found",
+      "no_station_found": "No station found",
+      "not_connected": "Not connected",
+      "online_user_manual": "Online user manual",
+      "ota_fail": "OTA_FAIL",
+      "ota_upgrade_success": "OTA_SUCCESS",
+      "pulse_three_unconnect_hint_one": "1.make sure your product is paired with your mobile via Bluetooth.",
+      "pulse_three_unconnect_hint_three": "3.restart your product.",
+      "pulse_three_unconnect_hint_title": "We\\'re still searching your JBL Pulse 3, but you can try to:",
+      "pulse_three_unconnect_hint_two": "2.disconnect your device from another mobile.",
+      "purchase_online_store": "Purchase On Online Store",
+      "reconnect_le_audio": "Reconnect Via LE Audio",
+      "reconnect_le_audio_desc": "Please click “GO TO SETTINGS” button below and forget your current Bluetooth connection, then connect your speaker with LE audio source in the Bluetooth pairing list.",
+      "reconnect_le_bluetooth": "Reconnect Via Bluetooth",
+      "reconnect_le_bluetooth_desc": "You may need to reconnect your product to your phone and Portable App after switching connection method.",
+      "reconnect_title": "We can’t find your speaker, make sure your speaker is connected to your device via Bluetooth.",
+      "rename_operation_failed": "Rename Failed!",
+      "rename_speaker_alert_tips": "Enter a new name for your JBL speaker",
+      "rename_successful": "Rename Successful",
+      "rename_successful_dialog_message": "The new Bluetooth name will be visible after restarting the speaker.",
+      "rename_successful_dialog_message_for_pulse2": "To see the updated name in your Bluetooth Settings, you may need to select \\\"Forget This Device\\\" and then reconnect.",
+      "restart_failed_msg1": "Can\\'t connect to",
+      "restart_failed_msg2": "after restarting.Please make sure Bluetooth is connected.",
+      "resume_fail_desc": "Sorry, cannot resume the stereo group at the moment. Please try again.",
+      "retry": "Retry",
+      "retry_click": "Retry button clicked",
+      "retry_update": "Retry update",
+      "silent_ota_connected_msg": "is connected",
+      "speaker_disconnect_message": "The connection to {deviceName} has been lost.",
+      "speaker_disconnected": "Speaker Disconnected",
+      "speaker_rename_failed": "Speaker Rename Failed",
+      "speaker_rename_success": "Speaker Rename Success",
+      "status": "Status",
+      "status_bar_notification_info_overflow": "999+",
+      "stereo_cant_connect_title": "To Access Current Setting",
+      "still_cannot_connect_product": "Still cannot connect to your product?",
+      "switch_and_reconnect": "Switch and Reconnect",
+      "tap_connect": "Tap to connect speaker",
+      "tap_to_connect": "Tap to connect",
+      "transfer_failed": "Transfer Failed",
+      "transfer_failed_tips_1": "A connection problem has occurred\\n between the app and the speaker.\\n \\n Please reconnect and try again.",
+      "transfer_success": "Transfer Successful",
+      "transfer_success_tips_1": "The speaker will automatically restart and be detected by the app when the upgrade is completed.",
+      "transfer_success_tips_2": "Do not unplug the speaker until it has restarted.",
+      "transfer_success_tips_3": "To see the upgrade status, make sure the speaker reconnects via Bluetooth after restarting.",
+      "transparent_fragment_connect_text": "Press the[img src=link_icon_for_popup/]button in speaker\\n to exit",
+      "turn_off_party_together_for_connection": "Please turn off PartyTogether on your product to continue the connection.",
+      "update_failure_solution": "Update Failure Solution",
+      "update_success": "Update successful",
+      "update_unsuccess": "Update unsuccessful",
+      "upgrade_fail": "Upgrade failed",
+      "upgrade_fail_msg": "During the upgrade, there were errors. Please \\n go to settings and try again.",
+      "upgrade_failed": "Upgrade Failed",
+      "upgrade_failed_tips": "Please try the upgrade again.",
+      "upgrade_success_msg": "Your speaker now is up to date",
+      "upgrade_successful": "Upgrade successful",
+      "upgrade_successful_tips": "Your speaker now is up to date.",
+      "waiting_status": "Waiting",
+      "warning": "WARNING",
+      "your_phone_could_not_connect": "Your phone could not connect to your product at the moment."
+    }
+  }
+}
