@@ -18,6 +18,12 @@ the protocol out of the app's command classes instead:
              Byte.parseByte(hex, 16))`` → opcode 0x62 carries one byte, eq_mode;
              a handler that formats the bytes as "a.b.c" → a version string; one
              that parses device-info tokens → the token list
+  settings   a set command's acknowledgement (``getCommand() == 0 && 103 ==
+             payload[0] && payload[1] == 0``), the device field it changes
+             (``device.setFeedbackToneStatus(getPayload()[0])``), and the values
+             the app sends it, traced back through wrapper methods to literals,
+             with the UI's name for each (``onActionOn`` → on; a ``when`` over
+             ``ClickEventType.ACTION_INDOOR`` → indoor)
   tokens     the token parser: ``retDevInfoTokenIds(4, PacketFormat.BATTERY_STATUS,
              …)`` → token 0x44, one byte; ``v >= 128 … v - 128 … Charging`` → level
              in the low 7 bits, bit 7 = charging; a length-prefixed name token
@@ -199,6 +205,7 @@ def scan(root: Path, java_files: list[Path]) -> FramedProtocol | None:
     commands, opcode_class, used_names = _commands(texts, base_name, setters, consts)
     if not commands:
         return None
+    _set_values(texts, commands, consts)
     proto = FramedProtocol(frame=frame, commands=commands, base_class=base_name)
     if opcode_class:
         proto.opcode_names = _opcode_names(consts.by_class.get(opcode_class, {}), used_names)
@@ -346,25 +353,197 @@ def _commands(
                     if "parseInt" not in a:
                         used_names.update(re.findall(r"\.([A-Z][A-Z0-9_]*)", a))
         name = re.sub(r"Command$", "", cls)
-        commands.append(
-            {
-                "name": name,
-                "class": cls,
-                "opcode": opcode,
-                "payload": payload,
-                "params": [p for p in params if any(i.get("param") == p["name"] for i in payload)],
-                "replies": replies,
-                "replies_are_tokens": token_ids,
-                "kind": "request"
-                if re.match(r"(?:Req|Get)[A-Z]", name)
-                else "set"
-                if name.startswith("Set")
-                else "other",
-                "complete": all("unknown" not in i for i in payload),
-            }
+        kind = (
+            "request"
+            if re.match(r"(?:Req|Get)[A-Z]", name)
+            else "set"
+            if name.startswith("Set")
+            else "other"
         )
+        command: dict[str, Any] = {
+            "name": name,
+            "class": cls,
+            "opcode": opcode,
+            "payload": payload,
+            "params": [p for p in params if any(i.get("param") == p["name"] for i in payload)],
+            "replies": replies,
+            "replies_are_tokens": token_ids,
+            "kind": kind,
+            "complete": all("unknown" not in i for i in payload),
+        }
+        if kind == "set":
+            command |= _set_effect(text, opcode)
+        commands.append(command)
     opcode_class = max(opcode_refs, key=lambda k: opcode_refs[k]) if opcode_refs else None
     return commands, opcode_class, used_names
+
+
+# if (receivedCommand.getCommand() == 0 && … 103 == payload[0] && payload[1] == 0)
+_ACK = re.compile(
+    r"getCommand\(\)\s*==\s*(\d+)\s*&&[^{]*?\b(\d+)\s*==\s*(\w+)\[0\]\s*&&\s*\3\[1\]\s*==\s*(\d+)"
+)
+
+
+def _set_effect(text: str, opcode: int) -> dict[str, Any]:
+    """How a setting is acknowledged, and which device field it changes.
+
+    ack    the device answers opcode N with [the set opcode, status]; the app
+           applies the change only for the status it tests for (0)
+    field  the device setter the app calls with the command's own payload once
+           acknowledged (``device.setFeedbackToneStatus(getPayload()[0])``): the
+           same field a request's reply fills in, which pairs them
+    """
+    out: dict[str, Any] = {}
+    for m in _ACK.finditer(text):
+        if int(m.group(2)) == opcode:
+            out["ack"] = {"opcode": int(m.group(1)), "ok": int(m.group(4))}
+            break
+    own = re.search(r"(\w+)\s*=\s*getPayload\(\)\s*;", text)
+    if own:
+        s = re.search(rf"\.set(\w+)\(\s*{re.escape(own.group(1))}\[0\]\s*\)", text)
+        if s:
+            out["field"] = _snake(s.group(1))
+    return out
+
+
+# A method declaration: modifiers, return type, name, parameters, opening brace.
+_METHOD_DECL = re.compile(
+    r"^[ \t]+(?:(?:public|private|protected|static|final|synchronized)\s+)*"
+    r"[\w.$]+(?:<[^(){};\n]*>)?(?:\[\])*\s+(\w+)\s*\(([^)\n]*)\)\s*(?:throws\s+[\w., ]+)?\{",
+    re.MULTILINE,
+)
+
+
+def _call_args(text: str, open_paren: int) -> list[str] | None:
+    """Arguments of the call whose '(' is at *open_paren*."""
+    depth = 0
+    for i in range(open_paren, min(len(text), open_paren + 2000)):
+        if text[i] == "(":
+            depth += 1
+        elif text[i] == ")":
+            depth -= 1
+            if depth == 0:
+                return _split_top(text[open_paren + 1 : i])
+    return None
+
+
+def _enclosing_method(text: str, pos: int) -> tuple[str, list[str]] | None:
+    """(name, parameter names) of the method whose body holds *pos*."""
+    found = None
+    for m in _METHOD_DECL.finditer(text, 0, pos):
+        found = m
+    if found is None or len(_block(text, found.end() - 1)) < pos - found.end():
+        return None
+    return found.group(1), [p["name"] for p in _params(found.group(2))]
+
+
+def _value_label(text: str, pos: int) -> str | None:
+    """What the UI calls the value sent at *pos*, if the code says.
+
+    ``onActionOn() { …(1) }`` → "ON"; a ``when`` over an enum, compiled to
+    ``switch (WhenMappings.$EnumSwitchMapping$0[action.ordinal()]) { case 5: …(0)``
+    with ``iArr[ClickEventType.ACTION_INDOOR.ordinal()] = 5`` → "ACTION_INDOOR".
+    """
+    method = None
+    for m in _METHOD_DECL.finditer(text, 0, pos):
+        method = m
+    if method is None:
+        return None
+    toggle = re.fullmatch(r"on(?:Action|Switch|Toggle)?(On|Off)", method.group(1))
+    if toggle:
+        return toggle.group(1).upper()
+    head = text[method.end() : pos]
+    switches = list(re.finditer(r"switch\s*\([^{]*\$EnumSwitchMapping\$(\d+)\[", head))
+    if not switches:
+        return None
+    switch = switches[-1]
+    cases = re.findall(r"\bcase\s+(\d+)\s*:", head[switch.end() :])
+    if not cases:
+        return None
+    table = re.search(
+        rf"int\[\]\s+(\w+)\s*=\s*new\s+int\[\w+\.values\(\)\.length\];(.*?)"
+        rf"\$EnumSwitchMapping\${switch.group(1)}\s*=\s*\1\s*;",
+        text,
+        re.DOTALL,
+    )
+    if table is None:
+        return None
+    for m in re.finditer(r"\[\w+\.(\w+)\.ordinal\(\)\]\s*=\s*(\d+)", table.group(2)):
+        if m.group(2) == cases[-1]:
+            return m.group(1)
+    return None
+
+
+def _short_labels(named: dict[int, str]) -> dict[int, str]:
+    """Drop the prefix all labels share (ACTION_PLAY_PAUSE, ACTION_VOICE → play_pause, voice)."""
+    parts = [n.lower().split("_") for n in named.values()]
+    common = 0
+    while len(parts) > 1 and all(len(p) > common + 1 for p in parts):
+        if len({p[common] for p in parts}) != 1:
+            break
+        common += 1
+    return {v: "_".join(p[common:]) for v, p in zip(named, parts, strict=True)}
+
+
+def _set_values(texts: dict[str, str], commands: list[dict[str, Any]], consts: _Constants) -> None:
+    """The values the app passes to each one-parameter setting, traced through wrappers.
+
+    ``new SetFeedbackToneCommand(status)`` inside ``setFeedbackToneStatus(device,
+    status, listener)`` → the callers of that method, their third argument → …
+    until literals (``setFeedBackTone((byte) 1)``). ``values_complete`` is False
+    when some path ends in anything else, so a caller can't mistake a partial
+    set for the whole range.
+    """
+    for c in commands:
+        if c["kind"] != "set" or len(c["params"]) != 1 or not c["complete"]:
+            continue
+        values: set[int] = set()
+        labels: dict[int, set[str]] = {}  # value → what the UI calls it
+        complete = True
+        seen: set[tuple[str, int, int]] = set()
+        # (callee name, constructor?, argument index, arity), traced up to 4 calls deep
+        todo: list[tuple[str, bool, int, int | None, int]] = [(c["class"], True, 0, None, 0)]
+        while todo:
+            callee, ctor, index, arity, depth = todo.pop()
+            esc = re.escape(callee)
+            pattern = rf"\bnew\s+{esc}\s*\(" if ctor else rf"(?<![\w$]){esc}\s*\("
+            for text in texts.values():
+                if callee not in text:
+                    continue
+                for m in re.finditer(pattern, text):
+                    args = _call_args(text, m.end() - 1)
+                    after = text[m.end() - 1 : m.end() + 400]
+                    if args is None or re.match(r"\([^()]*\)\s*(?:throws\s+[\w., ]+)?\{", after):
+                        continue  # a declaration, not a call
+                    if (arity is not None and len(args) != arity) or index >= len(args):
+                        continue
+                    arg = args[index]
+                    if re.fullmatch(r"[\w.$]+(?:<[^()]*>)?(?:\[\])*\s+\w+", arg):
+                        continue  # an abstract/interface declaration: "byte status"
+                    options = re.fullmatch(r"[^?]+\?\s*([^:]+?)\s*:\s*(.+)", arg)
+                    literals = [consts.byte(a) for a in (options.groups() if options else [arg])]
+                    if all(v is not None for v in literals):
+                        values.update(v for v in literals if v is not None)
+                        if not options and literals[0] is not None:
+                            label = _value_label(text, m.start())
+                            if label:
+                                labels.setdefault(literals[0], set()).add(label)
+                        continue
+                    name = re.sub(r"^\(byte\)\s*", "", arg).strip()
+                    method = _enclosing_method(text, m.start())
+                    if depth >= 4 or method is None or name not in method[1]:
+                        complete = False
+                        continue
+                    key = (method[0], method[1].index(name), len(method[1]))
+                    if key not in seen:
+                        seen.add(key)
+                        todo.append((method[0], False, *key[1:], depth + 1))
+        if values:
+            c["values"] = sorted(values)
+            c["values_complete"] = complete
+            named = {v: ls.pop() for v, ls in labels.items() if len(ls) == 1}
+            if named:
+                c["value_labels"] = {str(v): n for v, n in sorted(_short_labels(named).items())}
 
 
 def _opcode_names(consts: dict[str, int | str], used: set[str]) -> dict[int, str]:

@@ -22,6 +22,7 @@ from ..ir.models import (
     TransportType,
 )
 from . import actions as actions_mod
+from . import framed as framed_mod
 from . import gatt as gatt_mod
 
 _HA_TARGET = Path(__file__).parents[3] / "config" / "ha_target.toml"
@@ -423,9 +424,13 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         entity_sections["camera"] = {"stream": {"name": "Camera"}}
 
     challenge = challenge_ctx(ir)
-    gatt = gatt_mod.build(ir, domain)
+    framed = framed_mod.build(ir, domain)
+    gatt = None if framed else gatt_mod.build(ir, domain)
     if gatt:
         unmapped += gatt["unmapped"]
+    if framed:
+        # The generic command → entity mapping doesn't apply to framed devices.
+        unmapped = list(framed["unmapped"])
     ps = ir.play_store
     return {
         # identifiers
@@ -464,6 +469,9 @@ def build(ir: ProtocolIR) -> dict[str, Any]:
         # BLE devices without authentication: GATT reads and one-byte writes.
         "gatt": gatt,
         "has_gatt": gatt is not None,
+        # BLE devices speaking a framed command protocol over one write/notify pair.
+        "framed": framed,
+        "has_framed": framed is not None,
         # Poll-based HTTP devices: the GET that returns state ("GET /status").
         "poll_method": ir.state.poll_endpoint.split(" ", 1)[0] if ir.state.poll_endpoint else None,
         "poll_path": ir.state.poll_endpoint.split(" ", 1)[1] if ir.state.poll_endpoint else None,

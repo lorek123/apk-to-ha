@@ -21,6 +21,7 @@ from .dynamic import oracle as dynamic_oracle
 from .dynamic.ir_reconciler import ReconciliationReport
 from .emitters import context as emitter_context
 from .emitters import emit_all
+from .emitters import framed as framed_emit
 from .extraction import challenge_profile, entity_classifier, framed_scanner
 from .extraction import confidence as extraction_confidence
 from .extraction.app_sources import app_source_files, is_third_party
@@ -719,10 +720,11 @@ def _emit_blocker(ir: ProtocolIR) -> tuple[str, str] | None:
     if ir.transport.type == TransportType.HTTP_REST and not ir.state.poll_endpoint:
         # The HTTP templates poll a state endpoint; without one there's nothing to show.
         return "unsupported-transport", "HTTP device without a state endpoint to poll"
-    if "framed" in ir.extra:
+    if "framed" in ir.extra and framed_emit.build(ir, "x") is None:
         return (
             "unsupported-transport",
-            "Framed command protocol over GATT: extracted, but no client template yet",
+            "Framed command protocol over GATT: no entity the extraction can back"
+            " (no battery token, and no setting with known values, ack and read-back)",
         )
     if ir.transport.type not in _EMITTABLE_TRANSPORTS:
         return (

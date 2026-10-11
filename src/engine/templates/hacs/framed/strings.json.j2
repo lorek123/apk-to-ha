@@ -1,0 +1,54 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Choose a {{ name }} device",
+        "data": {"address": "Device"},
+        "data_description": {"address": "The {{ name }} device in Bluetooth range to add"}
+      },
+      "bluetooth_confirm": {
+        "description": "Set up {name}?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect — make sure the device is powered on and in Bluetooth range"
+    },
+    "abort": {
+      "already_configured": "This device is already configured",
+      "no_devices_found": "No {{ name }} devices found in Bluetooth range",
+      "not_supported": "This Bluetooth device is not a {{ name }} device",
+      "unsupported_model": "The {model} is controlled over classic Bluetooth, which Home Assistant can't use"
+    }
+  },
+  "entity": {
+{% set sections = [("switch", framed.switches), ("select", framed.selects)] | selectattr(1) | list %}
+{% for platform, items in sections %}
+    "{{ platform }}": {
+{% for e in items %}
+{% if platform == "select" %}
+      "{{ e.key }}": {
+        "name": {{ e.name | tojson }},
+        "state": {
+{% for v, o in e.options.items() %}
+          "{{ o }}": {{ (o.replace("_", " ") | capitalize) | tojson }}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+        }
+      }{% if not loop.last %},{% endif %}
+
+{% else %}
+      "{{ e.key }}": {"name": {{ e.name | tojson }}}{% if not loop.last %},{% endif %}
+
+{% endif %}
+{% endfor %}
+    }{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  },
+  "exceptions": {
+    "not_in_range": {"message": "{address} is not in range of any Bluetooth adapter"},
+    "cannot_connect": {"message": "Cannot reach the device: {error}"},
+    "write_failed": {"message": "The device didn't accept the change: {error}"}
+  }
+}

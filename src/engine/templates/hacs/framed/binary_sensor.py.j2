@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: MIT
+"""Binary sensor platform for {{ name }}."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+    BinarySensorEntityDescription,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from . import {{ class_prefix }}ConfigEntry
+from .coordinator import {{ class_prefix }}Coordinator
+from .entity_base import {{ class_prefix }}Entity
+
+PARALLEL_UPDATES = 0
+
+
+@dataclass(frozen=True, kw_only=True)
+class {{ class_prefix }}BinarySensorDescription(BinarySensorEntityDescription):
+    field: str
+
+
+BINARY_SENSORS: tuple[{{ class_prefix }}BinarySensorDescription, ...] = (
+{% for b in framed.binary_sensors %}
+    {{ class_prefix }}BinarySensorDescription(
+        key="{{ b.key }}",
+        field="{{ b.field }}",
+        device_class=BinarySensorDeviceClass.{{ b.device_class | upper }},
+    ),
+{% endfor %}
+)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: {{ class_prefix }}ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    async_add_entities(
+        {{ class_prefix }}BinarySensor(coordinator, d)
+        for d in BINARY_SENSORS
+        if d.field in coordinator.data
+    )
+
+
+class {{ class_prefix }}BinarySensor({{ class_prefix }}Entity, BinarySensorEntity):
+    entity_description: {{ class_prefix }}BinarySensorDescription
+
+    def __init__(
+        self,
+        coordinator: {{ class_prefix }}Coordinator,
+        description: {{ class_prefix }}BinarySensorDescription,
+    ) -> None:
+        super().__init__(coordinator, description.key, description.field)
+        self.entity_description = description
+        self._attr_translation_key = None  # named by its device class
+
+    @property
+    def is_on(self) -> bool | None:
+        value = self.value
+        return None if value is None else bool(value)

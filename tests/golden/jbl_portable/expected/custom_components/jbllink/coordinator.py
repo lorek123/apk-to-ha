@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: MIT
+"""Polls JBL Portable over Bluetooth."""
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING, Any
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from jbllink_sdk import (
+    SETTINGS,
+    JbllinkClient,
+    JbllinkConnectionError,
+    JbllinkUnsupportedError,
+)
+
+from .const import DOMAIN, POLL_INTERVAL
+
+if TYPE_CHECKING:
+    from . import JbllinkConfigEntry
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class JbllinkCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """State of one device: {field: value}; a field is missing until the device gives it."""
+
+    config_entry: JbllinkConfigEntry
+
+    def __init__(
+        self, hass: HomeAssistant, entry: JbllinkConfigEntry, client: JbllinkClient
+    ) -> None:
+        super().__init__(
+            hass,
+            _LOGGER,
+            config_entry=entry,
+            name=DOMAIN,
+            update_interval=POLL_INTERVAL,
+        )
+        self.client = client
+        self.device_info: dict[str, Any] = {}
+
+    async def _async_setup(self) -> None:
+        try:
+            self.device_info = await self.client.read_device_info()
+        except (JbllinkConnectionError, JbllinkUnsupportedError) as err:
+            raise UpdateFailed(
+                translation_domain=DOMAIN,
+                translation_key="cannot_connect",
+                translation_placeholders={"error": str(err)},
+            ) from err
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        try:
+            return await self.client.read_state()
+        except (JbllinkConnectionError, JbllinkUnsupportedError) as err:
+            raise UpdateFailed(
+                translation_domain=DOMAIN,
+                translation_key="cannot_connect",
+                translation_placeholders={"error": str(err)},
+            ) from err
+
+    async def async_apply(self, key: str, value: int) -> None:
+        """Change a setting; once acknowledged, show it without reconnecting to re-read."""
+        await self.client.apply(key, value)
+        self.async_set_updated_data({**(self.data or {}), SETTINGS[key].field: value})

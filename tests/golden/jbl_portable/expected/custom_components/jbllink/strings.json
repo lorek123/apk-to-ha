@@ -1,0 +1,65 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Choose a JBL Portable device",
+        "data": {
+          "address": "Device"
+        },
+        "data_description": {
+          "address": "The JBL Portable device in Bluetooth range to add"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Set up {name}?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect — make sure the device is powered on and in Bluetooth range"
+    },
+    "abort": {
+      "already_configured": "This device is already configured",
+      "no_devices_found": "No JBL Portable devices found in Bluetooth range",
+      "not_supported": "This Bluetooth device is not a JBL Portable device",
+      "unsupported_model": "The {model} is controlled over classic Bluetooth, which Home Assistant can't use"
+    }
+  },
+  "entity": {
+    "switch": {
+      "feedback_tone": {
+        "name": "Feedback tone"
+      },
+      "hfp": {
+        "name": "HFP"
+      }
+    },
+    "select": {
+      "eq_mode": {
+        "name": "EQ mode",
+        "state": {
+          "indoor": "Indoor",
+          "outdoor": "Outdoor"
+        }
+      },
+      "mfb": {
+        "name": "MFB",
+        "state": {
+          "play_pause": "Play pause",
+          "voice": "Voice"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "not_in_range": {
+      "message": "{address} is not in range of any Bluetooth adapter"
+    },
+    "cannot_connect": {
+      "message": "Cannot reach the device: {error}"
+    },
+    "write_failed": {
+      "message": "The device didn't accept the change: {error}"
+    }
+  }
+}
